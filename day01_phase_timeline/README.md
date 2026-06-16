@@ -44,4 +44,12 @@ As a surgeon, I felt that phase boundaries are artificial labels imposed on a co
 
 Single-frame inspection was insufficient to determine whether a phase transition was truly occurring.
 
+Note:
+
+The dataset uses the phase name
+"carlot-triangle-dissection".
+
+This corresponds to the dissection of Calot's triangle
+(commonly used surgical terminology).
+
 Reviewing temporal context appears essential.
