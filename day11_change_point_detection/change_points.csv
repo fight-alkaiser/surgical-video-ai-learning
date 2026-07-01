@@ -1,0 +1,16 @@
+Frame1,Frame2,Similarity,Removed,Added
+390,391,0.0,bipolar | coagulate | blood_vessel,grasper | grasp | gallbladder
+483,484,0.0,grasper | grasp | gallbladder,hook | coagulate | liver
+492,493,0.0,hook | coagulate | liver,grasper | grasp | gallbladder; hook | dissect | gallbladder
+551,552,0.0,grasper | grasp | gallbladder,grasper | retract | gallbladder
+553,554,0.0,grasper | retract | gallbladder,grasper | grasp | gallbladder
+563,564,0.333,grasper | retract | gallbladder,grasper | grasp | gallbladder
+620,621,0.333,grasper | grasp | gallbladder; grasper | retract | gallbladder,
+935,936,0.0,grasper | retract | gallbladder,irrigator | aspirate | fluid
+970,971,0.0,irrigator | aspirate | fluid,irrigator | irrigate | abdominal_wall_cavity; irrigator | irrigate | cystic_pedicle; irrigator | irrigate | liver
+971,972,0.0,irrigator | irrigate | abdominal_wall_cavity; irrigator | irrigate | cystic_pedicle; irrigator | irrigate | liver,irrigator | aspirate | fluid
+1038,1039,0.0,grasper | retract | gallbladder,hook | dissect | gallbladder
+1163,1164,0.333,grasper | grasp | gallbladder,grasper | retract | liver
+1180,1181,0.333,hook | dissect | gallbladder,grasper | retract | gallbladder
+1191,1192,0.333,grasper | retract | gallbladder; grasper | retract | liver,
+1377,1378,0.333,hook | dissect | gallbladder,grasper | grasp | gallbladder
