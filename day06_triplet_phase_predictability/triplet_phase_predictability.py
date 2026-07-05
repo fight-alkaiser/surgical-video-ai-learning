@@ -1,5 +1,5 @@
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 with open(
     "/Users/katsutoshimakino/Datasets/CholecT50/CholecT50/labels/VID01.json"
@@ -9,7 +9,7 @@ with open(
 triplet_names = data["categories"]["triplet"]
 phase_names = data["categories"]["phase"]
 
-triplet_phases = defaultdict(set)
+triplet_phase_counts = defaultdict(Counter)
 
 for frame, annotations in data["annotations"].items():
 
@@ -29,16 +29,41 @@ for frame, annotations in data["annotations"].items():
 
         triplet_name = triplet_names[str(triplet_id)]
 
-        triplet_phases[triplet_name].add(
-            phase_name
-        )
+        triplet_phase_counts[triplet_name][phase_name] += 1
 
-for triplet, phases in sorted(
-    triplet_phases.items(),
-    key=lambda x: len(x[1])
-):
+results = []
+
+for triplet, counts in triplet_phase_counts.items():
+
+    total = sum(counts.values())
+
+    if total < 20:
+        continue
+
+    dominant_phase, dominant_count = counts.most_common(1)[0]
+
+    ratio = dominant_count / total
+
+    results.append(
+        (
+            ratio,
+            total,
+            dominant_phase,
+            triplet
+        )
+    )
+
+results.sort(reverse=True)
+
+print()
+print("Most Phase-Specific Triplets")
+print("=" * 60)
+
+for ratio, total, phase, triplet in results[:20]:
 
     print(
-        len(phases),
+        f"{ratio:.2f}",
+        total,
+        phase,
         triplet
     )

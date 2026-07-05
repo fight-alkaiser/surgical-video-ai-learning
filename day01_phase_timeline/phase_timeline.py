@@ -1,7 +1,7 @@
 import json
 
 with open(
-    "../CholecT50/CholecT50/labels/VID01.json",
+    "/Users/katsutoshimakino/Datasets/CholecT50/CholecT50/labels/VID01.json",
     "r"
 ) as f:
     data = json.load(f)
