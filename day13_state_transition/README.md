@@ -121,6 +121,40 @@ video that a 1-step model cannot see.
 
 ---
 
+## Surgeon's reflection
+
+From a surgical perspective, the branching of S0 and S1 makes intuitive
+sense.
+
+`S1 (idle)` may not represent "nothing is happening" so much as the
+surgeon (and assistant) pausing to decide what to do next: continue the
+current step, move on to the next step, or approach the same task from a
+different angle/position. That decision-making moment is exactly where the
+next action *should* be unpredictable from the current state alone — the
+surgeon is drawing on the broader operative context (what has already been
+achieved, what the anatomy looks like), not just "what am I doing right
+now."
+
+`S0 (grasper, grasp, gallbladder)` may often be a similar kind of pause: a
+confirmatory or exploratory grasp used to check the current state of the
+field before deciding the next maneuver, rather than a committed step
+toward a specific goal. If so, it is natural for its next state to be
+scattered across many possibilities.
+
+Conversely, once a rare, task-specific action such as clipping or
+packaging begins, the surgeon is already committed to a fixed short
+sequence of that subtask — there is little room for branching, so the
+next state being deterministic is exactly what would be expected
+clinically, not just statistically.
+
+This suggests an interesting reframing for future modeling: states with
+high branching may not be "noisy" or "hard to predict" in a bad sense —
+they may be the very moments where the surgeon's decision-making is
+happening, and where richer context (a model that can see further back
+than one step) would be most valuable for prediction.
+
+---
+
 ## Conclusion
 
 Representing the video as an integer state sequence and counting
