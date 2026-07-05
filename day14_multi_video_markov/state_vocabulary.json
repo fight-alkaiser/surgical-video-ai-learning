@@ -1,0 +1,1434 @@
+[
+  {
+    "id": 0,
+    "label": "grasper|grasp|gallbladder"
+  },
+  {
+    "id": 1,
+    "label": "(idle / no active triplet)"
+  },
+  {
+    "id": 2,
+    "label": "hook|dissect|cystic_duct"
+  },
+  {
+    "id": 3,
+    "label": "grasper|grasp|gallbladder, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 4,
+    "label": "irrigator|aspirate|fluid"
+  },
+  {
+    "id": 5,
+    "label": "bipolar|coagulate|blood_vessel, grasper|grasp|gallbladder"
+  },
+  {
+    "id": 6,
+    "label": "bipolar|coagulate|blood_vessel"
+  },
+  {
+    "id": 7,
+    "label": "bipolar|dissect|cystic_duct, grasper|grasp|gallbladder"
+  },
+  {
+    "id": 8,
+    "label": "bipolar|dissect|cystic_duct"
+  },
+  {
+    "id": 9,
+    "label": "hook|coagulate|liver"
+  },
+  {
+    "id": 10,
+    "label": "grasper|grasp|gallbladder, hook|dissect|gallbladder"
+  },
+  {
+    "id": 11,
+    "label": "hook|dissect|gallbladder"
+  },
+  {
+    "id": 12,
+    "label": "grasper|retract|gallbladder"
+  },
+  {
+    "id": 13,
+    "label": "grasper|grasp|gallbladder, grasper|retract|gallbladder"
+  },
+  {
+    "id": 14,
+    "label": "grasper|retract|gallbladder, hook|dissect|gallbladder"
+  },
+  {
+    "id": 15,
+    "label": "clipper|clip|cystic_duct, grasper|grasp|gallbladder"
+  },
+  {
+    "id": 16,
+    "label": "clipper|clip|cystic_duct"
+  },
+  {
+    "id": 17,
+    "label": "grasper|grasp|gallbladder, scissors|cut|cystic_duct"
+  },
+  {
+    "id": 18,
+    "label": "irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 19,
+    "label": "irrigator|irrigate|abdominal_wall_cavity, irrigator|irrigate|cystic_pedicle, irrigator|irrigate|liver"
+  },
+  {
+    "id": 20,
+    "label": "bipolar|coagulate|cystic_artery"
+  },
+  {
+    "id": 21,
+    "label": "grasper|retract|liver, hook|dissect|gallbladder"
+  },
+  {
+    "id": 22,
+    "label": "grasper|retract|gallbladder, grasper|retract|liver"
+  },
+  {
+    "id": 23,
+    "label": "grasper|grasp|gallbladder, grasper|retract|liver"
+  },
+  {
+    "id": 24,
+    "label": "grasper|retract|liver"
+  },
+  {
+    "id": 25,
+    "label": "grasper|grasp|specimen_bag"
+  },
+  {
+    "id": 26,
+    "label": "grasper|grasp|liver, grasper|grasp|specimen_bag"
+  },
+  {
+    "id": 27,
+    "label": "grasper|grasp|specimen_bag, grasper|pack|gallbladder"
+  },
+  {
+    "id": 28,
+    "label": "grasper|pack|gallbladder"
+  },
+  {
+    "id": 29,
+    "label": "grasper|retract|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 30,
+    "label": "grasper|retract|liver, irrigator|retract|liver"
+  },
+  {
+    "id": 31,
+    "label": "grasper|grasp|specimen_bag, grasper|retract|liver"
+  },
+  {
+    "id": 32,
+    "label": "scissors|cut|adhesion"
+  },
+  {
+    "id": 33,
+    "label": "grasper|retract|omentum, scissors|cut|adhesion"
+  },
+  {
+    "id": 34,
+    "label": "grasper|retract|omentum"
+  },
+  {
+    "id": 35,
+    "label": "grasper|grasp|omentum, grasper|retract|liver"
+  },
+  {
+    "id": 36,
+    "label": "grasper|grasp|omentum"
+  },
+  {
+    "id": 37,
+    "label": "grasper|retract|gut, grasper|retract|omentum"
+  },
+  {
+    "id": 38,
+    "label": "grasper|retract|gut"
+  },
+  {
+    "id": 39,
+    "label": "grasper|grasp|gut"
+  },
+  {
+    "id": 40,
+    "label": "grasper|grasp|gallbladder, grasper|retract|omentum"
+  },
+  {
+    "id": 41,
+    "label": "grasper|retract|gallbladder, grasper|retract|omentum"
+  },
+  {
+    "id": 42,
+    "label": "grasper|retract|gallbladder, hook|dissect|omentum"
+  },
+  {
+    "id": 43,
+    "label": "grasper|retract|omentum, hook|dissect|omentum"
+  },
+  {
+    "id": 44,
+    "label": "hook|dissect|omentum"
+  },
+  {
+    "id": 45,
+    "label": "grasper|retract|gallbladder, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 46,
+    "label": "grasper|retract|gallbladder, hook|dissect|cystic_duct"
+  },
+  {
+    "id": 47,
+    "label": "hook|dissect|cystic_artery"
+  },
+  {
+    "id": 48,
+    "label": "clipper|clip|cystic_duct, grasper|retract|gallbladder"
+  },
+  {
+    "id": 49,
+    "label": "clipper|clip|cystic_artery"
+  },
+  {
+    "id": 50,
+    "label": "grasper|retract|gallbladder, scissors|cut|cystic_artery"
+  },
+  {
+    "id": 51,
+    "label": "scissors|cut|cystic_artery"
+  },
+  {
+    "id": 52,
+    "label": "grasper|grasp|cystic_artery, grasper|retract|gallbladder"
+  },
+  {
+    "id": 53,
+    "label": "grasper|grasp|cystic_artery"
+  },
+  {
+    "id": 54,
+    "label": "clipper|clip|cystic_artery, grasper|grasp|cystic_artery"
+  },
+  {
+    "id": 55,
+    "label": "bipolar|coagulate|cystic_pedicle, grasper|retract|gallbladder"
+  },
+  {
+    "id": 56,
+    "label": "bipolar|coagulate|cystic_pedicle"
+  },
+  {
+    "id": 57,
+    "label": "grasper|retract|gallbladder, scissors|cut|cystic_duct"
+  },
+  {
+    "id": 58,
+    "label": "scissors|cut|cystic_duct"
+  },
+  {
+    "id": 59,
+    "label": "grasper|grasp|cystic_duct, grasper|retract|gallbladder"
+  },
+  {
+    "id": 60,
+    "label": "hook|coagulate|gallbladder"
+  },
+  {
+    "id": 61,
+    "label": "grasper|grasp|gallbladder, grasper|grasp|specimen_bag"
+  },
+  {
+    "id": 62,
+    "label": "grasper|retract|liver, irrigator|irrigate|liver"
+  },
+  {
+    "id": 63,
+    "label": "irrigator|irrigate|liver"
+  },
+  {
+    "id": 64,
+    "label": "bipolar|retract|omentum, grasper|retract|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 65,
+    "label": "bipolar|retract|omentum"
+  },
+  {
+    "id": 66,
+    "label": "bipolar|retract|omentum, irrigator|irrigate|liver"
+  },
+  {
+    "id": 67,
+    "label": "bipolar|retract|omentum, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 68,
+    "label": "bipolar|retract|liver, grasper|retract|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 69,
+    "label": "bipolar|retract|liver, grasper|retract|liver, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 70,
+    "label": "bipolar|retract|liver"
+  },
+  {
+    "id": 71,
+    "label": "bipolar|coagulate|liver, irrigator|retract|liver"
+  },
+  {
+    "id": 72,
+    "label": "bipolar|coagulate|liver"
+  },
+  {
+    "id": 73,
+    "label": "bipolar|coagulate|liver, grasper|retract|liver"
+  },
+  {
+    "id": 74,
+    "label": "bipolar|coagulate|liver, grasper|retract|liver, irrigator|irrigate|liver"
+  },
+  {
+    "id": 75,
+    "label": "bipolar|retract|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 76,
+    "label": "scissors|cut|omentum"
+  },
+  {
+    "id": 77,
+    "label": "hook|coagulate|blood_vessel"
+  },
+  {
+    "id": 78,
+    "label": "grasper|grasp|gallbladder, grasper|retract|gallbladder, hook|dissect|cystic_duct"
+  },
+  {
+    "id": 79,
+    "label": "grasper|grasp|gallbladder, hook|dissect|cystic_duct"
+  },
+  {
+    "id": 80,
+    "label": "clipper|clip|cystic_artery, grasper|grasp|gallbladder"
+  },
+  {
+    "id": 81,
+    "label": "grasper|grasp|gallbladder, scissors|cut|cystic_artery"
+  },
+  {
+    "id": 82,
+    "label": "bipolar|coagulate|peritoneum, grasper|retract|liver"
+  },
+  {
+    "id": 83,
+    "label": "grasper|retract|peritoneum"
+  },
+  {
+    "id": 84,
+    "label": "grasper|retract|peritoneum, hook|dissect|omentum"
+  },
+  {
+    "id": 85,
+    "label": "grasper|retract|gut, hook|dissect|omentum"
+  },
+  {
+    "id": 86,
+    "label": "grasper|retract|cystic_pedicle"
+  },
+  {
+    "id": 87,
+    "label": "grasper|retract|gallbladder, hook|dissect|cystic_artery"
+  },
+  {
+    "id": 88,
+    "label": "grasper|retract|gallbladder, hook|dissect|cystic_plate"
+  },
+  {
+    "id": 89,
+    "label": "clipper|clip|cystic_artery, grasper|retract|gallbladder"
+  },
+  {
+    "id": 90,
+    "label": "grasper|retract|liver, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 91,
+    "label": "bipolar|coagulate|abdominal_wall_cavity"
+  },
+  {
+    "id": 92,
+    "label": "grasper|retract|gallbladder, hook|retract|gallbladder"
+  },
+  {
+    "id": 93,
+    "label": "hook|dissect|cystic_plate"
+  },
+  {
+    "id": 94,
+    "label": "bipolar|coagulate|cystic_plate, grasper|retract|gallbladder"
+  },
+  {
+    "id": 95,
+    "label": "clipper|clip|cystic_plate, grasper|retract|gallbladder"
+  },
+  {
+    "id": 96,
+    "label": "grasper|retract|gallbladder, scissors|cut|cystic_plate"
+  },
+  {
+    "id": 97,
+    "label": "grasper|grasp|gallbladder, hook|coagulate|gallbladder"
+  },
+  {
+    "id": 98,
+    "label": "bipolar|retract|liver, grasper|retract|liver"
+  },
+  {
+    "id": 99,
+    "label": "bipolar|retract|liver, grasper|retract|gut, grasper|retract|liver"
+  },
+  {
+    "id": 100,
+    "label": "grasper|retract|gut, grasper|retract|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 101,
+    "label": "irrigator|retract|liver"
+  },
+  {
+    "id": 102,
+    "label": "grasper|grasp|specimen_bag, irrigator|retract|liver"
+  },
+  {
+    "id": 103,
+    "label": "grasper|grasp|specimen_bag, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 104,
+    "label": "grasper|grasp|specimen_bag, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 105,
+    "label": "grasper|retract|gallbladder, grasper|retract|liver, hook|retract|liver"
+  },
+  {
+    "id": 106,
+    "label": "hook|retract|liver"
+  },
+  {
+    "id": 107,
+    "label": "grasper|retract|gallbladder, hook|retract|liver"
+  },
+  {
+    "id": 108,
+    "label": "grasper|retract|gallbladder, hook|dissect|peritoneum"
+  },
+  {
+    "id": 109,
+    "label": "hook|retract|gallbladder"
+  },
+  {
+    "id": 110,
+    "label": "grasper|grasp|gallbladder, hook|retract|gallbladder"
+  },
+  {
+    "id": 111,
+    "label": "bipolar|retract|omentum, grasper|retract|liver"
+  },
+  {
+    "id": 112,
+    "label": "grasper|retract|omentum, irrigator|retract|liver"
+  },
+  {
+    "id": 113,
+    "label": "grasper|retract|omentum, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 114,
+    "label": "grasper|grasp|omentum, grasper|retract|gallbladder"
+  },
+  {
+    "id": 115,
+    "label": "grasper|grasp|omentum, hook|dissect|omentum"
+  },
+  {
+    "id": 116,
+    "label": "grasper|grasp|gallbladder, hook|dissect|omentum"
+  },
+  {
+    "id": 117,
+    "label": "grasper|grasp|omentum, hook|dissect|cystic_duct"
+  },
+  {
+    "id": 118,
+    "label": "grasper|grasp|cystic_duct, grasper|retract|gallbladder, hook|dissect|cystic_duct"
+  },
+  {
+    "id": 119,
+    "label": "grasper|grasp|gallbladder, grasper|retract|gallbladder, hook|dissect|cystic_artery"
+  },
+  {
+    "id": 120,
+    "label": "grasper|grasp|gallbladder, grasper|retract|gallbladder, hook|dissect|gallbladder"
+  },
+  {
+    "id": 121,
+    "label": "grasper|grasp|cystic_artery, grasper|retract|gallbladder, hook|dissect|gallbladder"
+  },
+  {
+    "id": 122,
+    "label": "grasper|retract|omentum, hook|dissect|gallbladder"
+  },
+  {
+    "id": 123,
+    "label": "grasper|grasp|cystic_duct, hook|dissect|gallbladder"
+  },
+  {
+    "id": 124,
+    "label": "grasper|grasp|gallbladder, grasper|retract|liver, hook|dissect|gallbladder"
+  },
+  {
+    "id": 125,
+    "label": "grasper|retract|gallbladder, grasper|retract|liver, hook|dissect|gallbladder"
+  },
+  {
+    "id": 126,
+    "label": "clipper|clip|blood_vessel, grasper|retract|liver"
+  },
+  {
+    "id": 127,
+    "label": "clipper|clip|cystic_artery, grasper|retract|liver"
+  },
+  {
+    "id": 128,
+    "label": "clipper|clip|cystic_duct, grasper|retract|gallbladder, grasper|retract|liver"
+  },
+  {
+    "id": 129,
+    "label": "grasper|retract|gallbladder, grasper|retract|liver, scissors|cut|cystic_artery"
+  },
+  {
+    "id": 130,
+    "label": "grasper|retract|gallbladder, grasper|retract|liver, scissors|cut|cystic_duct"
+  },
+  {
+    "id": 131,
+    "label": "grasper|retract|gallbladder, grasper|retract|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 132,
+    "label": "bipolar|coagulate|blood_vessel, grasper|retract|liver"
+  },
+  {
+    "id": 133,
+    "label": "grasper|retract|liver, hook|coagulate|liver"
+  },
+  {
+    "id": 134,
+    "label": "grasper|grasp|peritoneum, grasper|retract|liver"
+  },
+  {
+    "id": 135,
+    "label": "grasper|grasp|peritoneum"
+  },
+  {
+    "id": 136,
+    "label": "grasper|grasp|peritoneum, hook|dissect|cystic_artery"
+  },
+  {
+    "id": 137,
+    "label": "grasper|grasp|gallbladder, hook|dissect|cystic_artery"
+  },
+  {
+    "id": 138,
+    "label": "clipper|clip|cystic_artery, grasper|grasp|gallbladder, grasper|retract|gallbladder"
+  },
+  {
+    "id": 139,
+    "label": "grasper|grasp|gallbladder, grasper|retract|gallbladder, scissors|cut|cystic_artery"
+  },
+  {
+    "id": 140,
+    "label": "grasper|pack|gallbladder, grasper|retract|liver"
+  },
+  {
+    "id": 141,
+    "label": "grasper|grasp|gallbladder, hook|dissect|peritoneum"
+  },
+  {
+    "id": 142,
+    "label": "hook|dissect|peritoneum"
+  },
+  {
+    "id": 143,
+    "label": "grasper|grasp|cystic_duct"
+  },
+  {
+    "id": 144,
+    "label": "clipper|clip|cystic_duct, grasper|grasp|cystic_duct"
+  },
+  {
+    "id": 145,
+    "label": "clipper|clip|cystic_artery, grasper|grasp|cystic_duct"
+  },
+  {
+    "id": 146,
+    "label": "grasper|grasp|cystic_duct, scissors|cut|cystic_duct"
+  },
+  {
+    "id": 147,
+    "label": "bipolar|coagulate|liver, grasper|retract|gallbladder"
+  },
+  {
+    "id": 148,
+    "label": "clipper|clip|blood_vessel"
+  },
+  {
+    "id": 149,
+    "label": "grasper|retract|gut, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 150,
+    "label": "grasper|grasp|gallbladder, grasper|grasp|liver"
+  },
+  {
+    "id": 151,
+    "label": "grasper|grasp|cystic_pedicle"
+  },
+  {
+    "id": 152,
+    "label": "grasper|retract|gallbladder, hook|coagulate|cystic_duct"
+  },
+  {
+    "id": 153,
+    "label": "bipolar|dissect|cystic_artery"
+  },
+  {
+    "id": 154,
+    "label": "grasper|retract|liver, hook|retract|gallbladder"
+  },
+  {
+    "id": 155,
+    "label": "grasper|grasp|liver, hook|dissect|gallbladder"
+  },
+  {
+    "id": 156,
+    "label": "grasper|grasp|liver"
+  },
+  {
+    "id": 157,
+    "label": "grasper|grasp|peritoneum, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 158,
+    "label": "grasper|grasp|cystic_duct, grasper|retract|liver"
+  },
+  {
+    "id": 159,
+    "label": "bipolar|coagulate|peritoneum, grasper|grasp|peritoneum, grasper|retract|liver"
+  },
+  {
+    "id": 160,
+    "label": "bipolar|coagulate|peritoneum, grasper|grasp|peritoneum"
+  },
+  {
+    "id": 161,
+    "label": "grasper|grasp|peritoneum, grasper|retract|gallbladder"
+  },
+  {
+    "id": 162,
+    "label": "grasper|grasp|peritoneum, hook|dissect|omentum"
+  },
+  {
+    "id": 163,
+    "label": "grasper|grasp|gallbladder, scissors|dissect|gallbladder"
+  },
+  {
+    "id": 164,
+    "label": "grasper|retract|liver, hook|coagulate|blood_vessel"
+  },
+  {
+    "id": 165,
+    "label": "grasper|grasp|gallbladder, hook|coagulate|blood_vessel"
+  },
+  {
+    "id": 166,
+    "label": "grasper|grasp|specimen_bag, grasper|pack|gallbladder, grasper|retract|liver"
+  },
+  {
+    "id": 167,
+    "label": "grasper|retract|gallbladder, grasper|retract|omentum, hook|dissect|omentum"
+  },
+  {
+    "id": 168,
+    "label": "grasper|retract|gallbladder, grasper|retract|omentum, hook|coagulate|omentum"
+  },
+  {
+    "id": 169,
+    "label": "bipolar|coagulate|omentum, grasper|retract|gallbladder, grasper|retract|omentum"
+  },
+  {
+    "id": 170,
+    "label": "bipolar|coagulate|gallbladder"
+  },
+  {
+    "id": 171,
+    "label": "bipolar|dissect|gallbladder"
+  },
+  {
+    "id": 172,
+    "label": "bipolar|dissect|gallbladder, grasper|retract|gut"
+  },
+  {
+    "id": 173,
+    "label": "bipolar|dissect|gallbladder, grasper|retract|gallbladder"
+  },
+  {
+    "id": 174,
+    "label": "grasper|retract|omentum, hook|dissect|peritoneum"
+  },
+  {
+    "id": 175,
+    "label": "grasper|retract|peritoneum, hook|dissect|gallbladder"
+  },
+  {
+    "id": 176,
+    "label": "grasper|retract|liver, hook|retract|liver"
+  },
+  {
+    "id": 177,
+    "label": "bipolar|coagulate|cystic_plate, grasper|retract|liver"
+  },
+  {
+    "id": 178,
+    "label": "irrigator|irrigate|cystic_pedicle"
+  },
+  {
+    "id": 179,
+    "label": "grasper|retract|liver, irrigator|irrigate|cystic_pedicle"
+  },
+  {
+    "id": 180,
+    "label": "grasper|grasp|gallbladder, grasper|retract|liver, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 181,
+    "label": "grasper|grasp|gallbladder, grasper|retract|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 182,
+    "label": "grasper|grasp|gallbladder, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 183,
+    "label": "grasper|grasp|specimen_bag, scissors|cut|liver"
+  },
+  {
+    "id": 184,
+    "label": "bipolar|grasp|liver, grasper|retract|liver"
+  },
+  {
+    "id": 185,
+    "label": "grasper|grasp|gallbladder, grasper|retract|gut"
+  },
+  {
+    "id": 186,
+    "label": "grasper|retract|gallbladder, grasper|retract|gut"
+  },
+  {
+    "id": 187,
+    "label": "bipolar|coagulate|cystic_artery, grasper|retract|gallbladder"
+  },
+  {
+    "id": 188,
+    "label": "grasper|retract|gallbladder, scissors|dissect|cystic_plate"
+  },
+  {
+    "id": 189,
+    "label": "bipolar|retract|gallbladder, grasper|retract|gallbladder, grasper|retract|liver"
+  },
+  {
+    "id": 190,
+    "label": "bipolar|coagulate|cystic_plate"
+  },
+  {
+    "id": 191,
+    "label": "grasper|retract|gallbladder, irrigator|retract|liver"
+  },
+  {
+    "id": 192,
+    "label": "grasper|retract|liver, irrigator|retract|gallbladder"
+  },
+  {
+    "id": 193,
+    "label": "grasper|retract|gallbladder, grasper|retract|liver, irrigator|retract|liver"
+  },
+  {
+    "id": 194,
+    "label": "grasper|retract|gallbladder, grasper|retract|liver, hook|coagulate|liver"
+  },
+  {
+    "id": 195,
+    "label": "grasper|retract|omentum, hook|coagulate|omentum"
+  },
+  {
+    "id": 196,
+    "label": "bipolar|retract|omentum, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 197,
+    "label": "scissors|cut|cystic_plate"
+  },
+  {
+    "id": 198,
+    "label": "grasper|grasp|cystic_plate"
+  },
+  {
+    "id": 199,
+    "label": "clipper|clip|cystic_plate, grasper|grasp|cystic_plate"
+  },
+  {
+    "id": 200,
+    "label": "grasper|retract|liver, grasper|retract|omentum"
+  },
+  {
+    "id": 201,
+    "label": "grasper|retract|liver, grasper|retract|omentum, irrigator|retract|liver"
+  },
+  {
+    "id": 202,
+    "label": "clipper|clip|cystic_plate, grasper|retract|liver"
+  },
+  {
+    "id": 203,
+    "label": "grasper|grasp|cystic_plate, grasper|retract|liver"
+  },
+  {
+    "id": 204,
+    "label": "grasper|retract|gallbladder, grasper|retract|gut, hook|coagulate|omentum"
+  },
+  {
+    "id": 205,
+    "label": "grasper|grasp|cystic_plate, hook|retract|gallbladder"
+  },
+  {
+    "id": 206,
+    "label": "grasper|grasp|cystic_plate, hook|dissect|gallbladder"
+  },
+  {
+    "id": 207,
+    "label": "grasper|retract|cystic_plate"
+  },
+  {
+    "id": 208,
+    "label": "grasper|retract|cystic_plate, hook|dissect|gallbladder"
+  },
+  {
+    "id": 209,
+    "label": "grasper|retract|cystic_plate, grasper|retract|gallbladder"
+  },
+  {
+    "id": 210,
+    "label": "grasper|grasp|specimen_bag, grasper|retract|gallbladder"
+  },
+  {
+    "id": 211,
+    "label": "grasper|retract|gut, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 212,
+    "label": "grasper|grasp|specimen_bag, grasper|retract|gut"
+  },
+  {
+    "id": 213,
+    "label": "bipolar|grasp|liver"
+  },
+  {
+    "id": 214,
+    "label": "bipolar|grasp|liver, scissors|cut|liver"
+  },
+  {
+    "id": 215,
+    "label": "grasper|grasp|gallbladder, grasper|retract|gallbladder, hook|dissect|omentum"
+  },
+  {
+    "id": 216,
+    "label": "bipolar|retract|omentum, grasper|retract|liver, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 217,
+    "label": "bipolar|retract|omentum, grasper|retract|liver, irrigator|irrigate|liver"
+  },
+  {
+    "id": 218,
+    "label": "grasper|retract|gut, hook|dissect|gallbladder"
+  },
+  {
+    "id": 219,
+    "label": "hook|coagulate|cystic_artery"
+  },
+  {
+    "id": 220,
+    "label": "grasper|retract|gallbladder, hook|coagulate|cystic_pedicle"
+  },
+  {
+    "id": 221,
+    "label": "hook|coagulate|cystic_pedicle"
+  },
+  {
+    "id": 222,
+    "label": "grasper|retract|gallbladder, hook|dissect|blood_vessel"
+  },
+  {
+    "id": 223,
+    "label": "clipper|clip|blood_vessel, grasper|retract|gallbladder"
+  },
+  {
+    "id": 224,
+    "label": "grasper|retract|gallbladder, hook|coagulate|blood_vessel"
+  },
+  {
+    "id": 225,
+    "label": "grasper|retract|gallbladder, scissors|cut|blood_vessel"
+  },
+  {
+    "id": 226,
+    "label": "bipolar|retract|omentum, grasper|retract|omentum"
+  },
+  {
+    "id": 227,
+    "label": "grasper|retract|gallbladder, hook|coagulate|gallbladder"
+  },
+  {
+    "id": 228,
+    "label": "grasper|retract|gallbladder, hook|coagulate|liver"
+  },
+  {
+    "id": 229,
+    "label": "bipolar|retract|gallbladder, hook|dissect|gallbladder"
+  },
+  {
+    "id": 230,
+    "label": "grasper|retract|liver, hook|coagulate|gallbladder"
+  },
+  {
+    "id": 231,
+    "label": "bipolar|coagulate|gallbladder, grasper|retract|liver"
+  },
+  {
+    "id": 232,
+    "label": "grasper|retract|gallbladder, grasper|retract|liver, hook|retract|gallbladder"
+  },
+  {
+    "id": 233,
+    "label": "grasper|grasp|gallbladder, grasper|retract|liver, hook|retract|gallbladder"
+  },
+  {
+    "id": 234,
+    "label": "irrigator|retract|omentum"
+  },
+  {
+    "id": 235,
+    "label": "grasper|retract|gut, irrigator|retract|liver"
+  },
+  {
+    "id": 236,
+    "label": "grasper|retract|cystic_plate, grasper|retract|gallbladder, hook|dissect|cystic_plate"
+  },
+  {
+    "id": 237,
+    "label": "grasper|retract|cystic_plate, grasper|retract|gallbladder, hook|dissect|cystic_duct"
+  },
+  {
+    "id": 238,
+    "label": "grasper|grasp|gallbladder, grasper|retract|cystic_plate"
+  },
+  {
+    "id": 239,
+    "label": "bipolar|coagulate|omentum, grasper|retract|gallbladder"
+  },
+  {
+    "id": 240,
+    "label": "grasper|retract|gallbladder, irrigator|retract|omentum"
+  },
+  {
+    "id": 241,
+    "label": "grasper|retract|gallbladder, irrigator|retract|gallbladder"
+  },
+  {
+    "id": 242,
+    "label": "grasper|retract|gallbladder, irrigator|dissect|omentum"
+  },
+  {
+    "id": 243,
+    "label": "bipolar|dissect|cystic_duct, grasper|retract|gallbladder"
+  },
+  {
+    "id": 244,
+    "label": "bipolar|dissect|cystic_artery, grasper|retract|gallbladder"
+  },
+  {
+    "id": 245,
+    "label": "grasper|dissect|cystic_plate, grasper|retract|gallbladder"
+  },
+  {
+    "id": 246,
+    "label": "bipolar|coagulate|liver, grasper|retract|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 247,
+    "label": "bipolar|coagulate|liver, grasper|retract|liver, irrigator|retract|liver"
+  },
+  {
+    "id": 248,
+    "label": "grasper|retract|liver, irrigator|retract|omentum"
+  },
+  {
+    "id": 249,
+    "label": "grasper|retract|cystic_duct, grasper|retract|gallbladder"
+  },
+  {
+    "id": 250,
+    "label": "grasper|retract|cystic_duct"
+  },
+  {
+    "id": 251,
+    "label": "grasper|retract|cystic_duct, hook|dissect|cystic_duct"
+  },
+  {
+    "id": 252,
+    "label": "grasper|retract|cystic_duct, hook|coagulate|cystic_plate"
+  },
+  {
+    "id": 253,
+    "label": "grasper|retract|cystic_duct, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 254,
+    "label": "grasper|retract|cystic_duct, irrigator|dissect|cystic_duct"
+  },
+  {
+    "id": 255,
+    "label": "bipolar|coagulate|cystic_plate, grasper|retract|cystic_duct"
+  },
+  {
+    "id": 256,
+    "label": "grasper|retract|cystic_duct, grasper|retract|gallbladder, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 257,
+    "label": "grasper|grasp|cystic_duct, grasper|retract|cystic_duct, grasper|retract|gallbladder"
+  },
+  {
+    "id": 258,
+    "label": "clipper|clip|cystic_duct, grasper|retract|cystic_duct, grasper|retract|gallbladder"
+  },
+  {
+    "id": 259,
+    "label": "clipper|clip|cystic_duct, grasper|retract|cystic_duct"
+  },
+  {
+    "id": 260,
+    "label": "grasper|retract|gallbladder, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 261,
+    "label": "grasper|grasp|cystic_pedicle, irrigator|irrigate|cystic_pedicle"
+  },
+  {
+    "id": 262,
+    "label": "grasper|grasp|cystic_pedicle, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 263,
+    "label": "grasper|retract|gallbladder, grasper|retract|peritoneum"
+  },
+  {
+    "id": 264,
+    "label": "grasper|retract|peritoneum, hook|dissect|peritoneum"
+  },
+  {
+    "id": 265,
+    "label": "bipolar|retract|cystic_pedicle"
+  },
+  {
+    "id": 266,
+    "label": "grasper|dissect|gallbladder, grasper|retract|gallbladder"
+  },
+  {
+    "id": 267,
+    "label": "grasper|dissect|gallbladder"
+  },
+  {
+    "id": 268,
+    "label": "grasper|retract|gallbladder, irrigator|dissect|cystic_pedicle"
+  },
+  {
+    "id": 269,
+    "label": "grasper|retract|gallbladder, irrigator|irrigate|cystic_pedicle"
+  },
+  {
+    "id": 270,
+    "label": "bipolar|dissect|omentum, grasper|retract|gallbladder, grasper|retract|omentum"
+  },
+  {
+    "id": 271,
+    "label": "bipolar|dissect|omentum"
+  },
+  {
+    "id": 272,
+    "label": "bipolar|dissect|omentum, grasper|retract|omentum"
+  },
+  {
+    "id": 273,
+    "label": "scissors|dissect|gallbladder"
+  },
+  {
+    "id": 274,
+    "label": "grasper|retract|gut, scissors|dissect|gallbladder"
+  },
+  {
+    "id": 275,
+    "label": "grasper|retract|gallbladder, scissors|dissect|gallbladder"
+  },
+  {
+    "id": 276,
+    "label": "bipolar|dissect|cystic_plate"
+  },
+  {
+    "id": 277,
+    "label": "grasper|grasp|specimen_bag, grasper|retract|omentum"
+  },
+  {
+    "id": 278,
+    "label": "bipolar|dissect|adhesion"
+  },
+  {
+    "id": 279,
+    "label": "grasper|retract|omentum, scissors|dissect|omentum"
+  },
+  {
+    "id": 280,
+    "label": "scissors|dissect|omentum"
+  },
+  {
+    "id": 281,
+    "label": "grasper|retract|gallbladder, scissors|dissect|omentum"
+  },
+  {
+    "id": 282,
+    "label": "grasper|retract|omentum, scissors|coagulate|omentum"
+  },
+  {
+    "id": 283,
+    "label": "bipolar|coagulate|abdominal_wall_cavity, grasper|retract|gallbladder"
+  },
+  {
+    "id": 284,
+    "label": "grasper|retract|cystic_pedicle, grasper|retract|liver"
+  },
+  {
+    "id": 285,
+    "label": "bipolar|coagulate|omentum, grasper|retract|liver"
+  },
+  {
+    "id": 286,
+    "label": "bipolar|coagulate|gallbladder, grasper|retract|gallbladder"
+  },
+  {
+    "id": 287,
+    "label": "grasper|retract|liver, grasper|retract|omentum, irrigator|irrigate|liver"
+  },
+  {
+    "id": 288,
+    "label": "bipolar|grasp|specimen_bag, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 289,
+    "label": "bipolar|grasp|specimen_bag"
+  },
+  {
+    "id": 290,
+    "label": "bipolar|grasp|specimen_bag, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 291,
+    "label": "bipolar|grasp|specimen_bag, irrigator|retract|liver"
+  },
+  {
+    "id": 292,
+    "label": "bipolar|retract|omentum, irrigator|retract|liver"
+  },
+  {
+    "id": 293,
+    "label": "bipolar|retract|liver, irrigator|retract|liver"
+  },
+  {
+    "id": 294,
+    "label": "bipolar|grasp|specimen_bag, grasper|grasp|specimen_bag"
+  },
+  {
+    "id": 295,
+    "label": "bipolar|coagulate|abdominal_wall_cavity, grasper|grasp|specimen_bag"
+  },
+  {
+    "id": 296,
+    "label": "grasper|retract|gut, hook|dissect|peritoneum"
+  },
+  {
+    "id": 297,
+    "label": "grasper|grasp|cystic_duct, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 298,
+    "label": "bipolar|coagulate|cystic_duct, grasper|retract|gallbladder"
+  },
+  {
+    "id": 299,
+    "label": "bipolar|coagulate|liver, grasper|retract|gut"
+  },
+  {
+    "id": 300,
+    "label": "grasper|retract|gut, grasper|retract|liver"
+  },
+  {
+    "id": 301,
+    "label": "grasper|grasp|omentum, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 302,
+    "label": "clipper|clip|cystic_pedicle, grasper|grasp|cystic_plate"
+  },
+  {
+    "id": 303,
+    "label": "clipper|clip|cystic_pedicle, grasper|retract|gallbladder"
+  },
+  {
+    "id": 304,
+    "label": "grasper|retract|liver, grasper|retract|omentum, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 305,
+    "label": "grasper|retract|liver, grasper|retract|omentum, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 306,
+    "label": "grasper|grasp|specimen_bag, grasper|retract|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 307,
+    "label": "grasper|grasp|specimen_bag, grasper|retract|liver, irrigator|irrigate|abdominal_wall_cavity"
+  },
+  {
+    "id": 308,
+    "label": "scissors|cut|peritoneum"
+  },
+  {
+    "id": 309,
+    "label": "grasper|retract|gut, scissors|cut|peritoneum"
+  },
+  {
+    "id": 310,
+    "label": "bipolar|dissect|cystic_plate, grasper|retract|gallbladder"
+  },
+  {
+    "id": 311,
+    "label": "grasper|dissect|omentum, grasper|retract|omentum"
+  },
+  {
+    "id": 312,
+    "label": "grasper|retract|omentum, irrigator|dissect|omentum"
+  },
+  {
+    "id": 313,
+    "label": "grasper|retract|omentum, irrigator|dissect|gallbladder"
+  },
+  {
+    "id": 314,
+    "label": "bipolar|coagulate|gallbladder, grasper|retract|omentum"
+  },
+  {
+    "id": 315,
+    "label": "irrigator|dissect|omentum"
+  },
+  {
+    "id": 316,
+    "label": "bipolar|coagulate|omentum, grasper|retract|omentum"
+  },
+  {
+    "id": 317,
+    "label": "bipolar|coagulate|omentum"
+  },
+  {
+    "id": 318,
+    "label": "bipolar|retract|liver, grasper|retract|gallbladder"
+  },
+  {
+    "id": 319,
+    "label": "bipolar|retract|gallbladder"
+  },
+  {
+    "id": 320,
+    "label": "bipolar|retract|gallbladder, grasper|retract|gallbladder"
+  },
+  {
+    "id": 321,
+    "label": "grasper|dissect|cystic_plate"
+  },
+  {
+    "id": 322,
+    "label": "bipolar|coagulate|liver, irrigator|aspirate|fluid"
+  },
+  {
+    "id": 323,
+    "label": "grasper|retract|gut, hook|coagulate|omentum"
+  },
+  {
+    "id": 324,
+    "label": "hook|coagulate|cystic_duct"
+  },
+  {
+    "id": 325,
+    "label": "grasper|retract|gallbladder, irrigator|dissect|cystic_plate"
+  },
+  {
+    "id": 326,
+    "label": "irrigator|dissect|cystic_plate"
+  },
+  {
+    "id": 327,
+    "label": "hook|coagulate|omentum"
+  },
+  {
+    "id": 328,
+    "label": "bipolar|coagulate|omentum, grasper|grasp|omentum"
+  },
+  {
+    "id": 329,
+    "label": "grasper|retract|cystic_pedicle, grasper|retract|gallbladder, hook|dissect|gallbladder"
+  },
+  {
+    "id": 330,
+    "label": "grasper|retract|gallbladder, irrigator|dissect|gallbladder"
+  },
+  {
+    "id": 331,
+    "label": "scissors|cut|blood_vessel"
+  },
+  {
+    "id": 332,
+    "label": "bipolar|retract|liver, grasper|retract|liver, irrigator|retract|liver"
+  },
+  {
+    "id": 333,
+    "label": "bipolar|coagulate|cystic_plate, grasper|grasp|gallbladder"
+  },
+  {
+    "id": 334,
+    "label": "bipolar|coagulate|cystic_plate, grasper|grasp|cystic_plate"
+  },
+  {
+    "id": 335,
+    "label": "grasper|grasp|cystic_plate, grasper|grasp|gallbladder"
+  },
+  {
+    "id": 336,
+    "label": "bipolar|coagulate|liver, grasper|retract|cystic_plate"
+  },
+  {
+    "id": 337,
+    "label": "bipolar|coagulate|liver, grasper|grasp|liver"
+  },
+  {
+    "id": 338,
+    "label": "grasper|grasp|liver, grasper|retract|liver"
+  },
+  {
+    "id": 339,
+    "label": "grasper|retract|peritoneum, hook|coagulate|gallbladder"
+  },
+  {
+    "id": 340,
+    "label": "grasper|retract|omentum, hook|coagulate|gallbladder"
+  },
+  {
+    "id": 341,
+    "label": "grasper|grasp|gallbladder, hook|retract|liver"
+  },
+  {
+    "id": 342,
+    "label": "grasper|retract|omentum, hook|retract|liver"
+  },
+  {
+    "id": 343,
+    "label": "bipolar|coagulate|cystic_duct"
+  },
+  {
+    "id": 344,
+    "label": "bipolar|grasp|cystic_plate, grasper|retract|gallbladder"
+  },
+  {
+    "id": 345,
+    "label": "bipolar|grasp|cystic_plate"
+  },
+  {
+    "id": 346,
+    "label": "bipolar|retract|cystic_duct, grasper|retract|gallbladder"
+  },
+  {
+    "id": 347,
+    "label": "bipolar|retract|cystic_duct"
+  },
+  {
+    "id": 348,
+    "label": "bipolar|dissect|gallbladder, grasper|retract|liver"
+  },
+  {
+    "id": 349,
+    "label": "grasper|dissect|omentum, grasper|retract|gallbladder"
+  },
+  {
+    "id": 350,
+    "label": "grasper|dissect|omentum"
+  },
+  {
+    "id": 351,
+    "label": "hook|cut|blood_vessel"
+  },
+  {
+    "id": 352,
+    "label": "hook|cut|peritoneum"
+  },
+  {
+    "id": 353,
+    "label": "grasper|grasp|gut, hook|cut|peritoneum"
+  },
+  {
+    "id": 354,
+    "label": "grasper|grasp|peritoneum, hook|cut|peritoneum"
+  },
+  {
+    "id": 355,
+    "label": "bipolar|dissect|cystic_artery, grasper|grasp|gallbladder"
+  },
+  {
+    "id": 356,
+    "label": "bipolar|dissect|gallbladder, grasper|grasp|gallbladder"
+  },
+  {
+    "id": 357,
+    "label": "grasper|grasp|gallbladder, grasper|pack|gallbladder"
+  }
+]

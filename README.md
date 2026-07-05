@@ -109,8 +109,15 @@ Day 13 - State Transition Matrix
 
 See [day13 details](day13_state_transition/README.md).
 
+Day 14 - Multi-Video State Vocabulary and Markov Prediction
+
+* Scaled the state vocabulary and Markov transition model from 1 video to all 50 CholecT50 videos, with a proper train/test split (40 train / 10 test).
+* The Markov model reaches 34.5% next-state accuracy on held-out videos, nearly 3x a naive baseline (12.1%) — confirming the transition patterns generalize across patients, not just one video.
+
+See [day14 details](day14_multi_video_markov/README.md).
+
 Next steps:
 
-* Turn the state sequence into a clean, reusable token vocabulary and evaluate simple Markov prediction accuracy
+* Look at where the Markov model fails before moving to models with more memory
 * Move from static/statistical analysis toward sequence and temporal modeling
 * Work toward Attention and Transformer-based surgical workflow understanding
