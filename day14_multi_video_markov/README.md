@@ -68,7 +68,11 @@ Transformers are evaluated too, just with a far richer model in place of
   `segment_into_states`, `load_state_sequence`) so it can run once per
   video instead of being copy-pasted 50 times.
 * Built one global `signature -> id` vocabulary by scanning all 50 videos
-  in sorted order.
+  in sorted order. Note that similarity is only used within Day12's
+  segmentation step (merging consecutive frames of one video into a
+  state). Assigning IDs across different videos is an **exact match** on
+  the compressed triplet-set signature, not a similarity threshold — two
+  states only share an ID if their triplet sets are identical.
 * Split the 50 videos 80/20 into 40 train / 10 test videos, using
   `random.seed(42)` so the split is reproducible.
 * Counted state transitions **within each training video only**
@@ -128,18 +132,74 @@ of surgical action to be learned.
 
 ---
 
+## Reflection (surgeon's perspective)
+
+Surgery does follow a coarse procedural order. For laparoscopic
+cholecystectomy: port placement, dissection of Calot's triangle,
+confirmation of the Critical View of Safety (CVS), clipping and cutting
+the cystic duct and artery, dissection of the gallbladder off the liver
+bed, and finally packaging and extraction. At that macro level — which
+roughly corresponds to CholecT50's own phase labels — predicting "what
+comes next" is largely reasonable. This macro level is really about
+recognizing *events*: the moment one step of the procedure ends and the
+next begins.
+
+Recognizing those events reliably is known to be hard even at this coarse
+level, which is exactly why prior work has gone beyond triplets and tried
+to represent the scene as a graph over anatomy — spatial edges capturing
+instrument-tissue relationships within a frame, temporal edges capturing
+how those relationships change over time — instead of relying on
+instrument-verb-target labels alone. If even macro-level event
+recognition needed that much extra structure, it is not surprising that
+predicting micro-level (per-state, S) transitions from triplets alone is
+even harder.
+
+At the micro level, what happens next during dissection often depends on
+information a triplet label simply does not contain: whether tissue
+tension at the current grasp point is adequate, whether unexpected
+bleeding occurs, whether a structure has become clearly exposed. For
+example, bleeding is often followed by irrigator use; a clearly exposed
+cystic duct is often followed by clipper use. These are visual/anatomical
+findings, not annotated categories in CholecT50.
+
+This distinction matters for how the 34.5% accuracy number should be
+read. The 65% of wrong predictions are a mix of at least two different
+things:
+
+1. **Genuine surgeon judgment calls** — decisions that would reasonably
+   vary from case to case regardless of how much information were
+   available.
+2. **Transitions that are, in principle, predictable, but invisible to
+   this model** — because CholecT50's triplet/phase vocabulary does not
+   encode the visual finding (bleeding, exposure, tension) that actually
+   drove the surgeon's decision.
+
+CholecT50's annotations alone cannot separate (1) from (2). So 34.5%
+should not be read as "surgical workflow is 34.5% predictable." It should
+be read as "this is as predictable as it gets using only symbolic
+triplet-and-phase labels and one step of memory." The ceiling measured
+here is a property of this representation, not necessarily a property of
+surgery itself.
+
+---
+
 ## Conclusion
 
 Scaling Day13's single-video Markov chain to 50 videos with a proper
 train/test split turned a descriptive exercise into the project's first
 genuinely evaluated predictive model, and produced a reusable artifact
 (`state_vocabulary.json`) for future days. The Markov model clearly beats
-a naive baseline, but its ~35% accuracy ceiling — set by looking only one
-step into the past — is the concrete, measured motivation for the
-sequence models coming next.
+a naive baseline, but its ~35% accuracy ceiling should be read carefully:
+part of it comes from Markov's one-step memory, and part of it comes from
+triplet/phase labels not encoding the visual and anatomical information
+(bleeding, tissue tension, exposure) that surgeons actually use to decide
+their next move.
 
 ## Next Step
 
-Day15: examine *where* the Markov model fails (which states are hardest
-to predict, and why) before moving toward models with more memory than a
-single previous state.
+Day15 will test the macro-vs-micro hypothesis directly: using the same
+50-video train/test split, compare next-state prediction accuracy at the
+**phase level** (CholecT50's own phase labels) against the **triplet-state
+(S) level** used today. If macro-level transitions really are more
+predictable than micro-level ones, phase-level accuracy should be
+noticeably higher than the 34.5% measured here.

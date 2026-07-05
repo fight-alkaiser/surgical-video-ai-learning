@@ -118,6 +118,6 @@ See [day14 details](day14_multi_video_markov/README.md).
 
 Next steps:
 
-* Look at where the Markov model fails before moving to models with more memory
+* Compare phase-level vs triplet-state-level next-step prediction accuracy, to test whether macro-level workflow transitions are more predictable than micro-level ones
 * Move from static/statistical analysis toward sequence and temporal modeling
 * Work toward Attention and Transformer-based surgical workflow understanding
