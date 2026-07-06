@@ -116,8 +116,15 @@ Day 14 - Multi-Video State Vocabulary and Markov Prediction
 
 See [day14 details](day14_multi_video_markov/README.md).
 
+Day 15 - Macro vs Micro Predictability
+
+* Compared CholecT50's own phase-level transitions (98.2% accuracy) against Day14's triplet-state transitions (34.5%), then split the triplet-state accuracy into phase-boundary-crossing vs within-phase transitions (26.3% vs 34.8%).
+* The high phase-level accuracy mostly reflects that surgical phases follow a near-fixed clinical order, not a subtle model insight. Boundary-crossing transitions were the *hardest* to predict at the state level (rare, one-off events per video) — closing out the Markov-chain line of investigation: the ~35% ceiling is set by what triplet labels can express, not by memory length.
+
+See [day15 details](day15_phase_vs_state_markov/README.md).
+
 Next steps:
 
-* Compare phase-level vs triplet-state-level next-step prediction accuracy, to test whether macro-level workflow transitions are more predictable than micro-level ones
-* Move from static/statistical analysis toward sequence and temporal modeling
+* Move from symbolic Markov chains toward representation learning: embeddings, then sequence models with more memory (RNN), then Attention
+* Treat the state-sequence data as pedagogical material for learning these mechanisms, not as a benchmark to beat
 * Work toward Attention and Transformer-based surgical workflow understanding
