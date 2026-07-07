@@ -123,8 +123,15 @@ Day 15 - Macro vs Micro Predictability
 
 See [day15 details](day15_phase_vs_state_markov/README.md).
 
+Day 16 - State Embedding from Scratch
+
+* Replaced the Markov count table with a from-scratch numpy embedding model (embedding lookup + linear + softmax, hand-written forward/backward pass, no autograd) predicting the next triplet-state.
+* Accuracy matches the Markov table almost exactly (35.2% vs 34.5%), and the learned embedding space does *not* spontaneously separate by surgical phase — because the training objective (one step ahead) never rewards phase-scale structure, only local next-state structure.
+
+See [day16 details](day16_state_embedding/README.md).
+
 Next steps:
 
-* Move from symbolic Markov chains toward representation learning: embeddings, then sequence models with more memory (RNN), then Attention
+* Move from a one-step-back objective toward sequence models with more memory (RNN), then Attention
 * Treat the state-sequence data as pedagogical material for learning these mechanisms, not as a benchmark to beat
 * Work toward Attention and Transformer-based surgical workflow understanding
