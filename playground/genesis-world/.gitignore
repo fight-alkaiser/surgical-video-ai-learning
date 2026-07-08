@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+run*.log
+sb_frame*.png
+frame0.png
+frame_last.png
