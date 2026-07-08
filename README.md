@@ -130,8 +130,16 @@ Day 16 - State Embedding from Scratch
 
 See [day16 details](day16_state_embedding/README.md).
 
+Day 17 - State RNN from Scratch
+
+* Replaced the one-step-back objective (Markov table / Day16 embedding) with a hand-written RNN (embedding + tanh recurrence + BPTT, no autograd) that carries hidden state across a full video.
+* Accuracy clears the ~35% ceiling shared by the Markov table and Day16's embedding model, reaching 40.5% — and the RNN's hidden states visibly cluster by surgical phase (in roughly procedural order) despite phase never being a training target, confirming that the ceiling was specific to one-step-back prediction. Also documents a mode-collapse failure from too-small weight initialization, fixed with Xavier-style scaling.
+* Quantified this with a linear probe: a single linear layer on the frozen hidden state recovers phase at 68.4% (vs. 29.2% baseline), confirming phase is substantially linearly encoded, not just visually suggestive in a 2D PCA plot.
+
+See [day17 details](day17_state_rnn/README.md).
+
 Next steps:
 
-* Move from a one-step-back objective toward sequence models with more memory (RNN), then Attention
+* Move from a hidden-vector summary of history (RNN) toward Attention, which looks back and weighs specific earlier states directly
 * Treat the state-sequence data as pedagogical material for learning these mechanisms, not as a benchmark to beat
 * Work toward Attention and Transformer-based surgical workflow understanding
