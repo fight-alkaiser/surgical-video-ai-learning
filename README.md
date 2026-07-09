@@ -138,8 +138,16 @@ Day 17 - State RNN from Scratch
 
 See [day17 details](day17_state_rnn/README.md).
 
+Day 18 - State Attention from Scratch
+
+* Implemented causal self-attention from scratch (forward/backward, no autograd) as an alternative to Day17's RNN: instead of compressing history into one recurrently-updated hidden vector, every position directly attends back over all earlier states.
+* A single attention layer alone (no multi-head, no feed-forward network, no stacking) underperforms the RNN — 33.1% vs. 40.5% — a negative result that motivates why full Transformer blocks need more than attention alone. A positional-encoding ablation shows much of the clean phase gradient in context vectors comes from absolute position (which correlates with phase, since surgical phases proceed in roughly fixed order), not purely from content-based attention.
+* A window-size study (k-th order Markov, windowed RNN, windowed attention at k=1..10) shows the RNN's edge over the ~35% floor is not reproduced by any bounded window up to 10 states — it needs something close to the full video, matching a slow-moving "procedure progress" signal rather than a short-horizon one. Windowed attention stays flat at every k, including full history, confirming its ceiling here is architectural capacity, not context length.
+
+See [day18 details](day18_state_attention/README.md).
+
 Next steps:
 
-* Move from a hidden-vector summary of history (RNN) toward Attention, which looks back and weighs specific earlier states directly
+* Move from a single attention layer toward a full Transformer block: multi-head attention, a feed-forward network, and residual/normalization that make stacking layers trainable
 * Treat the state-sequence data as pedagogical material for learning these mechanisms, not as a benchmark to beat
-* Work toward Attention and Transformer-based surgical workflow understanding
+* Work toward Transformer-based surgical workflow understanding

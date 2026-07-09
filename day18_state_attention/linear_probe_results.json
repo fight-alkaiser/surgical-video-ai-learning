@@ -1,0 +1,10 @@
+{
+  "with_positional_encoding": {
+    "probe_accuracy": 0.6528460997891778,
+    "baseline_accuracy": 0.2916373858046381
+  },
+  "without_positional_encoding": {
+    "probe_accuracy": 0.46732255797610683,
+    "baseline_accuracy": 0.2916373858046381
+  }
+}
