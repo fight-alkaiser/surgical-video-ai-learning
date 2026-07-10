@@ -1,0 +1,7 @@
+{
+  "num_phases": 7,
+  "num_train_examples": 6631,
+  "num_test_examples": 1423,
+  "probe_accuracy": 0.685172171468728,
+  "baseline_accuracy": 0.2916373858046381
+}

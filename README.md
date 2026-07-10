@@ -146,8 +146,11 @@ Day 18 - State Attention from Scratch
 
 See [day18 details](day18_state_attention/README.md).
 
-Next steps:
+Day 19 - Transformer Block from Scratch
 
-* Move from a single attention layer toward a full Transformer block: multi-head attention, a feed-forward network, and residual/normalization that make stacking layers trainable
-* Treat the state-sequence data as pedagogical material for learning these mechanisms, not as a benchmark to beat
-* Work toward Transformer-based surgical workflow understanding
+* Implemented a full Transformer (decoder) block from scratch — multi-head attention, feed-forward network, residual connections + LayerNorm — with the backward pass verified against numerical gradients before running on real data.
+* Accuracy improves over plain attention (35.3% vs. 33.1%) but still falls short of the RNN (40.5%), even though a linear probe shows the block's output encodes surgical phase just as well as the RNN's hidden state (0.685 vs. 0.684) — suggesting the remaining gap is about capturing fine-grained local dynamics, not "knowing what part of the procedure this is." Also documents an overfitting failure: more training epochs (which helped Day17's RNN) made this higher-capacity model worse on this small dataset.
+
+See [day19 details](day19_transformer_block/README.md).
+
+This closes out the embedding → RNN → Attention → Transformer roadmap set at Day15. Across all four mechanisms, next-state accuracy moved from 34.5% (Markov) to a ceiling that never exceeded ~40% (the RNN, still the best of the four) — more context helped a little, more architectural sophistication (attention → Transformer) recovered lost ground but never exceeded what recurrence already found. The recurring conclusion: triplet-state and phase-label representations have a ceiling no architecture change here has broken through, which is the same conclusion motivating richer, anatomy-aware representations like Murali et al.'s spatiotemporal graphs (2023, arXiv:2312.06829) — see Day18.
