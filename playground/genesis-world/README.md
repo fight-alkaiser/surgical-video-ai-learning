@@ -115,3 +115,74 @@ No fluid solver (blood/irrigation), no photorealistic rendering (this
 is purely mechanical — a rendering engine like Unreal would sit on top
 of, not replace, this layer), no single scene combining all six
 mechanisms at once.
+
+## Day37: Fluid, and continuous emission (bleeding patterns)
+
+Day36 flagged Fluid as unexplored. Day37 deliberately dropped the
+surgical framing and just surveyed what Genesis's Fluid solver (SPH —
+Smoothed Particle Hydrodynamics) can do, then used it to check whether
+two clinically distinct bleeding patterns (arterial spurting vs. venous
+oozing) could be told apart by physics parameters alone.
+
+**Capability survey (no surgical framing):**
+
+| # | Script | What it checks | Result |
+|---|---|---|---|
+| 1 | `10_fluid_sph_liquid.py` | Fluid alone | ![fluid liquid](fluid_sph_liquid.gif) A dropped liquid block spreads into a thin, irregular puddle — behavior neither Rigid nor Soft Body produces |
+| 2 | `11_fluid_sph_rigid_obstacle.py` | Fluid + Rigid coupling | ![fluid rigid](fluid_sph_rigid_obstacle.gif) Liquid visibly flows around a fixed rigid box instead of overlapping it |
+| 3 | `12_fluid_sph_mpm_soft.py` | Fluid + Soft Body coupling | ![fluid soft](fluid_sph_mpm_soft.gif) Liquid flows around a soft MPM block; unlike the rigid case, the block itself slumps and rounds off slightly |
+
+**Bleeding patterns, using `scene.add_emitter()`:**
+
+All three scripts above drop one static block of liquid. Genesis also
+has an `Emitter` API (`scene.add_emitter()` + `emitter.emit(...)` called
+every step) that injects a continuous stream of new particles with a
+controllable speed and direction — closer to how a vessel actually
+bleeds than a single dropped block.
+
+| # | Script | Parameters | Result |
+|---|---|---|---|
+| 1 | `13_bleeding_arterial_spurt.py` | High speed (1.8–3.0 m/s), sine-wave pulsed (mimicking the cardiac cycle) | ![arterial](bleeding_arterial_spurt.gif) A forceful jet arcing across the basin — visually disturbing, in a good way for a training-data use case |
+| 2 | `14_bleeding_venous_oozing.py` | Low, constant speed (0.12 m/s), straight down | ![venous](bleeding_venous_oozing.gif) A slow dribble pooling near the source — no arc, no pulsation |
+
+Getting the venous version to emit anything took one fix: at very low
+speed, the emitter's default `droplet_length` (computed from
+`speed × dt`) works out smaller than one particle, so it silently
+accumulates for ~25 steps before emitting anything. Passing an explicit
+`droplet_length` fixed it.
+
+**Attempted and abandoned: pooling on an uneven surface.** A flat floor
+makes oozing look like "liquid just wells up and spreads," with no
+reason to accumulate anywhere. Real bleeding pools in whatever local
+depression exists at the wound before overflowing into a channel. Two
+approaches were tried to give the floor that structure:
+
+1. A custom `gs.morphs.Terrain` heightfield (a crater + a winding
+   groove). First attempt produced a jagged, wall-like mesh because the
+   groove was carved by *cumulatively subtracting* many overlapping
+   circular stamps along the path instead of taking their max envelope
+   — overlapping stamps carved the same cells repeatedly. Fixed with a
+   max-envelope + light smoothing pass.
+2. After fixing the geometry, a **reproducible Genesis bug** surfaced:
+   combining an `Emitter` with any additional Rigid entity in the scene
+   (a Terrain, or even a single `Box`) causes most emitted particles to
+   jump to the corners of the SPH solver's bounding domain instead of
+   the requested nozzle position. Confirmed by isolating it down to the
+   simplest case: `Plane + Emitter` alone works correctly;
+   `Plane + one fixed Box + Emitter` reliably breaks. A static (non-
+   emitter) liquid block coexisting with a Rigid obstacle (script 11,
+   above) works fine — so the bug is specific to the `Emitter` + Rigid
+   combination, not SPH-Rigid coupling in general.
+
+This wasn't a performance ceiling (both attempts ran in seconds on
+CPU) — it was a correctness bug in this version of the library
+(`genesis-world` 1.2.1). No workaround was attempted beyond confirming
+the isolation; the terrain scripts were not kept in this repo.
+
+## Not in scope here (Day37)
+
+No terrain/uneven-surface oozing (blocked by the bug above), no
+granular material (sand/snow), no combining Fluid with the six Day36
+mechanisms into one scene, no blood rheology (non-Newtonian behavior —
+`rho`/`mu` were nudged toward blood's values but this is still a
+Newtonian SPH fluid).
