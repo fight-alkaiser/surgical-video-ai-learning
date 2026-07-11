@@ -154,3 +154,10 @@ Day 19 - Transformer Block from Scratch
 See [day19 details](day19_transformer_block/README.md).
 
 This closes out the embedding → RNN → Attention → Transformer roadmap set at Day15. Across all four mechanisms, next-state accuracy moved from 34.5% (Markov) to a ceiling that never exceeded ~40% (the RNN, still the best of the four) — more context helped a little, more architectural sophistication (attention → Transformer) recovered lost ground but never exceeded what recurrence already found. The recurring conclusion: triplet-state and phase-label representations have a ceiling no architecture change here has broken through, which is the same conclusion motivating richer, anatomy-aware representations like Murali et al.'s spatiotemporal graphs (2023, arXiv:2312.06829) — see Day18.
+
+Day 20 - Instrument Recognition from Raw Pixels
+
+* Started a new arc: recognizing triplets directly from raw endoscopic frames (the actual CholecT50/Rendezvous task), rather than treating triplet labels as given. First using PyTorch instead of a from-scratch implementation — CNN backprop isn't a core mechanism this project needs to internalize, and Rendezvous itself uses a pretrained CNN backbone.
+* Trained a frozen ImageNet-pretrained ResNet18 + linear head (same "linear probe" pattern as Day17-19, applied to vision) on VID01's frames (the only video with local raw images) for multi-label instrument recognition, with a chronological train/test split. The model does not clearly beat a trivial train-majority baseline (macro accuracy 0.807 vs. 0.811), and three of six instrument classes have zero positive examples in the test segment — a real distribution shift from testing within one video (across time) rather than across videos (across patients), the same confound Day14 was careful to avoid for the symbolic pipeline.
+
+See [day20 details](day20_pixel_instrument_recognition/README.md).
