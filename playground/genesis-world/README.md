@@ -186,3 +186,63 @@ granular material (sand/snow), no combining Fluid with the six Day36
 mechanisms into one scene, no blood rheology (non-Newtonian behavior —
 `rho`/`mu` were nudged toward blood's values but this is still a
 Newtonian SPH fluid).
+
+## Day38: combining five mechanisms into one scene (the Day35-38 capstone)
+
+Day36 left six mechanisms as six separate scripts. Day38 closes that
+out: `16_combined_surgical_field.py` combines five of them (grasping
+simplified from a full Franka arm to two directly-driven rigid jaws,
+to stay CPU-feasible) into one scene, framed as a laparoscopic
+cholecystectomy moment — a gallbladder (Soft Body/MPM) tethered by a
+fixed anchor (cystic duct/mesentery), sitting in a walled cavity next
+to two crowding neighbor organs, with a Cloth patch (omentum) adhered
+to a neighbor and draped over the organ, released partway through as
+if just dissected, then grasped by two closing jaws.
+
+**First two attempts failed, for two different reasons:**
+
+1. Organ scattered into disconnected particles within ~20 steps
+   (`dt=2e-2, substeps=10` — carried over unchanged from the Rigid/
+   Cloth-only Day36 scripts).
+2. Raising `substeps` to 40 at the same `dt` avoided the scatter but
+   produced a new failure: `GenesisException: Invalid constraint
+   forces causing 'nan'` from the Rigid solver, while the jaws were
+   being driven via `set_pos()`.
+
+**Root-caused instead of writing it off as "combining things is
+hard":** three short, render-free isolation tests (organ+tether at the
+coarse `dt`; organ+tether at Day36 script06's proven-stable
+`dt=2e-3, substeps=20`; that same fine `dt` plus the teleporting jaws)
+showed the coarse `dt` alone was enough to collapse the organ, and
+that both the tether and the teleporting jaws were fine once `dt`
+matched what MPM actually needed. Fixing `dt` (not stiffness, not the
+jaw control method) made the full 5-mechanism scene run cleanly:
+
+![combined surgical field](combined_surgical_field.gif)
+
+The organ stays cohesive throughout — visibly tethered, crowded by
+neighbors, draped by cloth that releases from its adhesion point and
+sags further onto the organ over time, jaws closing in at the end.
+
+**Where this leaves the surgical-field question, honestly:** getting
+diverse object types to coexist in one scene without solvers breaking
+each other did work. But the shapes are boxes, there's no texture, and
+each interaction (draping, tethering, grasping) is still a crude
+approximation of the real mechanism. The main takeaway from Day38
+wasn't "Genesis can now represent a surgical field" — it was a
+concrete, hands-on sense of how large the gap is between "objects
+coexist in one scene" and an actual faithful surgical world model, and
+how much of that gap is unglamorous numerical plumbing (timestep
+choice) rather than conceptual design.
+
+## Not in scope here (Day38)
+
+No Franka arm in the combined scene (simplified to two rigid jaws for
+CPU feasibility), no Fluid in the combined scene (the Day37 Emitter+
+Rigid bug would apply), no texture/material realism, no validation
+that the chosen physical parameters (stiffness, `E`, friction) are
+clinically meaningful — this closes the "can multiple mechanisms
+coexist" question, not the "is this a faithful surgical simulation"
+question.
+
+This closes the Day35-38 Genesis arc.
