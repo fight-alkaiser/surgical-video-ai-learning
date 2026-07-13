@@ -161,3 +161,10 @@ Day 20 - Instrument Recognition from Raw Pixels
 * Trained a frozen ImageNet-pretrained ResNet18 + linear head (same "linear probe" pattern as Day17-19, applied to vision) on VID01's frames (the only video with local raw images) for multi-label instrument recognition, with a chronological train/test split. The model does not clearly beat a trivial train-majority baseline (macro accuracy 0.807 vs. 0.811), and three of six instrument classes have zero positive examples in the test segment — a real distribution shift from testing within one video (across time) rather than across videos (across patients), the same confound Day14 was careful to avoid for the symbolic pipeline.
 
 See [day20 details](day20_pixel_instrument_recognition/README.md).
+
+Day 21 - Multi-Video Instrument Recognition
+
+* Extracted 9 more videos locally (10 total: VID01, 02, 04, 05, 06, 08, 10, 12, 13, 14, ~17,600 frames) and repeated Day20's instrument recognition with a video-level train/test split (8 train / 2 test) instead of a within-video chronological one.
+* This directly fixed Day20's core problem: every instrument class now has real test examples, and macro accuracy clears the trivial baseline (0.894 vs. 0.825), with the two common instruments (grasper, hook) showing a clear, genuine win (F1 0.86, 0.68). Rare instruments (bipolar, scissors, clipper, irrigator, all under 7% prevalence) remain hard to detect (F1 0.01-0.11) — now a legible data-volume limitation rather than an artifact of a broken evaluation.
+
+See [day21 details](day21_multi_video_instrument_recognition/README.md).

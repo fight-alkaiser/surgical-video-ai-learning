@@ -1,0 +1,77 @@
+{
+  "instruments": {
+    "grasper": {
+      "accuracy": 0.8140279394644936,
+      "f1": 0.8597145993413831,
+      "baseline_accuracy": 0.6606519208381839,
+      "train_prevalence": 0.7085561752319336,
+      "test_prevalence": 0.6606519222259521
+    },
+    "bipolar": {
+      "accuracy": 0.9316065192083819,
+      "f1": 0.10646387832699619,
+      "baseline_accuracy": 0.9423748544819558,
+      "train_prevalence": 0.06550802290439606,
+      "test_prevalence": 0.057625144720077515
+    },
+    "hook": {
+      "accuracy": 0.7552386495925495,
+      "f1": 0.6766628219915417,
+      "baseline_accuracy": 0.43742724097788127,
+      "train_prevalence": 0.5290599465370178,
+      "test_prevalence": 0.43742725253105164
+    },
+    "scissors": {
+      "accuracy": 0.969441210710128,
+      "f1": 0.05405405405405406,
+      "baseline_accuracy": 0.9813736903376019,
+      "train_prevalence": 0.031522657722234726,
+      "test_prevalence": 0.01862630993127823
+    },
+    "clipper": {
+      "accuracy": 0.9525611175785798,
+      "f1": 0.012121212121212121,
+      "baseline_accuracy": 0.9560535506402794,
+      "train_prevalence": 0.031100478023290634,
+      "test_prevalence": 0.04394644871354103
+    },
+    "irrigator": {
+      "accuracy": 0.9423748544819558,
+      "f1": 0.1,
+      "baseline_accuracy": 0.9691501746216531,
+      "train_prevalence": 0.05600900575518608,
+      "test_prevalence": 0.030849825590848923
+    }
+  },
+  "macro_accuracy": 0.894208381839348,
+  "macro_f1": 0.3015027609725312,
+  "macro_baseline_accuracy": 0.8245052386495925,
+  "loss_history": [
+    0.2665721028038625,
+    0.21232872226934754,
+    0.1965114364965578,
+    0.18748117494449187,
+    0.18171296154849984,
+    0.17988354727793276,
+    0.1748244470759724,
+    0.1710097000840005,
+    0.17078772959079636,
+    0.1692488646406806
+  ],
+  "train_video_ids": [
+    "VID01",
+    "VID02",
+    "VID04",
+    "VID06",
+    "VID08",
+    "VID10",
+    "VID13",
+    "VID14"
+  ],
+  "test_video_ids": [
+    "VID05",
+    "VID12"
+  ],
+  "num_train_frames": 14212,
+  "num_test_frames": 3436
+}
