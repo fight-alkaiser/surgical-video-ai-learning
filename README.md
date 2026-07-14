@@ -168,3 +168,10 @@ Day 21 - Multi-Video Instrument Recognition
 * This directly fixed Day20's core problem: every instrument class now has real test examples, and macro accuracy clears the trivial baseline (0.894 vs. 0.825), with the two common instruments (grasper, hook) showing a clear, genuine win (F1 0.86, 0.68). Rare instruments (bipolar, scissors, clipper, irrigator, all under 7% prevalence) remain hard to detect (F1 0.01-0.11) — now a legible data-volume limitation rather than an artifact of a broken evaluation.
 
 See [day21 details](day21_multi_video_instrument_recognition/README.md).
+
+Day 22 - Verb Recognition from Raw Pixels
+
+* Repeated Day21's exact pipeline (same 10 videos, same video-level 8/2 split, same frozen ResNet18 + linear head) for verb recognition (10 classes) instead of instrument recognition, isolating the effect of the task itself.
+* Verb recognition is markedly harder (macro F1 0.192 vs. Day21's 0.302), but for two different reasons, not one: grasp/retract/null_verb looks like a genuine, likely irreducible information limit (indistinguishable in a still frame, possibly ambiguous even to human annotators), while clip/cut/aspirate/irrigate — checked directly against instrument co-occurrence, 79-95% determined by instrument identity alone — looks like an architecture gap, since today's verb classifier is fully independent of Day21's instrument signal rather than conditioned on it, much closer to how Rendezvous's actual interaction-attention modules are structured.
+
+See [day22 details](day22_pixel_verb_recognition/README.md).
