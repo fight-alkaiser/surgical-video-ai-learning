@@ -175,3 +175,10 @@ Day 22 - Verb Recognition from Raw Pixels
 * Verb recognition is markedly harder (macro F1 0.192 vs. Day21's 0.302), but for two different reasons, not one: grasp/retract/null_verb looks like a genuine, likely irreducible information limit (indistinguishable in a still frame, possibly ambiguous even to human annotators), while clip/cut/aspirate/irrigate — checked directly against instrument co-occurrence, 79-95% determined by instrument identity alone — looks like an architecture gap, since today's verb classifier is fully independent of Day21's instrument signal rather than conditioned on it, much closer to how Rendezvous's actual interaction-attention modules are structured.
 
 See [day22 details](day22_pixel_verb_recognition/README.md).
+
+Day 23 - Instrument-Conditioned Verb Recognition
+
+* Tested Day22's hypothesis directly: concatenated the *true* instrument multi-hot label to the frozen ResNet18 feature vector before a newly trained linear head, an oracle test of whether conditioning verb prediction on instrument identity closes the gap for tool-specific verbs.
+* Macro F1 more than doubled (0.192 → 0.388), and each verb's improvement tracked its instrument→verb co-occurrence strength almost exactly (clip: 0.000 → 0.629, matching clipper→clip at 94.9%; dissect: 0.652 → 0.859, matching hook→dissect at 86.6%). Genuinely ambiguous verbs (grasp, irrigate, null_verb) barely moved or slightly worsened — confirming the earlier diagnosis that Day22's weak verb performance was partly an architecture gap, not solely a data or single-frame information limit.
+
+See [day23 details](day23_instrument_conditioned_verb/README.md).
