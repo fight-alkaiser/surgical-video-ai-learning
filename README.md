@@ -182,3 +182,10 @@ Day 23 - Instrument-Conditioned Verb Recognition
 * Macro F1 more than doubled (0.192 → 0.388), and each verb's improvement tracked its instrument→verb co-occurrence strength almost exactly (clip: 0.000 → 0.629, matching clipper→clip at 94.9%; dissect: 0.652 → 0.859, matching hook→dissect at 86.6%). Genuinely ambiguous verbs (grasp, irrigate, null_verb) barely moved or slightly worsened — confirming the earlier diagnosis that Day22's weak verb performance was partly an architecture gap, not solely a data or single-frame information limit.
 
 See [day23 details](day23_instrument_conditioned_verb/README.md).
+
+Day 24 - Predicted-Instrument-Conditioned Verb Recognition
+
+* Closed Day23's oracle gap: trained a real instrument classifier, conditioned verb prediction on its *predicted* probabilities (not ground truth), and evaluated end-to-end. Cached the shared frozen ResNet18 features once instead of recomputing them for two training runs.
+* Macro F1 reached 0.241 — between Day22's no-conditioning floor (0.192) and Day23's oracle ceiling (0.388), but much closer to the floor. The shortfall tracks Day21's own uneven per-instrument accuracy almost exactly: verbs tied to well-detected instruments (grasper, hook) captured a real share of the oracle gain, while verbs tied to poorly-detected ones (bipolar F1 0.106, clipper F1 0.012) captured little or none, and two verbs (grasp, coagulate) actually regressed below the no-conditioning baseline — a clean demonstration that an unreliable auxiliary signal can actively hurt, not just fail to help.
+
+See [day24 details](day24_predicted_instrument_conditioned_verb/README.md).
