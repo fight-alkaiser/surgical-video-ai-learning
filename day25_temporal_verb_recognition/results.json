@@ -1,0 +1,112 @@
+{
+  "verbs": {
+    "grasp": {
+      "accuracy": 0.7478082992402104,
+      "f1": 0.4101161995898838,
+      "baseline_accuracy": 0.7843366452367037,
+      "train_prevalence": 0.25056514143943787,
+      "test_prevalence": 0.2156633585691452
+    },
+    "retract": {
+      "accuracy": 0.7726475745178258,
+      "f1": 0.7742309924550204,
+      "baseline_accuracy": 0.4766218585622443,
+      "train_prevalence": 0.5134925246238708,
+      "test_prevalence": 0.4766218662261963
+    },
+    "dissect": {
+      "accuracy": 0.7764465225014612,
+      "f1": 0.6996466431095406,
+      "baseline_accuracy": 0.6265341905318527,
+      "train_prevalence": 0.46517378091812134,
+      "test_prevalence": 0.37346580624580383
+    },
+    "coagulate": {
+      "accuracy": 0.9500292226767972,
+      "f1": 0.0,
+      "baseline_accuracy": 0.9506136762127411,
+      "train_prevalence": 0.05700762942433357,
+      "test_prevalence": 0.04938632249832153
+    },
+    "clip": {
+      "accuracy": 0.9634716540035068,
+      "f1": 0.3523316062176166,
+      "baseline_accuracy": 0.9558737580362361,
+      "train_prevalence": 0.029104266315698624,
+      "test_prevalence": 0.0441262423992157
+    },
+    "cut": {
+      "accuracy": 0.9786674459380479,
+      "f1": 0.0,
+      "baseline_accuracy": 0.9812974868497955,
+      "train_prevalence": 0.028397852554917336,
+      "test_prevalence": 0.018702512606978416
+    },
+    "aspirate": {
+      "accuracy": 0.9734073641145529,
+      "f1": 0.02150537634408602,
+      "baseline_accuracy": 0.9739918176504968,
+      "train_prevalence": 0.036027126014232635,
+      "test_prevalence": 0.026008183136582375
+    },
+    "irrigate": {
+      "accuracy": 0.9979544126241964,
+      "f1": 0.0,
+      "baseline_accuracy": 0.9979544126241964,
+      "train_prevalence": 0.0052981069311499596,
+      "test_prevalence": 0.0020455874036997557
+    },
+    "pack": {
+      "accuracy": 0.9976621858562245,
+      "f1": 0.0,
+      "baseline_accuracy": 0.9985388661601403,
+      "train_prevalence": 0.0052981069311499596,
+      "test_prevalence": 0.0014611338265240192
+    },
+    "null_verb": {
+      "accuracy": 0.8398597311513735,
+      "f1": 0.04861111111111111,
+      "baseline_accuracy": 0.8822326125073057,
+      "train_prevalence": 0.12341056764125824,
+      "test_prevalence": 0.11776738613843918
+    }
+  },
+  "macro_accuracy": 0.8997954412624196,
+  "macro_f1": 0.23064419288272586,
+  "macro_baseline_accuracy": 0.8627995324371712,
+  "loss_history": [
+    0.2543170393253288,
+    0.17908915335787606,
+    0.14881367988161254,
+    0.12680752399644518,
+    0.10967777936843394,
+    0.09636421916211702,
+    0.08623457518374678,
+    0.07857044225318975,
+    0.07249362008650335,
+    0.06674678547572739,
+    0.05938384102543913,
+    0.05717468402152944,
+    0.0516880983087333,
+    0.048146909399222976,
+    0.046689389359718926
+  ],
+  "window_size": 8,
+  "hidden_dim": 64,
+  "train_video_ids": [
+    "VID01",
+    "VID02",
+    "VID04",
+    "VID06",
+    "VID08",
+    "VID10",
+    "VID13",
+    "VID14"
+  ],
+  "test_video_ids": [
+    "VID05",
+    "VID12"
+  ],
+  "num_train_sequences": 14156,
+  "num_test_sequences": 3422
+}

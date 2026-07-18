@@ -189,3 +189,10 @@ Day 24 - Predicted-Instrument-Conditioned Verb Recognition
 * Macro F1 reached 0.241 — between Day22's no-conditioning floor (0.192) and Day23's oracle ceiling (0.388), but much closer to the floor. The shortfall tracks Day21's own uneven per-instrument accuracy almost exactly: verbs tied to well-detected instruments (grasper, hook) captured a real share of the oracle gain, while verbs tied to poorly-detected ones (bipolar F1 0.106, clipper F1 0.012) captured little or none, and two verbs (grasp, coagulate) actually regressed below the no-conditioning baseline — a clean demonstration that an unreliable auxiliary signal can actively hurt, not just fail to help.
 
 See [day24 details](day24_predicted_instrument_conditioned_verb/README.md).
+
+Day 25 - Temporal Verb Recognition
+
+* Tested Track 1 from Day22/23's diagnosis: an 8-frame GRU over cached ResNet18 features (Day17's from-scratch RNN mechanism, now in PyTorch, applied to real visual features instead of symbolic triplet-states) predicts verb from temporal context, isolated from instrument conditioning.
+* Macro F1 improved (0.192 → 0.231), but not by fixing the intended target: grasp (the grasp-vs-retract ambiguity this was designed to resolve) stayed flat (0.434 → 0.410). Most of the gain came from an unexpected source — clip jumped from undetectable to F1 0.352 with no instrument conditioning at all, plausibly via a distinctive motion signature — while two rare verbs (coagulate, aspirate) got worse, consistent with added model capacity being a net cost with too little data.
+
+See [day25 details](day25_temporal_verb_recognition/README.md).
