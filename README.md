@@ -196,3 +196,10 @@ Day 25 - Temporal Verb Recognition
 * Macro F1 improved (0.192 → 0.231), but not by fixing the intended target: grasp (the grasp-vs-retract ambiguity this was designed to resolve) stayed flat (0.434 → 0.410). Most of the gain came from an unexpected source — clip jumped from undetectable to F1 0.352 with no instrument conditioning at all, plausibly via a distinctive motion signature — while two rare verbs (coagulate, aspirate) got worse, consistent with added model capacity being a net cost with too little data.
 
 See [day25 details](day25_temporal_verb_recognition/README.md).
+
+Day 26 - Class-Weighted Instrument Recognition
+
+* Started Track 2 (Day21's unsolved rare-instrument problem): kept everything identical to Day21 (same 10 videos, frozen ResNet18 + linear head, same split) except giving `BCEWithLogitsLoss` a per-instrument `pos_weight` based on training rarity.
+* Macro F1 improved (0.302 → 0.378), driven mainly by clipper (F1 0.012 → 0.291, a 24x jump via much higher recall), at a real, deliberate cost to precision and overall accuracy (0.894 → 0.786, now below baseline) — a concrete instance of the precision/recall trade-off discussed after Day24. Scissors barely improved (0.054 → 0.050) despite a similar recall gain to clipper's, showing class weighting fixes a model's *willingness* to guess a rare class, not its *ability* to visually distinguish it — pointing toward backbone fine-tuning as the next lever to try.
+
+See [day26 details](day26_class_weighted_instrument_recognition/README.md).
