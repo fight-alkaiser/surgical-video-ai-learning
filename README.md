@@ -203,3 +203,10 @@ Day 26 - Class-Weighted Instrument Recognition
 * Macro F1 improved (0.302 → 0.378), driven mainly by clipper (F1 0.012 → 0.291, a 24x jump via much higher recall), at a real, deliberate cost to precision and overall accuracy (0.894 → 0.786, now below baseline) — a concrete instance of the precision/recall trade-off discussed after Day24. Scissors barely improved (0.054 → 0.050) despite a similar recall gain to clipper's, showing class weighting fixes a model's *willingness* to guess a rare class, not its *ability* to visually distinguish it — pointing toward backbone fine-tuning as the next lever to try.
 
 See [day26 details](day26_class_weighted_instrument_recognition/README.md).
+
+Day 27 - Backbone Fine-Tuning
+
+* Tested Day21's other named fix: unfroze ResNet18's last residual block (layer4) and fine-tuned it, keeping Day26's class-weighted loss constant, isolating whether better features (not just loss re-weighting) fix rare-instrument detection. 8GB RAM ruled out Day24-26's feature-caching shortcut, so training went back to a live loop like Day21's, at a smaller batch size.
+* Macro F1 rose from 0.378 (Day26) to 0.512, and macro accuracy from 0.786 to 0.932 — precision and recall improved *together* for nearly every instrument (clipper: precision 0.190→0.481, recall 0.629→0.503), unlike Day26's pure re-weighting which traded one for the other. Scissors remained the weakest (F1 0.101), improving only modestly despite the same intervention that transformed bipolar (0.182→0.431) and clipper (0.291→0.492) — consistent with its scarcity (~500 total instances) being severe enough that better features alone can't fully compensate.
+
+See [day27 details](day27_backbone_finetuning/README.md).
