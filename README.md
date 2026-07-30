@@ -210,3 +210,10 @@ Day 27 - Backbone Fine-Tuning
 * Macro F1 rose from 0.378 (Day26) to 0.512, and macro accuracy from 0.786 to 0.932 — precision and recall improved *together* for nearly every instrument (clipper: precision 0.190→0.481, recall 0.629→0.503), unlike Day26's pure re-weighting which traded one for the other. Scissors remained the weakest (F1 0.101), improving only modestly despite the same intervention that transformed bipolar (0.182→0.431) and clipper (0.291→0.492) — consistent with its scarcity (~500 total instances) being severe enough that better features alone can't fully compensate.
 
 See [day27 details](day27_backbone_finetuning/README.md).
+
+Day 28 - Fine-Tuned Instrument-Conditioned Verb Recognition
+
+* Combined Day24 (verb conditioned on predicted instrument probabilities) with Day27 (fine-tuned instrument classifier) to test whether a better upstream instrument signal recovers more of Day23's oracle ceiling (F1 0.388) than Day24's frozen-feature version (F1 0.241) did.
+* Macro F1 reached 0.299 — recovering ~55% of the gap to the oracle ceiling, more than double Day24's ~25%. Gains concentrated exactly where Day27's fine-tuning most improved instrument detection (coagulate: 0.023→0.369; clip: 0.119→0.377), while verbs tied to instruments fine-tuning couldn't fully fix (cut, needs scissors) or with an inherently split verb profile (aspirate, needs irrigator) stayed weak or regressed — closing the loop that most of the tool-specific verb problem traces back to instrument recognition quality.
+
+See [day28 details](day28_finetuned_instrument_conditioned_verb/README.md).
