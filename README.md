@@ -217,3 +217,10 @@ Day 28 - Fine-Tuned Instrument-Conditioned Verb Recognition
 * Macro F1 reached 0.299 — recovering ~55% of the gap to the oracle ceiling, more than double Day24's ~25%. Gains concentrated exactly where Day27's fine-tuning most improved instrument detection (coagulate: 0.023→0.369; clip: 0.119→0.377), while verbs tied to instruments fine-tuning couldn't fully fix (cut, needs scissors) or with an inherently split verb profile (aspirate, needs irrigator) stayed weak or regressed — closing the loop that most of the tool-specific verb problem traces back to instrument recognition quality.
 
 See [day28 details](day28_finetuned_instrument_conditioned_verb/README.md).
+
+Day 29 - Target Recognition
+
+* A deliberately lighter single day (not a new multi-day arc): applied the best known recipe directly (Day27's fine-tuned backbone + Day26's class-weighted loss) to target recognition (15 anatomical-structure classes), the third and last part of CholecT50's triplet.
+* Macro F1 reached only 0.207 — below instrument's 0.512 and verb's best combined result of 0.299 (Day28) — with 6 of 15 classes completely undetected. This is a scale lesson, not a new technique-level one: target has more than double instrument's class count and several classes rarer than any instrument/verb seen so far, showing the same fixes (more data, fine-tuning, class weighting) have real but bounded power that depends on how much data exists per class. Closes the instrument-verb-target arc (Day20-29).
+
+See [day29 details](day29_target_recognition/README.md).

@@ -1,0 +1,185 @@
+{
+  "targets": {
+    "gallbladder": {
+      "accuracy": 0.8227590221187427,
+      "f1": 0.8356275303643725,
+      "precision": 0.8121720881427072,
+      "recall": 0.8604780433574208,
+      "baseline_accuracy": 0.5235739231664727,
+      "train_prevalence": 0.6184914112091064,
+      "test_prevalence": 0.5235739350318909
+    },
+    "cystic_plate": {
+      "accuracy": 0.979336437718277,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "baseline_accuracy": 0.990104772991851,
+      "train_prevalence": 0.026737967506051064,
+      "test_prevalence": 0.009895226918160915
+    },
+    "cystic_duct": {
+      "accuracy": 0.8489522700814901,
+      "f1": 0.06486486486486485,
+      "precision": 0.391304347826087,
+      "recall": 0.03536345776031434,
+      "baseline_accuracy": 0.8518626309662398,
+      "train_prevalence": 0.10617788136005402,
+      "test_prevalence": 0.14813737571239471
+    },
+    "cystic_artery": {
+      "accuracy": 0.9254947613504074,
+      "f1": 0.292817679558011,
+      "precision": 0.31736526946107785,
+      "recall": 0.2717948717948718,
+      "baseline_accuracy": 0.9432479627473807,
+      "train_prevalence": 0.0606529675424099,
+      "test_prevalence": 0.0567520372569561
+    },
+    "cystic_pedicle": {
+      "accuracy": 0.9982537834691502,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "baseline_accuracy": 0.9982537834691502,
+      "train_prevalence": 0.0028848859947174788,
+      "test_prevalence": 0.001746216556057334
+    },
+    "blood_vessel": {
+      "accuracy": 0.9933061699650757,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "baseline_accuracy": 0.9947613504074505,
+      "train_prevalence": 0.010554460808634758,
+      "test_prevalence": 0.005238649435341358
+    },
+    "fluid": {
+      "accuracy": 0.9647846332945286,
+      "f1": 0.18791946308724833,
+      "precision": 0.23333333333333334,
+      "recall": 0.15730337078651685,
+      "baseline_accuracy": 0.9740977881257276,
+      "train_prevalence": 0.03588516637682915,
+      "test_prevalence": 0.025902211666107178
+    },
+    "abdominal_wall_cavity": {
+      "accuracy": 0.9647846332945286,
+      "f1": 0.016260162601626015,
+      "precision": 0.018518518518518517,
+      "recall": 0.014492753623188406,
+      "baseline_accuracy": 0.979918509895227,
+      "train_prevalence": 0.010132282972335815,
+      "test_prevalence": 0.02008149027824402
+    },
+    "liver": {
+      "accuracy": 0.9010477299185099,
+      "f1": 0.5942720763723149,
+      "precision": 0.4543795620437956,
+      "recall": 0.8586206896551725,
+      "baseline_accuracy": 0.9155995343422585,
+      "train_prevalence": 0.18547706305980682,
+      "test_prevalence": 0.0844004675745964
+    },
+    "adhesion": {
+      "accuracy": 0.9752619324796274,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "baseline_accuracy": 1.0,
+      "train_prevalence": 0.010906276293098927,
+      "test_prevalence": 0.0
+    },
+    "omentum": {
+      "accuracy": 0.9246216530849826,
+      "f1": 0.465979381443299,
+      "precision": 0.4829059829059829,
+      "recall": 0.450199203187251,
+      "baseline_accuracy": 0.9269499417927823,
+      "train_prevalence": 0.052420489490032196,
+      "test_prevalence": 0.07305005937814713
+    },
+    "peritoneum": {
+      "accuracy": 0.9749708963911525,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "baseline_accuracy": 0.9752619324796274,
+      "train_prevalence": 0.012454263865947723,
+      "test_prevalence": 0.024738067761063576
+    },
+    "gut": {
+      "accuracy": 0.9991268917345751,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "baseline_accuracy": 0.9991268917345751,
+      "train_prevalence": 0.00879538431763649,
+      "test_prevalence": 0.000873108278028667
+    },
+    "specimen_bag": {
+      "accuracy": 0.909487776484284,
+      "f1": 0.4076190476190476,
+      "precision": 0.2628992628992629,
+      "recall": 0.9067796610169492,
+      "baseline_accuracy": 0.9656577415599534,
+      "train_prevalence": 0.05699408799409866,
+      "test_prevalence": 0.03434225916862488
+    },
+    "null_target": {
+      "accuracy": 0.7709545983701979,
+      "f1": 0.2351797862001944,
+      "precision": 0.19329073482428116,
+      "recall": 0.3002481389578164,
+      "baseline_accuracy": 0.8827124563445867,
+      "train_prevalence": 0.12341683357954025,
+      "test_prevalence": 0.1172875463962555
+    }
+  },
+  "macro_accuracy": 0.9302095459837019,
+  "macro_f1": 0.20670266614073193,
+  "macro_baseline_accuracy": 0.9280752813348855,
+  "loss_history": [
+    0.5020086618456717,
+    0.17840163129789355,
+    0.10498452883452612,
+    0.07809116416354114,
+    0.05856982956999752,
+    0.04984268901505087,
+    0.04743565659900903,
+    0.044879495861853136
+  ],
+  "pos_weight": [
+    0.6168373227119446,
+    36.400001525878906,
+    8.418157577514648,
+    15.487238883972168,
+    345.6341552734375,
+    93.74666595458984,
+    26.866666793823242,
+    97.69444274902344,
+    4.391502380371094,
+    90.69032287597656,
+    18.076509475708008,
+    79.29378509521484,
+    112.69599914550781,
+    16.545679092407227,
+    7.1026225090026855
+  ],
+  "train_video_ids": [
+    "VID01",
+    "VID02",
+    "VID04",
+    "VID06",
+    "VID08",
+    "VID10",
+    "VID13",
+    "VID14"
+  ],
+  "test_video_ids": [
+    "VID05",
+    "VID12"
+  ],
+  "num_train_frames": 14212,
+  "num_test_frames": 3436
+}
