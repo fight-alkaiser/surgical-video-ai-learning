@@ -224,3 +224,10 @@ Day 29 - Target Recognition
 * Macro F1 reached only 0.207 — below instrument's 0.512 and verb's best combined result of 0.299 (Day28) — with 6 of 15 classes completely undetected. This is a scale lesson, not a new technique-level one: target has more than double instrument's class count and several classes rarer than any instrument/verb seen so far, showing the same fixes (more data, fine-tuning, class weighting) have real but bounded power that depends on how much data exists per class. Closes the instrument-verb-target arc (Day20-29).
 
 See [day29 details](day29_target_recognition/README.md).
+
+Day 30 - Retrospective
+
+* A deliberate pause between the two closed arcs (Day01-19 symbolic sequence modeling, Day20-29 pixel-based recognition) and Day31's move to self-supervised learning: not a re-summary of each day, but the methodological lessons that reappeared across both arcs in different disguises.
+* Nine cross-cutting lessons identified, spanning both arcs: accuracy is close to meaningless under class imbalance; evaluation protocol can matter as much as architecture; a falling loss curve isn't proof of useful learning; representational capability must be checked (e.g. via linear probes), not assumed; "willingness to guess" and "ability to distinguish" need different fixes; errors propagate through pipelines; fixes don't always land where intended; trade-offs should be chosen deliberately, not absorbed silently; and honesty about what an experiment can't show is itself a finding.
+
+See [day30 details](day30_retrospective/README.md).
