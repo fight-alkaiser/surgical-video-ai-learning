@@ -231,3 +231,10 @@ Day 30 - Retrospective
 * Nine cross-cutting lessons identified, spanning both arcs: accuracy is close to meaningless under class imbalance; evaluation protocol can matter as much as architecture; a falling loss curve isn't proof of useful learning; representational capability must be checked (e.g. via linear probes), not assumed; "willingness to guess" and "ability to distinguish" need different fixes; errors propagate through pipelines; fixes don't always land where intended; trade-offs should be chosen deliberately, not absorbed silently; and honesty about what an experiment can't show is itself a finding.
 
 See [day30 details](day30_retrospective/README.md).
+
+Day 31 - Contrastive Self-Supervised Pretraining
+
+* Opened the self-supervised learning arc: a small, resource-constrained reproduction of SimCLR-style contrastive learning (batch size 32-64, vs. hundreds-to-thousands in published results) adapting only ResNet18's layer4 on the 8 training videos' frames — no instrument/verb/target/phase label used anywhere during pretraining. Evaluated the same way as every prior instrument day: freeze the backbone, cache features, class-weighted linear probe.
+* Macro F1 reached 0.407 — exactly 50% of the way from Day21's frozen-ImageNet baseline (0.302) to Day27's supervised fine-tuning result (0.512), recovered with zero labels. The recovery wasn't uniform: concentrated in instruments Day26/27 diagnosed as feature-quality-limited (bipolar, clipper: ~60% of their gap closed) and nearly absent where frozen features were already strong (grasper: 4%) — a pattern that argues the contrastive objective learned something real about this domain, not a spurious uniform boost.
+
+See [day31 details](day31_contrastive_pretraining/README.md).

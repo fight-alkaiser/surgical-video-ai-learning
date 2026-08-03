@@ -1,1 +1,7 @@
 .DS_Store
+
+# Trained model weights: large binaries, reproducible via each day's
+# script with a fixed random seed, kept locally rather than in git.
+*.pt
+*.pth
+
