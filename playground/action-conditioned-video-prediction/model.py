@@ -71,7 +71,15 @@ class ActionConditionedPredictor(nn.Module):
         self.enc3 = ConvBlock(base_ch * 2, base_ch * 4, stride=2)  # 16 -> 8
 
         bottleneck_ch = base_ch * 4
-        self.action_embedder = ActionEmbedder(action_dim, bottleneck_ch)
+        # Day62 fix: the action_embedder now conditions the LAST feature map (after dec3,
+        # base_ch channels), not the bottleneck. Modulating right before a GroupNorm let
+        # that norm re-standardize the activations and erase the modulation entirely
+        # (verified empirically: diff after modulation was ~0.28, diff after the next
+        # GroupNorm-containing block was exactly 0.0). Cosmos avoids this by applying its
+        # AdaLN modulation AFTER each block's normalization, not before it -- so here the
+        # modulation is the last thing to happen before the final conv, with no norm layer
+        # left downstream to wash it back out.
+        self.action_embedder = ActionEmbedder(action_dim, base_ch)
 
         self.dec1 = DeconvBlock(bottleneck_ch, base_ch * 2, stride=2)  # 8 -> 16
         self.dec2 = DeconvBlock(base_ch * 2, base_ch, stride=2)  # 16 -> 32
@@ -87,13 +95,14 @@ class ActionConditionedPredictor(nn.Module):
         x = self.enc2(x)
         x = self.enc3(x)  # (B, C, 8, 8)
 
-        scale, shift = self.action_embedder(action)  # (B, C) each
-        scale = scale.unsqueeze(-1).unsqueeze(-1)  # (B, C, 1, 1)
-        shift = shift.unsqueeze(-1).unsqueeze(-1)
-        x = x * (1 + scale) + shift  # FiLM / AdaLN-style modulation
-
         x = self.dec1(x)
         x = self.dec2(x)
-        x = self.dec3(x)
+        x = self.dec3(x)  # (B, base_ch, 64, 64) -- last normalization already applied
+
+        scale, shift = self.action_embedder(action)  # (B, base_ch) each
+        scale = scale.unsqueeze(-1).unsqueeze(-1)  # (B, base_ch, 1, 1)
+        shift = shift.unsqueeze(-1).unsqueeze(-1)
+        x = x * (1 + scale) + shift  # FiLM / AdaLN-style modulation, nothing downstream to undo it
+
         delta = torch.tanh(self.out_conv(x))  # bounded change in [-1, 1]
         return torch.clamp(frame + delta, 0.0, 1.0)  # residual: copy + learned change

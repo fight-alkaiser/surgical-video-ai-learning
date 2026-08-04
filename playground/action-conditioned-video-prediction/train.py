@@ -26,7 +26,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 H = args.horizon
-tag = f"h{H}_residual" + ("_weighted" if args.weighted_loss else "")
+tag = f"h{H}_lateFiLM" + ("_weighted" if args.weighted_loss else "")
 
 DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 BATCH_SIZE = 32
@@ -82,7 +82,18 @@ def to_tensor_batch(frame_t, action_t, frame_t1, idx):
 
 
 model = ActionConditionedPredictor(action_dim=train_action_t.shape[1]).to(DEVICE)
-opt = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=1e-4)
+# Day62 finding: weight_decay on the action_embedder drove it to exactly zero (the action
+# pathway contributes little to the loss, so decay wins). Exclude it from weight_decay so
+# the action pathway isn't penalized just for existing.
+action_embedder_params = list(model.action_embedder.parameters())
+other_params = [p for p in model.parameters() if not any(p is q for q in action_embedder_params)]
+opt = torch.optim.Adam(
+    [
+        {"params": other_params, "weight_decay": 1e-4},
+        {"params": action_embedder_params, "weight_decay": 0.0},
+    ],
+    lr=LR,
+)
 unweighted_loss_fn = nn.MSELoss()
 
 
