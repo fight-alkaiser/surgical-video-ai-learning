@@ -238,3 +238,10 @@ Day 31 - Contrastive Self-Supervised Pretraining
 * Macro F1 reached 0.407 — exactly 50% of the way from Day21's frozen-ImageNet baseline (0.302) to Day27's supervised fine-tuning result (0.512), recovered with zero labels. The recovery wasn't uniform: concentrated in instruments Day26/27 diagnosed as feature-quality-limited (bipolar, clipper: ~60% of their gap closed) and nearly absent where frozen features were already strong (grasper: 4%) — a pattern that argues the contrastive objective learned something real about this domain, not a spurious uniform boost.
 
 See [day31 details](day31_contrastive_pretraining/README.md).
+
+Day 32 - What's Inside the Contrastively-Learned Representation?
+
+* Reused Day16-19's linear-probe + PCA methodology to check what Day31's label-free, temporally-blind contrastive backbone actually organizes itself around: does phase structure (never a training target, and the pretext task had no temporal signal at all) show up, and more than in plain frozen ImageNet features?
+* Phase-probe accuracy improved modestly (0.511 → 0.532, baseline 0.382) — a much smaller relative gain than instrument recognition's (Day31: 0.302 → 0.407), since generic features already captured much of phase's visual correlates. The PCA plot showed this gain wasn't diffuse: a sharply-separated cluster emerged for clipping-and-cutting, the phase most tied to the clipper instrument — exactly the instrument contrastive adaptation improved most in Day31 (F1 0.012 → 0.298), connecting two independent probes to the same underlying mechanism.
+
+See [day32 details](day32_representation_analysis/README.md).
