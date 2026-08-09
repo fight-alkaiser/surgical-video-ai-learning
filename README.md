@@ -245,3 +245,10 @@ Day 32 - What's Inside the Contrastively-Learned Representation?
 * Phase-probe accuracy improved modestly (0.511 → 0.532, baseline 0.382) — a much smaller relative gain than instrument recognition's (Day31: 0.302 → 0.407), since generic features already captured much of phase's visual correlates. The PCA plot showed this gain wasn't diffuse: a sharply-separated cluster emerged for clipping-and-cutting, the phase most tied to the clipper instrument — exactly the instrument contrastive adaptation improved most in Day31 (F1 0.012 → 0.298), connecting two independent probes to the same underlying mechanism.
 
 See [day32 details](day32_representation_analysis/README.md).
+
+Day 33 - Does a Bigger Batch Size Actually Help?
+
+* Tested Day31's own named limitation directly: doubled the contrastive pretraining batch size (32→64 images, 64→128 augmented views), with learning rate scaled 2x to match (linear scaling rule), otherwise identical setup.
+* Macro F1 was unchanged (0.407 → 0.406) — a clean negative result. Batch size, the most obvious hardware-constrained caveat relative to published SimCLR results, is not the binding constraint here, at least within the doubling achievable on 8GB RAM. Per-instrument changes were small and bidirectional (no consistent improvement pattern), unlike Day31's clear, uniform-looking gains over frozen ImageNet — the signature of noise rather than a real effect. Redirects the next investigation (if this arc continues) toward training duration, augmentation choices, or a data-diversity ceiling instead.
+
+See [day33 details](day33_batch_size_ablation/README.md).
