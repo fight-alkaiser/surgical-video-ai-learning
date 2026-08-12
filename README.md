@@ -252,3 +252,10 @@ Day 33 - Does a Bigger Batch Size Actually Help?
 * Macro F1 was unchanged (0.407 → 0.406) — a clean negative result. Batch size, the most obvious hardware-constrained caveat relative to published SimCLR results, is not the binding constraint here, at least within the doubling achievable on 8GB RAM. Per-instrument changes were small and bidirectional (no consistent improvement pattern), unlike Day31's clear, uniform-looking gains over frozen ImageNet — the signature of noise rather than a real effect. Redirects the next investigation (if this arc continues) toward training duration, augmentation choices, or a data-diversity ceiling instead.
 
 See [day33 details](day33_batch_size_ablation/README.md).
+
+Day 34 - Temporal-Order Self-Supervised Pretraining
+
+* Tried a genuinely different self-supervised signal that uses temporal structure (unlike Day31-33's appearance-only contrastive learning): predict which of two same-video frames comes later, via a single ranking-loss-trained "progress head," still using zero labels. Hypothesis: this should capture phase structure better than contrastive learning did.
+* Split verdict. Instrument recognition improved to macro F1 0.432 — the best SSL result so far, beating both contrastive variants. But phase-probe accuracy *fell* to 0.460, worse than even plain frozen ImageNet (0.511), directly contradicting the hypothesis. A diagnostic (PCA colored by video vs. phase) didn't cleanly confirm the leading explanation (within-video overfitting) and surfaced a broader methodological point instead: a 2D PCA plot's apparent structure and a full-dimensional linear probe's actual accuracy can diverge — only the probe answers what a linear classifier can actually use.
+
+See [day34 details](day34_temporal_order_pretraining/README.md).
