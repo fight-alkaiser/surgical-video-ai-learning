@@ -259,3 +259,10 @@ Day 34 - Temporal-Order Self-Supervised Pretraining
 * Split verdict. Instrument recognition improved to macro F1 0.432 — the best SSL result so far, beating both contrastive variants. But phase-probe accuracy *fell* to 0.460, worse than even plain frozen ImageNet (0.511), directly contradicting the hypothesis. A diagnostic (PCA colored by video vs. phase) didn't cleanly confirm the leading explanation (within-video overfitting) and surfaced a broader methodological point instead: a 2D PCA plot's apparent structure and a full-dimensional linear probe's actual accuracy can diverge — only the probe answers what a linear classifier can actually use.
 
 See [day34 details](day34_temporal_order_pretraining/README.md).
+
+Day 35 - Retrospective: the Self-Supervised Learning Arc (Day31-34)
+
+* A deliberate pause (same discipline as Day30) to synthesize what generalized across four days and three pretext tasks (appearance contrastive, contrastive at 2x batch size, temporal order) against two downstream probes (instrument, phase), rather than re-summarizing each day.
+* Four cross-cutting lessons: no pretext task is free of an inductive bias that automatically aligns with every downstream task (temporal-order won on instrument, lost on phase); a named limitation (batch size) tested directly turned out not to be the real one, again; independent probes agreeing (Day31 instrument F1 + Day32 phase PCA, both pointing at clipper) is stronger evidence than either alone, and disagreeing (Day34's instrument-vs-phase split) is just as informative; a 2D PCA plot's apparent structure and a linear probe's actual accuracy can diverge. Reframes the arc's question from "does SSL help" to "which inductive bias, for which downstream question."
+
+See [day35 details](day35_ssl_retrospective/README.md).
