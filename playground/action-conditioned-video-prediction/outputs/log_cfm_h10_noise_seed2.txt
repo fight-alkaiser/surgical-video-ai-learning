@@ -1,0 +1,20 @@
+train episodes (16): [np.str_('episode_000000'), np.str_('episode_000001'), np.str_('episode_000003'), np.str_('episode_000005'), np.str_('episode_000007'), np.str_('episode_000008'), np.str_('episode_000009'), np.str_('episode_000010'), np.str_('episode_000011'), np.str_('episode_000012'), np.str_('episode_000013'), np.str_('episode_000014'), np.str_('episode_000015'), np.str_('episode_000016'), np.str_('episode_000017'), np.str_('episode_000018')]
+val episodes (4):   [np.str_('episode_000002'), np.str_('episode_000004'), np.str_('episode_000006'), np.str_('episode_000019')]
+train pairs: 6217, val pairs: 1312
+epoch    0  train_loss 0.8566  val_loss 0.7174  z_std 1.1968
+epoch   10  train_loss 0.2308  val_loss 0.3285  z_std 1.4022
+epoch   20  train_loss 0.2189  val_loss 0.2381  z_std 1.3317
+epoch   30  train_loss 0.2243  val_loss 0.2985  z_std 1.4374
+epoch   40  train_loss 0.2043  val_loss 0.2474  z_std 1.3584
+epoch   50  train_loss 0.2077  val_loss 0.2661  z_std 1.3398
+epoch   60  train_loss 0.2128  val_loss 0.3084  z_std 1.3405
+epoch   70  train_loss 0.2192  val_loss 0.3110  z_std 1.3542
+epoch   80  train_loss 0.2116  val_loss 0.3256  z_std 1.3758
+epoch   90  train_loss 0.2068  val_loss 0.3543  z_std 1.3542
+epoch   99  train_loss 0.2140  val_loss 0.3647  z_std 1.3983
+
+            real -- paired_loss: 0.3663   best_of_n_error: 0.0393   sample_spread: 0.1271
+        shuffled -- paired_loss: 0.4105   best_of_n_error: 0.0421   sample_spread: 0.1294
+            zero -- paired_loss: 0.3008   best_of_n_error: 0.0302   sample_spread: 0.1248
+copy_zt_baseline -- error_vs_target: 0.0263
+saved outputs/loss_curve_cfm_h10_noise_seed2.png

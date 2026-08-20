@@ -1,0 +1,55 @@
+{
+  "train_loss": [
+    0.21486939900817398,
+    0.9495519161224365,
+    0.14257878829271364
+  ],
+  "val_loss": [
+    4.016451478004456,
+    0.5408851042753313,
+    0.2664954842227261
+  ],
+  "z_std": [
+    1.2596908840135885,
+    1.4703801005314558,
+    1.8852764294697688
+  ],
+  "eval": {
+    "real": {
+      "paired_loss": 0.26328395148057765
+    },
+    "shuffled": {
+      "paired_loss": 0.45880235200066394
+    },
+    "zero": {
+      "paired_loss": 0.39699702039815304
+    },
+    "copy_zt_baseline": {
+      "error_vs_target": 0.932255109329495
+    }
+  },
+  "train_episodes": [
+    "episode_000000",
+    "episode_000001",
+    "episode_000003",
+    "episode_000005",
+    "episode_000007",
+    "episode_000008",
+    "episode_000009",
+    "episode_000010",
+    "episode_000011",
+    "episode_000012",
+    "episode_000013",
+    "episode_000014",
+    "episode_000015",
+    "episode_000016",
+    "episode_000017",
+    "episode_000018"
+  ],
+  "val_episodes": [
+    "episode_000002",
+    "episode_000004",
+    "episode_000006",
+    "episode_000019"
+  ]
+}

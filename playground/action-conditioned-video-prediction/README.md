@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -135,15 +135,94 @@ back into a real image, so this may be the wrong representation for
 the Day62 write-up for the fuller reasoning (and the I-JEPA note this
 project's daily log links back to).
 
+## Result (Day 78) -- replacing the JEPA predictor with Conditional Flow Matching
+
+**Why revisit this.** Day62 ended on an unresolved observation: the JEPA
+predictor's real-action loss tied the do-nothing baseline exactly. That is
+the signature of a deterministic regressor collapsing to the conditional
+*mean* of the future -- if the true next latent is not perfectly determined
+by a 16-dim action vector (instrument jitter, camera noise), MSE's optimal
+output is an average over possible futures, which looks like "barely change
+anything." Day64-77 worked through DDPM, Score-based SDEs, Flow Matching,
+Rectified Flow, DIAMOND (EDM), Self Forcing and OT-CFM -- all of them ways
+to replace exactly this kind of point-estimate regression with a generative
+objective. `cfm_model.py` / `cfm_train.py` apply that here: same
+online/target-encoder pair and VICReg anti-collapse term as `jepa_model.py`,
+but the predictor is replaced with a velocity field trained with the
+standard Conditional Flow Matching loss (linear interpolant between a
+source `x0` and the target latent `x1 = z_{t+H}`, regressing the constant
+velocity `x1 - x0`).
+
+**First attempt (`--source noise`, standard CFM, `x0 ~ N(0,I)`) --
+evaluated the wrong way.** Comparing the *average* of several generated
+samples to the one observed `z_{t+H}` showed real action still losing to
+the do-nothing baseline (0.098 vs. 0.067) and even losing to a zeroed-out
+action (0.083) -- CFM looked like it hadn't helped at all.
+
+**Second attempt (`--source zt`, Rectified-Flow-style residual, `x0 = z_t`)
+-- looked promising, then fell apart.** The first run (seed 0) showed real
+action beating the do-nothing baseline for the first time in this project
+(0.0012 vs. 0.0017). Repeating with different seeds killed that story:
+seed 1 reversed the ordering, seed 2 collapsed completely (the velocity
+network learned to output ~0 regardless of action -- the same
+"safe no-op" failure as the Day61 pixel-space residual model, just in a
+different parameterization), and a lower-LR run failed to converge to a
+comparable scale at all. The seed-0 "win" was noise, not signal.
+
+**The evaluation itself was the wrong tool.** Comparing a generated sample
+(or worse, an average of several samples) to the one observed continuation
+penalizes a generative model for doing its job: if the true future given
+`(z_t, action)` is genuinely multimodal, a correctly-calibrated sampler
+will land away from that one realization even when it's working, while a
+plain deterministic regressor that always outputs the conditional mean
+wins this comparison by construction -- exactly what CFM was supposed to
+move away from. Two metrics avoid this: **paired_loss** (the training CFM
+loss itself, evaluated against the real observed transition with each
+candidate action -- a likelihood-style score that never converts the model
+into a point estimate) and **best-of-N** (score the *closest* of several
+samples to the target, rather than their average, asking whether the truth
+is inside what the model considers plausible rather than penalizing
+diversity).
+
+**Re-run with the corrected evaluation (`--source noise`, 3 seeds) --
+a stable, reproducible result at last.**
+
+| seed | real | shuffled | zero |
+|---|---|---|---|
+| 0 | 0.4050 | 0.4077 | 0.3385 |
+| 1 | 0.3708 | 0.4000 | 0.3174 |
+| 2 | 0.3663 | 0.4105 | 0.3008 |
+
+(`paired_loss`, lower is better.) `zero < real < shuffled` held across all
+three seeds -- the first fully reproducible ordering in this project. The
+`best_of_n_error` metric agreed in direction (mostly) but never approached
+the do-nothing latent-copy baseline either.
+
+**What this means.** `real < shuffled` shows the action pathway is reading
+*something* real -- a wrong action explains the observed transition worse
+than the right one. But `zero < real` shows that using the action at all,
+even correctly, currently makes the prediction worse than ignoring it
+entirely. The action pathway carries a directionally correct signal that
+is still, net, harmful rather than helpful at this data scale (16 episodes,
+~6200 training pairs) and this horizon (H=10 frames). Switching the
+objective from deterministic regression to Conditional Flow Matching did
+not fix the Day62 problem -- but it did finally produce an evaluation
+methodology stable enough to say that with some confidence, instead of a
+single-run result that looked like a win and evaporated under a seed
+sweep.
+
 ## Next steps (not yet done)
 
-- The JEPA-style model still hasn't beaten the do-nothing baseline --
-  only shown that it's sensitive to getting the action right
+- The action pathway is directionally correct (real beats shuffled) but
+  net harmful (zero beats real) -- worth checking whether this is a data
+  scale problem (more episodes) or an architecture problem (the action
+  fusion mechanism needs to learn to gate itself off rather than always
+  contributing)
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
-- Per the plan agreed with the project owner, this line of exploration
-  pauses here; upcoming days return to reading
-  Cosmos-H-Surgical-Simulator's own source code
+- Action chunking (a la pi0): the action window is currently flattened
+  into one vector; encoding it with a small sequence model instead may
+  carry more usable signal into the predictor
 
 ## Files
 
@@ -155,6 +234,11 @@ project's daily log links back to).
 - `jepa_model.py`, `jepa_train.py` -- the latent-space (JEPA-style)
   variant: online/target encoders, predictor, variance-based
   anti-collapse regularization
+- `cfm_model.py`, `cfm_train.py` -- Day78: replaces the JEPA predictor with
+  a Conditional Flow Matching velocity field on the same latent space;
+  supports `--source {noise,zt}`, `--seed`, `--lr`; evaluation reports
+  `paired_loss` (likelihood-style, both source modes) and `best_of_n_error`
+  / `sample_spread` (source=noise only)
 - `outputs/` -- loss curves, qualitative comparisons, training history;
   `day61_experiment_summary_v2.png` (six pixel-space attempts compared),
   `day62_jepa_action_sensitivity.png` (latent-space action sensitivity)
