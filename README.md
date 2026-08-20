@@ -266,3 +266,10 @@ Day 35 - Retrospective: the Self-Supervised Learning Arc (Day31-34)
 * Four cross-cutting lessons: no pretext task is free of an inductive bias that automatically aligns with every downstream task (temporal-order won on instrument, lost on phase); a named limitation (batch size) tested directly turned out not to be the real one, again; independent probes agreeing (Day31 instrument F1 + Day32 phase PCA, both pointing at clipper) is stronger evidence than either alone, and disagreeing (Day34's instrument-vs-phase split) is just as informative; a 2D PCA plot's apparent structure and a linear probe's actual accuracy can diverge. Reframes the arc's question from "does SSL help" to "which inductive bias, for which downstream question."
 
 See [day35 details](day35_ssl_retrospective/README.md).
+
+Day 36 - Extending SSL Evaluation to Verb and Target
+
+* Reused the exact backbones already saved from Day31 (contrastive) and Day34 (temporal-order), no retraining, and evaluated them on verb (10 classes) and target (15 classes) with the same class-weighted linear probe recipe — extending the instrument/phase picture to four tasks total.
+* Neither SSL method helped verb at all (0.304–0.309 across all three backbones, indistinguishable from noise); target showed a small, one-sided effect (temporal-order 0.220 vs. frozen 0.209, contrastive flat). A side comparison showed class-weighting alone (no SSL) already lifts verb from 0.192 to 0.309, generalizing Day26's instrument finding. Reading all four tasks together: SSL adaptation helps in proportion to how much of a task's difficulty is genuinely a feature-separability problem (instrument) versus a single-frame information limit, architectural gap, or data-scarcity problem (verb, target) — diagnoses Day22/23/29 had already made independently, before any SSL evaluation existed.
+
+See [day36 details](day36_verb_target_ssl_evaluation/README.md).
