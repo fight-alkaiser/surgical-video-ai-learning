@@ -273,3 +273,10 @@ Day 36 - Extending SSL Evaluation to Verb and Target
 * Neither SSL method helped verb at all (0.304–0.309 across all three backbones, indistinguishable from noise); target showed a small, one-sided effect (temporal-order 0.220 vs. frozen 0.209, contrastive flat). A side comparison showed class-weighting alone (no SSL) already lifts verb from 0.192 to 0.309, generalizing Day26's instrument finding. Reading all four tasks together: SSL adaptation helps in proportion to how much of a task's difficulty is genuinely a feature-separability problem (instrument) versus a single-frame information limit, architectural gap, or data-scarcity problem (verb, target) — diagnoses Day22/23/29 had already made independently, before any SSL evaluation existed.
 
 See [day36 details](day36_verb_target_ssl_evaluation/README.md).
+
+Day 37 - Testing the Verb Recognition Architecture Gap
+
+* Day22 diagnosed verb's low ceiling as split between a single-frame information limit and an architecture gap (the model never sees instrument identity, even though verb meaning is instrument-dependent). Day31-36 ruled out feature quality as the fix; today tests the architecture-gap half directly, on frozen ImageNet features, by concatenating instrument information onto the verb probe's input: ground-truth instrument one-hot (oracle) vs. predicted instrument probabilities from a separately trained probe (realistic).
+* Oracle conditioning lifted verb macro F1 from 0.309 to 0.484, concentrated on instrument-specific verbs (clip 0.351→0.701, cut 0.061→0.444, coagulate 0.287→0.616, dissect 0.701→0.893) — confirming the architecture-gap hypothesis. But realistic conditioning recovered none of it (0.305, indistinguishable from baseline), because the instrument probe supplying the signal is itself only macro F1 0.399 — its errors are correlated with the same visual ambiguity that makes verb hard. The two problems are coupled: fixing verb via instrument conditioning is gated on first fixing rare-instrument recognition, which SSL adaptation has already been shown not to solve.
+
+See [day37 details](day37_verb_instrument_conditioning/README.md).
