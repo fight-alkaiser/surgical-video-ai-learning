@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-79 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -211,13 +211,59 @@ methodology stable enough to say that with some confidence, instead of a
 single-run result that looked like a win and evaporated under a seed
 sweep.
 
+## Result (Day 79) -- giving the action pathway an explicit opt-out gate
+
+Day78 left two candidate explanations for "the action pathway reads real
+signal but is net harmful": (1) not enough data for the network to learn
+to weight the action correctly, or (2) an architecture problem -- the
+plain `concat([z_s, t_emb, z_t, action]) -> MLP` design mixes action into
+every hidden unit from the first layer, with no dedicated "how much should
+I trust this" pathway, even though in principle the MLP could learn to
+ignore it.
+
+`GatedVelocityPredictor` (in `cfm_model.py`) tests (2) directly: the action
+is embedded separately and injected additively through a learned sigmoid
+gate, conditioned on the current hidden state and the action itself. The
+gate's bias is initialized so training starts with the action mostly
+gated off (close to the Day78 "zero action" regime, which was the
+best-performing condition) -- the network has to actively learn to open
+the gate where the action is worth using, rather than starting fully mixed
+in and having to learn to suppress it.
+
+| seed | real | shuffled | zero | mean_gate (real / shuffled / zero) |
+|---|---|---|---|---|
+| 0 | 0.2809 | 0.2780 | **0.2735** | 0.100 / 0.100 / 0.018 |
+| 1 | 0.3161 | 0.3224 | **0.3132** | 0.105 / 0.103 / 0.013 |
+| 2 | 0.2847 | 0.2913 | **0.2488** | 0.127 / 0.126 / 0.022 |
+
+(`paired_loss`, lower is better, source=noise, 3 seeds, 100 epochs.)
+
+**The gate does learn something real:** it opens roughly 5-10x wider for a
+real or shuffled (nonzero-deviation) action than for a zeroed-out one,
+consistently across all three seeds -- so the network can and does tell
+"an action was given" from "no action was given."
+
+**But it doesn't fix the problem.** `zero` remains the best-performing
+condition in all three seeds, by a similar margin to the ungated Day78
+run. Giving the model an explicit, cheap way to ignore the action when it
+doesn't help did not make it stop being net-harmful when used. Seed 0 also
+saw `real` and `shuffled` swap order (0.2809 vs 0.2780) -- something that
+never happened in three ungated runs -- suggesting the extra gating
+parameters added a bit of instability rather than removing it.
+
+**What this means.** This weighs against the architecture-limitation
+explanation and toward the data-scale explanation: the network isn't
+being forced into using the action against its own judgment by the
+`concat`+MLP design; giving it an easy way out doesn't change what it
+concludes is optimal. At 16 training episodes (~6200 pairs), the action
+signal available to learn from may simply not be reliable enough to be
+worth using, independent of how it's architecturally fused in.
+
 ## Next steps (not yet done)
 
-- The action pathway is directionally correct (real beats shuffled) but
-  net harmful (zero beats real) -- worth checking whether this is a data
-  scale problem (more episodes) or an architecture problem (the action
-  fusion mechanism needs to learn to gate itself off rather than always
-  contributing)
+- Test the data-scale hypothesis directly: expand beyond the current 20
+  Open-H peg-transfer episodes (more episodes and/or other Open-H
+  surgical tasks) and see whether `real < zero` finally emerges
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
 - Action chunking (a la pi0): the action window is currently flattened
@@ -238,9 +284,16 @@ sweep.
   a Conditional Flow Matching velocity field on the same latent space;
   supports `--source {noise,zt}`, `--seed`, `--lr`; evaluation reports
   `paired_loss` (likelihood-style, both source modes) and `best_of_n_error`
-  / `sample_spread` (source=noise only)
+  / `sample_spread` (source=noise only). Day79: `--gated` swaps in
+  `GatedVelocityPredictor`, which injects the action through a learned
+  sigmoid gate instead of a plain concat; adds `mean_gate` to the eval
+  output
+- `make_day78_summary.py`, `make_day79_summary.py` -- regenerate the
+  cross-seed comparison figures from `outputs/history_cfm_*.json`
 - `outputs/` -- loss curves, qualitative comparisons, training history;
   `day61_experiment_summary_v2.png` (six pixel-space attempts compared),
-  `day62_jepa_action_sensitivity.png` (latent-space action sensitivity)
+  `day62_jepa_action_sensitivity.png` (latent-space action sensitivity),
+  `day78_cfm_paired_loss_summary.png` (CFM real/shuffled/zero across
+  seeds), `day79_gating_summary.png` (gated vs ungated + gate values)
 - `data/raw/`, `data/episodes/` -- source parquet + mp4 + extracted
   frames/actions per episode

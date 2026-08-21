@@ -82,8 +82,57 @@ class VelocityPredictor(nn.Module):
         return self.net(torch.cat([z_s, t_emb, z_t, action], dim=-1))
 
 
+class GatedVelocityPredictor(nn.Module):
+    """Day79 follow-up to Day78's finding: the action pathway reads real signal
+    (real action explains the observed transition better than a shuffled one)
+    but is still net harmful (using it beats a zeroed-out action -- worse, not
+    better, than not conditioning at all). A plain concat+MLP like
+    VelocityPredictor can in principle learn to ignore action inputs it
+    doesn't trust, but nothing about the architecture makes that easy: the
+    action features are mixed into every hidden unit from the first layer
+    onward, with no dedicated "how much should I trust this" pathway.
+
+    This version gives the network an explicit, low-friction opt-out: the
+    action is embedded separately and injected additively through a learned
+    sigmoid gate, conditioned on the current hidden state and the action
+    itself. The gate's bias is initialized negative so training starts with
+    the action mostly gated off (close to the Day78 "zero action" regime,
+    which was the best-performing condition) and has to actively learn to
+    open the gate where the action is worth using, rather than starting from
+    "always fully mixed in" and having to learn to suppress it.
+    """
+
+    def __init__(self, embed_dim: int, action_dim: int, time_dim: int = 32, hidden: int = 256):
+        super().__init__()
+        self.time_dim = time_dim
+        base_in = embed_dim + time_dim + embed_dim  # z_s, time_emb, z_t -- no action here
+        self.base = nn.Sequential(nn.Linear(base_in, hidden), nn.GELU())
+        self.action_embed = nn.Sequential(nn.Linear(action_dim, hidden), nn.GELU())
+        self.gate = nn.Linear(hidden + action_dim, hidden)
+        nn.init.constant_(self.gate.bias, -2.0)  # sigmoid(-2) ~ 0.12: mostly closed at init
+        self.out = nn.Sequential(
+            nn.Linear(hidden, hidden),
+            nn.GELU(),
+            nn.Linear(hidden, embed_dim),
+        )
+
+    def forward_with_gate(self, z_s: torch.Tensor, s: torch.Tensor, z_t: torch.Tensor, action: torch.Tensor):
+        t_emb = sinusoidal_time_embedding(s, self.time_dim)
+        h = self.base(torch.cat([z_s, t_emb, z_t], dim=-1))
+        a_emb = self.action_embed(action)
+        gate = torch.sigmoid(self.gate(torch.cat([h, action], dim=-1)))
+        h = h + gate * a_emb
+        return self.out(h), gate
+
+    def forward(self, z_s: torch.Tensor, s: torch.Tensor, z_t: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
+        v, _ = self.forward_with_gate(z_s, s, z_t, action)
+        return v
+
+
 class CFMActionModel(nn.Module):
-    def __init__(self, action_dim: int, embed_dim: int = 64, base_ch: int = 32, ema_decay: float = 0.99):
+    def __init__(
+        self, action_dim: int, embed_dim: int = 64, base_ch: int = 32, ema_decay: float = 0.99, gated: bool = False
+    ):
         super().__init__()
         self.embed_dim = embed_dim
         self.online_encoder = Encoder(base_ch, embed_dim)
@@ -91,8 +140,20 @@ class CFMActionModel(nn.Module):
         self.target_encoder.load_state_dict(self.online_encoder.state_dict())
         for p in self.target_encoder.parameters():
             p.requires_grad = False
-        self.velocity = VelocityPredictor(embed_dim, action_dim)
+        self.velocity = GatedVelocityPredictor(embed_dim, action_dim) if gated else VelocityPredictor(embed_dim, action_dim)
+        self.gated = gated
         self.ema_decay = ema_decay
+
+    @torch.no_grad()
+    def mean_gate(self, z_t: torch.Tensor, action: torch.Tensor) -> float:
+        """Diagnostic only (gated model): average gate value at a fixed
+        reference point (z_s = z_t, s = 0.5), for comparing how open the gate
+        is for real vs. shuffled vs. zero action."""
+        if not self.gated:
+            return float("nan")
+        s = torch.full((z_t.shape[0],), 0.5, device=z_t.device)
+        _, gate = self.velocity.forward_with_gate(z_t, s, z_t, action)
+        return gate.mean().item()
 
     @torch.no_grad()
     def update_target(self):

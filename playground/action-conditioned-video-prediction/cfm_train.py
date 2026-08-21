@@ -34,9 +34,15 @@ parser.add_argument(
     help="flow start point: 'noise' (standard CFM, x0~N(0,I)) or 'zt' (Rectified-Flow-style residual, x0=z_t). "
     "Note: with 'zt' the ODE map is deterministic given z_t, so sample spread is expected to be ~0 by construction.",
 )
+parser.add_argument(
+    "--gated",
+    action="store_true",
+    help="Day79: use GatedVelocityPredictor -- action is injected through a learned sigmoid gate "
+    "(initialized mostly closed) instead of being concatenated in directly.",
+)
 args = parser.parse_args()
 H = args.horizon
-tag = f"h{H}_{args.source}_seed{args.seed}"
+tag = f"h{H}_{args.source}_seed{args.seed}" + ("_gated" if args.gated else "")
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)  # separate from the rng(0) used below for the train/val episode split, which stays fixed
 
@@ -83,7 +89,7 @@ def to_tensor_batch(frame_t, action_t, frame_t1, idx):
     return f.to(DEVICE), a.to(DEVICE), f1.to(DEVICE)
 
 
-model = CFMActionModel(action_dim=train_action_t.shape[1]).to(DEVICE)
+model = CFMActionModel(action_dim=train_action_t.shape[1], gated=args.gated).to(DEVICE)
 opt = torch.optim.Adam(list(model.online_encoder.parameters()) + list(model.velocity.parameters()), lr=args.lr)
 
 history = {"train_loss": [], "val_loss": [], "z_std": []}
@@ -155,7 +161,7 @@ with torch.no_grad():
 
     results = {}
     for condition in ["real", "shuffled", "zero"]:
-        paired_losses, best_of_n_errors, sample_spreads = [], [], []
+        paired_losses, best_of_n_errors, sample_spreads, gate_values = [], [], [], []
         for i in range(0, len(idx_all), BATCH_SIZE):
             idx = idx_all[i : i + BATCH_SIZE]
             f, a_real, f1 = to_tensor_batch(val_frame_t, val_action_t, val_frame_t1, idx)
@@ -171,6 +177,10 @@ with torch.no_grad():
             for _ in range(N_LOSS_REPEATS):
                 velocity_loss, _ = model.training_step(f, a, f1, source=args.source)
                 paired_losses.append(velocity_loss.item())
+
+            if args.gated:
+                z_t = model.online_encoder(f)
+                gate_values.append(model.mean_gate(z_t, a))
 
             if args.source == "noise":
                 target_z = model.target_encoder(f1)
@@ -189,6 +199,8 @@ with torch.no_grad():
         if args.source == "noise":
             results[condition]["best_of_n_error"] = float(np.mean(best_of_n_errors))
             results[condition]["sample_spread"] = float(np.mean(sample_spreads))
+        if args.gated:
+            results[condition]["mean_gate"] = float(np.mean(gate_values))
 
     # copy z_t forward, in the same latent space, as the do-nothing baseline
     # (not on the same metric as paired_loss -- kept as a point of reference)
