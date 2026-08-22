@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-79 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-80 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -259,20 +259,78 @@ concludes is optimal. At 16 training episodes (~6200 pairs), the action
 signal available to learn from may simply not be reliable enough to be
 worth using, independent of how it's architecturally fused in.
 
+## Result (Day 80) -- testing the data-scale hypothesis directly
+
+Day79 narrowed the "action pathway is net-harmful" problem down to two
+explanations and weighed against the architecture one. The remaining
+candidate: 16 training episodes (~6200 pairs) may simply not be enough
+for the model to learn to weight the action correctly, independent of
+how it's wired in.
+
+Pulled 80 more episodes (episode_000020-000099) from the same Open-H
+peg-transfer split used for the original 20 -- same task, same camera,
+same format -- for 100 episodes total (~39,200 frames, ~36,900 training
+pairs at H=10, up from ~6,200). The held-out val episodes were pinned to
+the original four (episode_000002/4/6/19) so the comparison isn't
+confounded by a different test set. Reran the Day78/79 experiment (3
+seeds, both the plain and gated predictor) on this larger dataset.
+
+| | 20 episodes (real / zero / shuffled) | 100 episodes (real / zero / shuffled) |
+|---|---|---|
+| ungated | 0.381 / 0.319 / 0.406 | 0.371 / 0.376 / 0.390 |
+| gated | 0.294 / 0.279 / 0.297 | 0.269 / 0.282 / 0.278 |
+
+(`paired_loss`, mean across 3 seeds, lower is better.)
+
+**In all six runs (3 seeds x {ungated, gated}), `real` now beats `zero`.**
+At 20 episodes `zero` was the best condition every time; at 100 episodes
+`real` is. Nothing about the model or the training code changed --
+only the amount of data. This is the first evidence in this project that
+the action pathway can be net-beneficial rather than net-harmful, and it
+lines up with the Day79 prediction: giving the model an opt-out gate
+didn't fix the problem, but more data did.
+
+One caveat: `best_of_n_error` (the sampling-based metric, ungated runs
+only) didn't fully agree -- `zero` still edged out `real` there by a
+small margin in all three seeds, even though `paired_loss` favored
+`real`. `paired_loss` doesn't require generating a sample at all (see
+below); `best_of_n_error` does, and is a noisier estimate over only 8
+draws. Given `paired_loss` is the more direct measurement and agreed
+across all 6 runs, it's the more trustworthy of the two here, but the
+disagreement itself is worth flagging rather than picking whichever
+number tells the cleaner story.
+
+**A note on how `paired_loss` actually works**, since "compare a
+generated frame to the real one" is an easy but inaccurate mental model
+for it. The CFM predictor doesn't output a next-frame guess directly --
+it outputs a *velocity*: a direction to move, step by step, from a
+starting point toward the target latent, the way turn-by-turn GPS
+directions guide a route rather than teleporting you to the
+destination. Because the evaluation video is real footage, the true
+next-frame latent (`x1`) is always known. `paired_loss` feeds the model
+different claims about the action (real / shuffled / zero) against that
+same known `x1`, and checks how well the resulting direction points
+toward it -- reusing the training objective itself as the score, rather
+than generating a sample and comparing it after the fact. That's also
+why it doesn't have the "penalizes correct diversity" problem discussed
+in Day78: it's not scoring a generated guess, just how well a given
+piece of conditioning explains a real, known transition.
+
 ## Next steps (not yet done)
 
-- Test the data-scale hypothesis directly: expand beyond the current 20
-  Open-H peg-transfer episodes (more episodes and/or other Open-H
-  surgical tasks) and see whether `real < zero` finally emerges
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
 - Action chunking (a la pi0): the action window is currently flattened
   into one vector; encoding it with a small sequence model instead may
   carry more usable signal into the predictor
+- The `best_of_n_error` / `paired_loss` disagreement at 100 episodes is
+  worth understanding rather than shrugging off
 
 ## Files
 
 - `prepare_data.py` -- extract frames + actions from raw episodes
+- `download_more_episodes.sh` -- Day80: fetch additional Open-H
+  peg-transfer episodes (episode_000020-000099) into `data/raw/`
 - `model.py` -- the pixel-space action-conditioned predictor (FiLM-style
   action injection applied post-normalization + residual/delta output)
 - `train.py` -- pixel-space training loop; supports `--horizon`,
@@ -287,13 +345,17 @@ worth using, independent of how it's architecturally fused in.
   / `sample_spread` (source=noise only). Day79: `--gated` swaps in
   `GatedVelocityPredictor`, which injects the action through a learned
   sigmoid gate instead of a plain concat; adds `mean_gate` to the eval
-  output
-- `make_day78_summary.py`, `make_day79_summary.py` -- regenerate the
-  cross-seed comparison figures from `outputs/history_cfm_*.json`
+  output. Train/val split (Day80) is pinned to a permutation of the
+  original 20 episodes, so the held-out set stays fixed regardless of
+  how many episodes are on disk
+- `make_day78_summary.py`, `make_day79_summary.py`, `make_day80_summary.py`
+  -- regenerate the cross-seed comparison figures from
+  `outputs/history_cfm_*.json`
 - `outputs/` -- loss curves, qualitative comparisons, training history;
   `day61_experiment_summary_v2.png` (six pixel-space attempts compared),
   `day62_jepa_action_sensitivity.png` (latent-space action sensitivity),
   `day78_cfm_paired_loss_summary.png` (CFM real/shuffled/zero across
-  seeds), `day79_gating_summary.png` (gated vs ungated + gate values)
+  seeds), `day79_gating_summary.png` (gated vs ungated + gate values),
+  `day80_data_scale_summary.png` (20 vs 100 episodes, both architectures)
 - `data/raw/`, `data/episodes/` -- source parquet + mp4 + extracted
-  frames/actions per episode
+  frames/actions per episode (100 episodes as of Day80)

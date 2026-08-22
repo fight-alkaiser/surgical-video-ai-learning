@@ -42,7 +42,6 @@ parser.add_argument(
 )
 args = parser.parse_args()
 H = args.horizon
-tag = f"h{H}_{args.source}_seed{args.seed}" + ("_gated" if args.gated else "")
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)  # separate from the rng(0) used below for the train/val episode split, which stays fixed
 
@@ -52,12 +51,21 @@ BATCH_SIZE = 32
 with open("data/episode_lengths.json") as f:
     episode_lengths = json.load(f)
 episode_ids = sorted(episode_lengths.keys())
-rng = np.random.default_rng(0)  # same seed as jepa_train.py / train.py -- same train/val split
-shuffled = rng.permutation(episode_ids)
+
+# Day80: val_episodes is pinned to a permutation of the ORIGINAL 20 episodes
+# (Day61-79's dataset), not of however many episodes happen to be on disk.
+# This keeps the held-out set identical (episode_000002/4/6/19) whether we're
+# training on 20 episodes or 100+ -- otherwise adding episodes would reshuffle
+# which ones are held out, and Day78/79 results would no longer be comparable.
+original_20 = [f"episode_{i:06d}" for i in range(20)]
+rng = np.random.default_rng(0)  # same seed as jepa_train.py / train.py -- same original val split
+shuffled = rng.permutation(original_20)
 val_episodes = set(shuffled[:4])
-train_episodes = set(shuffled[4:])
+train_episodes = set(episode_ids) - val_episodes  # original 16 + any additional episodes on disk
 print(f"train episodes ({len(train_episodes)}): {sorted(train_episodes)}")
 print(f"val episodes ({len(val_episodes)}):   {sorted(val_episodes)}")
+
+tag = f"h{H}_{args.source}_n{len(episode_ids)}_seed{args.seed}" + ("_gated" if args.gated else "")
 
 
 def build_pairs(ep_ids):

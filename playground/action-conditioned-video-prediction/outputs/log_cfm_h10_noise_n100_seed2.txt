@@ -1,0 +1,20 @@
+train episodes (96): ['episode_000000', 'episode_000001', 'episode_000003', 'episode_000005', 'episode_000007', 'episode_000008', 'episode_000009', 'episode_000010', 'episode_000011', 'episode_000012', 'episode_000013', 'episode_000014', 'episode_000015', 'episode_000016', 'episode_000017', 'episode_000018', 'episode_000020', 'episode_000021', 'episode_000022', 'episode_000023', 'episode_000024', 'episode_000025', 'episode_000026', 'episode_000027', 'episode_000028', 'episode_000029', 'episode_000030', 'episode_000031', 'episode_000032', 'episode_000033', 'episode_000034', 'episode_000035', 'episode_000036', 'episode_000037', 'episode_000038', 'episode_000039', 'episode_000040', 'episode_000041', 'episode_000042', 'episode_000043', 'episode_000044', 'episode_000045', 'episode_000046', 'episode_000047', 'episode_000048', 'episode_000049', 'episode_000050', 'episode_000051', 'episode_000052', 'episode_000053', 'episode_000054', 'episode_000055', 'episode_000056', 'episode_000057', 'episode_000058', 'episode_000059', 'episode_000060', 'episode_000061', 'episode_000062', 'episode_000063', 'episode_000064', 'episode_000065', 'episode_000066', 'episode_000067', 'episode_000068', 'episode_000069', 'episode_000070', 'episode_000071', 'episode_000072', 'episode_000073', 'episode_000074', 'episode_000075', 'episode_000076', 'episode_000077', 'episode_000078', 'episode_000079', 'episode_000080', 'episode_000081', 'episode_000082', 'episode_000083', 'episode_000084', 'episode_000085', 'episode_000086', 'episode_000087', 'episode_000088', 'episode_000089', 'episode_000090', 'episode_000091', 'episode_000092', 'episode_000093', 'episode_000094', 'episode_000095', 'episode_000096', 'episode_000097', 'episode_000098', 'episode_000099']
+val episodes (4):   [np.str_('episode_000002'), np.str_('episode_000004'), np.str_('episode_000006'), np.str_('episode_000019')]
+train pairs: 36917, val pairs: 1312
+epoch    0  train_loss 0.4080  val_loss 0.2230  z_std 1.5223
+epoch   10  train_loss 0.2294  val_loss 0.2597  z_std 1.3697
+epoch   20  train_loss 0.2346  val_loss 0.2830  z_std 1.3930
+epoch   30  train_loss 0.2400  val_loss 0.3007  z_std 1.3802
+epoch   40  train_loss 0.2522  val_loss 0.2998  z_std 1.4027
+epoch   50  train_loss 0.2609  val_loss 0.3330  z_std 1.4026
+epoch   60  train_loss 0.2646  val_loss 0.3713  z_std 1.4102
+epoch   70  train_loss 0.2687  val_loss 0.3741  z_std 1.3951
+epoch   80  train_loss 0.2721  val_loss 0.3971  z_std 1.4257
+epoch   90  train_loss 0.2670  val_loss 0.3802  z_std 1.4329
+epoch   99  train_loss 0.2653  val_loss 0.4123  z_std 1.4402
+
+            real -- paired_loss: 0.4234   best_of_n_error: 0.0877   sample_spread: 0.1146
+        shuffled -- paired_loss: 0.4376   best_of_n_error: 0.0869   sample_spread: 0.1142
+            zero -- paired_loss: 0.4265   best_of_n_error: 0.0856   sample_spread: 0.1158
+copy_zt_baseline -- error_vs_target: 0.0830
+saved outputs/loss_curve_cfm_h10_noise_n100_seed2.png
