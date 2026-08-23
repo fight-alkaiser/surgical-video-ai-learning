@@ -362,6 +362,20 @@ transition on average per `paired_loss`). Understanding that shape
 difference directly (rather than via a proxy like step count) is left
 for a future day.
 
+Framed in more ordinary ML terms: getting *worse* with more integration
+steps is the signature of underfitting, not a bug -- the velocity
+network is still only an approximate fit to the true dynamics at
+~39,000 training pairs for a genuinely hard task, so each step's small
+error compounds over repeated integration rather than washing out (the
+same way dead-reckoning navigation drifts over a long walk without a
+fixed landmark). Worth being precise about the fix, though: this
+project already hit the opposite failure once (Day78's first `noise`
+run overfit past ~epoch 30 on a small dataset), so "train longer on the
+same data" is not the same lever as "train on more data" -- only the
+latter is validated so far (Day80). Whether more data also closes this
+specific `paired_loss`/`best_of_n_error` gap is a reasonable next
+hypothesis, not yet tested.
+
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
