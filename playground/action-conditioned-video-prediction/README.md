@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-80 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-81 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -316,6 +316,52 @@ why it doesn't have the "penalizes correct diversity" problem discussed
 in Day78: it's not scoring a generated guess, just how well a given
 piece of conditioning explains a real, known transition.
 
+## Result (Day 81) -- is the paired_loss / best_of_n_error gap just integration error?
+
+Day80's 100-episode result had a loose end: `real` beats `zero` on
+`paired_loss`, but loses to it on `best_of_n_error`. One candidate
+explanation was numerical, not semantic: `best_of_n_error` requires
+integrating the ODE from noise with a 16-step Euler solver, and Euler is
+first-order -- its error depends on how *curved* the velocity field's
+path is, not just how accurate the field is pointwise. If `real`
+action's paths are less straight than `zero`'s, a coarse solver would
+penalize `real` specifically, independent of which condition the model
+actually explains better.
+
+Tested this directly against the Day80 checkpoints (`cfm_eval_steps.py`,
+no retraining -- just re-running the sampling eval at more steps):
+
+| steps | seed0 real / zero | seed1 real / zero | seed2 real / zero |
+|---|---|---|---|
+| 16  | 0.0859 / 0.0844 | 0.1388 / 0.1369 | 0.0880 / 0.0861 |
+| 32  | 0.0886 / 0.0867 | 0.1426 / 0.1409 | 0.0892 / 0.0869 |
+| 64  | 0.0898 / 0.0878 | 0.1440 / 0.1431 | 0.0900 / 0.0878 |
+| 128 | 0.0898 / 0.0875 | 0.1440 / 0.1442 | 0.0904 / 0.0879 |
+
+**The integration-error hypothesis is mostly not supported.** Going from
+16 to 128 steps (8x finer) only closes the gap in seed 1 (0.1440 vs
+0.1442, effectively tied); in seed 0 and seed 2 the gap holds steady or
+widens slightly. A real discretization artifact should shrink
+consistently across seeds as steps increase -- it didn't.
+
+**An unexpected side finding:** `best_of_n_error` got *worse*, not
+better, for every condition as steps increased (e.g. seed0 zero:
+0.0844 -> 0.0875). More integration steps should only help if the
+bottleneck is discretization; getting worse instead suggests the
+velocity network's own pointwise error compounds over more integration
+steps rather than washing out -- i.e. the field itself, not just the
+solver, is the limiting factor.
+
+**What this means.** The `paired_loss` / `best_of_n_error` disagreement
+is probably not a cheap numerical artifact to wave away -- it likely
+reflects a real difference in how the `real`- and `zero`-conditioned
+sample distributions are shaped (e.g. `zero`'s samples may cluster more
+tightly around a "safe" answer, giving best-of-8 more chances to land a
+lucky hit, even though `real`'s distribution is a better fit to the true
+transition on average per `paired_loss`). Understanding that shape
+difference directly (rather than via a proxy like step count) is left
+for a future day.
+
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
@@ -323,8 +369,9 @@ piece of conditioning explains a real, known transition.
 - Action chunking (a la pi0): the action window is currently flattened
   into one vector; encoding it with a small sequence model instead may
   carry more usable signal into the predictor
-- The `best_of_n_error` / `paired_loss` disagreement at 100 episodes is
-  worth understanding rather than shrugging off
+- Directly inspect the shape of the real- vs. zero-conditioned sample
+  distributions (e.g. per-dimension variance, distance to target vs.
+  distance to each other) instead of proxying via best_of_n/step count
 
 ## Files
 
@@ -348,14 +395,18 @@ piece of conditioning explains a real, known transition.
   output. Train/val split (Day80) is pinned to a permutation of the
   original 20 episodes, so the held-out set stays fixed regardless of
   how many episodes are on disk
-- `make_day78_summary.py`, `make_day79_summary.py`, `make_day80_summary.py`
-  -- regenerate the cross-seed comparison figures from
-  `outputs/history_cfm_*.json`
+- `cfm_eval_steps.py` -- Day81: reloads a saved checkpoint and re-runs the
+  sampling-based eval at several `--steps` values, without retraining;
+  used to test whether the paired_loss/best_of_n_error gap is an ODE
+  discretization artifact
+- `make_day78_summary.py` .. `make_day81_summary.py` -- regenerate the
+  cross-seed comparison figures from `outputs/history_cfm_*.json`
 - `outputs/` -- loss curves, qualitative comparisons, training history;
   `day61_experiment_summary_v2.png` (six pixel-space attempts compared),
   `day62_jepa_action_sensitivity.png` (latent-space action sensitivity),
   `day78_cfm_paired_loss_summary.png` (CFM real/shuffled/zero across
   seeds), `day79_gating_summary.png` (gated vs ungated + gate values),
-  `day80_data_scale_summary.png` (20 vs 100 episodes, both architectures)
+  `day80_data_scale_summary.png` (20 vs 100 episodes, both architectures),
+  `day81_step_sweep_summary.png` (best_of_n_error vs. ODE step count)
 - `data/raw/`, `data/episodes/` -- source parquet + mp4 + extracted
   frames/actions per episode (100 episodes as of Day80)
