@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-81 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-82 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -376,6 +376,56 @@ latter is validated so far (Day80). Whether more data also closes this
 specific `paired_loss`/`best_of_n_error` gap is a reasonable next
 hypothesis, not yet tested.
 
+## Result (Day 82) -- it's bias, not variance, and more samples don't fix it either
+
+Day81 ruled out ODE step count as the explanation for the paired_loss /
+best_of_n_error disagreement and left it as an open question: does the
+gap come from `real`'s generated samples being *more spread out* than
+`zero`'s (so best-of-8 luck favors the tighter cluster), or from
+something else? Two things this can now rule in or out:
+
+1. **Does more sampling close the gap?** (a sample-count analogue of
+   Day81's step sweep) -- draw a pool of 256 samples per condition per
+   pair and recompute best-of-N for N = 8, 16, 32, 64, 128, 256.
+2. **Bias/variance decomposition** -- split each condition's expected
+   squared error into `bias^2` (how far the *center* of its sample
+   cluster is from the true target) and `variance` (how spread out the
+   cluster is around its own center). These sum to (approximately) the
+   single-sample expected error.
+
+Both re-use the Day80 checkpoints, no retraining (`cfm_eval_distribution.py`).
+
+| seed | zero bias² / var | real bias² / var | shuffled bias² / var |
+|---|---|---|---|
+| 0 | 0.0696 / 0.0247 | 0.0735 / 0.0240 | 0.0740 / 0.0242 |
+| 1 | 0.1350 / 0.0392 | 0.1386 / 0.0364 | 0.1409 / 0.0368 |
+| 2 | 0.0813 / 0.0172 | 0.0828 / 0.0166 | 0.0821 / 0.0162 |
+
+**Variance is essentially the same across all three conditions in every
+seed** (in 2 of 3 seeds `zero`'s variance is actually *higher* than
+`real`'s, the opposite of the "tighter cluster" hypothesis). The entire
+gap lives in `bias^2`: `zero`'s sample cluster is consistently centered
+closer to the true target than `real`'s, by a small but reproducible
+margin in all 3 seeds.
+
+**More samples doesn't fix this either.** Going from N=8 to N=256 (32x
+more draws) leaves `real` behind `zero` by roughly the same relative
+margin throughout -- consistent with the gap being a bias, not a
+coverage/variance problem. Drawing more samples only helps close a gap
+caused by insufficient coverage of a genuinely wide distribution; it
+cannot fix a systematic offset in where the distribution is centered.
+
+**What this means.** This sharpens, rather than contradicts, Day81's
+underfitting story. `paired_loss` measures whether the model's direction
+is *locally* accurate when told the real answer already exists nearby
+(a single check against a known point). Generating a full sample means
+applying that same imperfect direction field open-loop, many times in a
+row, with no such correction -- and apparently doing so introduces a
+small but consistent drift specifically under the `real` condition, not
+just added noise that more samples or finer steps would average out.
+Whatever is different about `real`'s learned path, it's a bias baked
+into the field itself, not a sampling artifact.
+
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
@@ -383,9 +433,9 @@ hypothesis, not yet tested.
 - Action chunking (a la pi0): the action window is currently flattened
   into one vector; encoding it with a small sequence model instead may
   carry more usable signal into the predictor
-- Directly inspect the shape of the real- vs. zero-conditioned sample
-  distributions (e.g. per-dimension variance, distance to target vs.
-  distance to each other) instead of proxying via best_of_n/step count
+- Test whether more training data (Day80's validated lever, not more
+  epochs) also shrinks this specific bias, now that step count (Day81)
+  and sample count (Day82) have both been ruled out as the cause
 
 ## Files
 
@@ -413,7 +463,11 @@ hypothesis, not yet tested.
   sampling-based eval at several `--steps` values, without retraining;
   used to test whether the paired_loss/best_of_n_error gap is an ODE
   discretization artifact
-- `make_day78_summary.py` .. `make_day81_summary.py` -- regenerate the
+- `cfm_eval_distribution.py` -- Day82: reloads a saved checkpoint and draws
+  a large sample pool per condition to (1) recompute best-of-N at several
+  `N` values and (2) decompose expected error into bias² vs. variance;
+  also dumps a 2D PCA scatter of one example pair's samples
+- `make_day78_summary.py` .. `make_day82_summary.py` -- regenerate the
   cross-seed comparison figures from `outputs/history_cfm_*.json`
 - `outputs/` -- loss curves, qualitative comparisons, training history;
   `day61_experiment_summary_v2.png` (six pixel-space attempts compared),
@@ -421,6 +475,8 @@ hypothesis, not yet tested.
   `day78_cfm_paired_loss_summary.png` (CFM real/shuffled/zero across
   seeds), `day79_gating_summary.png` (gated vs ungated + gate values),
   `day80_data_scale_summary.png` (20 vs 100 episodes, both architectures),
-  `day81_step_sweep_summary.png` (best_of_n_error vs. ODE step count)
+  `day81_step_sweep_summary.png` (best_of_n_error vs. ODE step count),
+  `day82_distribution_summary.png` (sample-count sweep + bias/variance),
+  `day82_sample_distribution_pca_*.png` (2D PCA of one example pair)
 - `data/raw/`, `data/episodes/` -- source parquet + mp4 + extracted
   frames/actions per episode (100 episodes as of Day80)
