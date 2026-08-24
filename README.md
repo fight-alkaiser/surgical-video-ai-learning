@@ -280,3 +280,10 @@ Day 37 - Testing the Verb Recognition Architecture Gap
 * Oracle conditioning lifted verb macro F1 from 0.309 to 0.484, concentrated on instrument-specific verbs (clip 0.351→0.701, cut 0.061→0.444, coagulate 0.287→0.616, dissect 0.701→0.893) — confirming the architecture-gap hypothesis. But realistic conditioning recovered none of it (0.305, indistinguishable from baseline), because the instrument probe supplying the signal is itself only macro F1 0.399 — its errors are correlated with the same visual ambiguity that makes verb hard. The two problems are coupled: fixing verb via instrument conditioning is gated on first fixing rare-instrument recognition, which SSL adaptation has already been shown not to solve.
 
 See [day37 details](day37_verb_instrument_conditioning/README.md).
+
+Day 38 - Does a More Accurate Instrument Predictor Close More of the Gap?
+
+* Day37 explained its oracle-realistic gap (ground-truth instrument conditioning: 0.309→0.484; predicted-instrument conditioning: 0.305, no gain) as the predictor being too noisy (instrument macro F1 only 0.399). Today re-runs Day27's fine-tuning recipe (saving the checkpoint this time, which Day27 didn't) to get a substantially more accurate instrument predictor (macro F1 0.512) and swaps it into the same realistic-conditioning setup.
+* No improvement: verb macro F1 stayed at 0.305, identical to Day37's weaker predictor, despite large real gains on bipolar and clipper (the instruments coagulate and clip most depend on). This rules out predictor accuracy as the limiting factor and points to a structural, frame-level explanation instead — verb difficulty and instrument-prediction difficulty likely share a cause (plausibly instrument-tip occlusion), so a predictor that's more accurate on average still fails on exactly the frames where its help is needed most.
+
+See [day38 details](day38_finetuned_instrument_verb_conditioning/README.md).
