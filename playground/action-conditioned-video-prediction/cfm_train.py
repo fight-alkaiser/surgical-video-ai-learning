@@ -101,6 +101,9 @@ model = CFMActionModel(action_dim=train_action_t.shape[1], gated=args.gated).to(
 opt = torch.optim.Adam(list(model.online_encoder.parameters()) + list(model.velocity.parameters()), lr=args.lr)
 
 history = {"train_loss": [], "val_loss": [], "z_std": []}
+best_val_loss = float("inf")
+best_epoch = -1
+best_state = None
 
 for epoch in range(args.epochs):
     model.train()
@@ -122,11 +125,12 @@ for epoch in range(args.epochs):
     model.eval()
     val_losses = []
     with torch.no_grad():
-        for i in range(0, len(val_frame_t), BATCH_SIZE):
-            idx = np.arange(i, min(i + BATCH_SIZE, len(val_frame_t)))
-            f, a, f1 = to_tensor_batch(val_frame_t, val_action_t, val_frame_t1, idx)
-            velocity_loss, _ = model.training_step(f, a, f1, source=args.source)
-            val_losses.append(velocity_loss.item())
+        for _ in range(3):  # average over 3 stochastic (s, x0) draws -- the CFM loss is noisy per-draw
+            for i in range(0, len(val_frame_t), BATCH_SIZE):
+                idx = np.arange(i, min(i + BATCH_SIZE, len(val_frame_t)))
+                f, a, f1 = to_tensor_batch(val_frame_t, val_action_t, val_frame_t1, idx)
+                velocity_loss, _ = model.training_step(f, a, f1, source=args.source)
+                val_losses.append(velocity_loss.item())
     val_loss = float(np.mean(val_losses))
     train_loss = float(np.mean(epoch_losses))
     z_std = float(np.mean(epoch_zstd))
@@ -134,8 +138,27 @@ for epoch in range(args.epochs):
     history["val_loss"].append(val_loss)
     history["z_std"].append(z_std)
 
+    # Day83: even averaged over 3 draws, val_loss still bounces epoch-to-epoch (the CFM
+    # loss is inherently stochastic), so picking the single lowest raw value risks locking
+    # onto a lucky noisy dip rather than a genuine generalization point. Smooth with a
+    # trailing moving average before comparing.
+    smoothed = float(np.mean(history["val_loss"][-5:]))
+    if smoothed < best_val_loss:
+        best_val_loss = smoothed
+        best_epoch = epoch
+        best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
+
     if epoch % 10 == 0 or epoch == args.epochs - 1:
         print(f"epoch {epoch:4d}  train_loss {train_loss:.4f}  val_loss {val_loss:.4f}  z_std {z_std:.4f}")
+
+# Day83: more data (n=200) turned out to overfit within the fixed 100-epoch budget --
+# val_loss (smoothed) bottomed out early and rose for the rest of the run. Restore the
+# best-smoothed-val_loss checkpoint before evaluating/saving, instead of whatever epoch
+# training happened to stop at.
+print(f"\nbest smoothed val_loss {best_val_loss:.4f} at epoch {best_epoch} (of {args.epochs}); restoring that checkpoint")
+model.load_state_dict(best_state)
+history["best_epoch"] = best_epoch
+history["best_val_loss"] = best_val_loss
 
 # --- evaluation on held-out episodes ---
 #

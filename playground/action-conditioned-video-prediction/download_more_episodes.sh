@@ -1,14 +1,20 @@
 #!/bin/bash
-# Day80: download additional Open-H peg_transfer episodes (episode_000020..000099)
-# to test the data-scale hypothesis from Day79. Source: nvidia/PhysicalAI-Robotics-Open-H-Embodiment
-# (CC-BY-4.0), Surgical/hamlyn/peg_transfer, same task/camera as the existing 20 episodes.
+# Download additional Open-H peg_transfer episodes into data/raw/.
+# Source: nvidia/PhysicalAI-Robotics-Open-H-Embodiment (CC-BY-4.0),
+# Surgical/hamlyn/peg_transfer, same task/camera as the existing episodes.
+# Usage: ./download_more_episodes.sh <start_ep> <end_ep_inclusive>
+#   Day80 used: ./download_more_episodes.sh 20 99
+#   Day83 used: ./download_more_episodes.sh 100 199
 set -e
 cd "$(dirname "$0")"
 mkdir -p data/raw
 
+START="${1:?usage: download_more_episodes.sh <start_ep> <end_ep_inclusive>}"
+END="${2:?usage: download_more_episodes.sh <start_ep> <end_ep_inclusive>}"
+
 BASE="https://huggingface.co/datasets/nvidia/PhysicalAI-Robotics-Open-H-Embodiment/resolve/main/Surgical/hamlyn/peg_transfer"
 
-for i in $(seq 20 99); do
+for i in $(seq "$START" "$END"); do
     ep=$(printf "episode_%06d" "$i")
     pq="data/raw/${ep}.parquet"
     mp4="data/raw/${ep}_color.mp4"
