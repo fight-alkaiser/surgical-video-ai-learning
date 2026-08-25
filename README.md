@@ -287,3 +287,10 @@ Day 38 - Does a More Accurate Instrument Predictor Close More of the Gap?
 * No improvement: verb macro F1 stayed at 0.305, identical to Day37's weaker predictor, despite large real gains on bipolar and clipper (the instruments coagulate and clip most depend on). This rules out predictor accuracy as the limiting factor and points to a structural, frame-level explanation instead — verb difficulty and instrument-prediction difficulty likely share a cause (plausibly instrument-tip occlusion), so a predictor that's more accurate on average still fails on exactly the frames where its help is needed most.
 
 See [day38 details](day38_finetuned_instrument_verb_conditioning/README.md).
+
+Day 39 - Does Temporal Context Help Instrument or Verb More?
+
+* Day38 pointed to a structural, frame-level explanation for verb's oracle-realistic gap; the owner proposed instrument-tip occlusion as the shared cause, predicting temporal context should help instrument (trackable across frames) more than verb (which needs the occluded instant itself). Today tests this with a 3-frame window (t-1, t, t+1, ~2 seconds at CholecT50's 1-second sampling) on frozen ImageNet features, comparing macro F1 against single-frame on the identical frame subset, for both tasks.
+* The hypothesis was not supported: verb improved 2.5x more than instrument (+0.040 vs. +0.015), concentrated in rare, brief verbs (coagulate, clip, pack). Precision/recall analysis shows the mechanism is the opposite of "more willingness to guess" — precision rises sharply while recall falls, meaning temporal context lets the model correctly reject single-frame false positives on transient actions, closer to Day27's "genuinely better features" signature than Day26's "willingness" signature. A notable closing number: this untrained 3-frame concatenation (verb macro F1 0.332) beats every SSL-pretrained backbone from Day36 (0.304-0.309) on the same task.
+
+See [day39 details](day39_temporal_context_instrument_verb/README.md).
