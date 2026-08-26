@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-82 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-84 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -426,6 +426,51 @@ just added noise that more samples or finer steps would average out.
 Whatever is different about `real`'s learned path, it's a bias baked
 into the field itself, not a sampling artifact.
 
+## Result (Day 83-84) -- more data (100 -> 200 episodes) doesn't extend Day80's win, and closes this arc
+
+The natural next test after Day82's bias finding: does more data shrink
+it, the same way 20 -> 100 episodes fixed the Day78/79 problem? Downloaded
+80 more episodes (100 -> 200 total, `download_more_episodes.sh <start>
+<end>`) and reran the Day80 experiment.
+
+**First attempt was confounded by two stacked methodology bugs, not the
+data itself.** With the epoch budget fixed at 100, val_loss now bottomed
+out within ~10 epochs and rose for the rest of training -- more data at
+the same epoch count meant more gradient updates per epoch, and the model
+overfit faster, not slower. Fixed by saving the best-val_loss checkpoint
+instead of the final one (`cfm_train.py` now tracks `best_epoch`/
+`best_val_loss`). That surfaced a second problem: the CFM loss is
+stochastic per batch, so a single epoch's val_loss is itself a noisy
+read -- the "best" epoch it picked (0-2) turned out to be barely-trained,
+not a genuine minimum. Fixed by averaging val_loss over 3 stochastic
+draws and smoothing with a trailing moving average before comparing
+epochs.
+
+**With that fixed, extending training to 300 epochs confirmed a genuine
+second convergence phase** (val_loss fell well below its epoch-0 value
+in 2 of 3 seeds, after an overfitting hump in the middle) -- validating
+that 100 epochs simply wasn't enough training at this data scale, not
+that the model was stuck.
+
+**Even so, `zero` (no action) won on `paired_loss` in all 3 seeds** once
+training was genuinely converged (seed 2 came close: 0.1327 vs `real`'s
+0.1336, but didn't flip). Day80's "more data -> real wins" trend did not
+continue from 100 to 200 episodes -- if anything it partially reversed.
+One seed (seed 1) also failed to reach the second convergence phase
+within 300 epochs at all, best_epoch=2, underscoring how seed-sensitive
+this training regime is at this scale.
+
+**Closing this arc here.** Seven days (Day78-84) chasing whether the
+action pathway helps produced an unresolved answer on that original
+question, but a durable one on how to ask it: `paired_loss` (a
+likelihood-style score against the real transition, no sampling needed),
+`best_of_n_error` (best-of-N sampling, not average-of-N, to avoid
+penalizing correct multimodality), bias/variance decomposition, and
+smoothed best-checkpoint selection are all reusable pieces for any future
+work on this predictor. Next up: Action Chunking or a return to reading
+Cosmos-H-Surgical-Simulator's own source, not further iteration on this
+specific question.
+
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
@@ -440,8 +485,9 @@ into the field itself, not a sampling artifact.
 ## Files
 
 - `prepare_data.py` -- extract frames + actions from raw episodes
-- `download_more_episodes.sh` -- Day80: fetch additional Open-H
-  peg-transfer episodes (episode_000020-000099) into `data/raw/`
+- `download_more_episodes.sh <start> <end>` -- fetch additional Open-H
+  peg-transfer episodes into `data/raw/`; Day80 used `20 99`, Day83 used
+  `100 199`
 - `model.py` -- the pixel-space action-conditioned predictor (FiLM-style
   action injection applied post-normalization + residual/delta output)
 - `train.py` -- pixel-space training loop; supports `--horizon`,
@@ -456,9 +502,13 @@ into the field itself, not a sampling artifact.
   / `sample_spread` (source=noise only). Day79: `--gated` swaps in
   `GatedVelocityPredictor`, which injects the action through a learned
   sigmoid gate instead of a plain concat; adds `mean_gate` to the eval
-  output. Train/val split (Day80) is pinned to a permutation of the
-  original 20 episodes, so the held-out set stays fixed regardless of
-  how many episodes are on disk
+  output. Train/val split is pinned to a permutation of the original 20
+  episodes, so the held-out set stays fixed regardless of how many
+  episodes are on disk. Day83: tracks `best_epoch`/`best_val_loss` and
+  restores that checkpoint instead of the final epoch, with val_loss
+  averaged over 3 stochastic draws and smoothed (trailing moving average)
+  before comparing epochs -- fixes both overfitting-past-the-optimum and
+  noisy single-epoch checkpoint selection
 - `cfm_eval_steps.py` -- Day81: reloads a saved checkpoint and re-runs the
   sampling-based eval at several `--steps` values, without retraining;
   used to test whether the paired_loss/best_of_n_error gap is an ODE
@@ -479,4 +529,4 @@ into the field itself, not a sampling artifact.
   `day82_distribution_summary.png` (sample-count sweep + bias/variance),
   `day82_sample_distribution_pca_*.png` (2D PCA of one example pair)
 - `data/raw/`, `data/episodes/` -- source parquet + mp4 + extracted
-  frames/actions per episode (100 episodes as of Day80)
+  frames/actions per episode (200 episodes as of Day83)
