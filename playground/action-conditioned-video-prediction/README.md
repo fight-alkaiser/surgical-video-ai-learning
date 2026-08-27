@@ -471,16 +471,41 @@ work on this predictor. Next up: Action Chunking or a return to reading
 Cosmos-H-Surgical-Simulator's own source, not further iteration on this
 specific question.
 
+## Note (Day 85) -- rereading Cosmos-H-Surgical-Simulator's source after this arc
+
+Day58-60 read Cosmos-H-Surgical-Simulator (CHSS)'s source at a surface
+level (how it embeds actions, what data it trains on). Rereading it after
+Day78-84, several of the open questions above turn out to already have
+answers at production scale:
+
+- CHSS's teacher model is trained with an actual Rectified-Flow
+  objective -- the untried fix noted after Day82
+- The distillation into the real-time student (Self Forcing) trains the
+  student on its own generated rollouts instead of ground truth,
+  addressing exposure bias directly -- a plausible cause for the drift
+  found in Day81-82, though not one this project tested
+- The "action chunking" idea below is already CHSS's actual design (a
+  fixed 12-step window flattened into one vector, added uniformly) --
+  no more sophisticated than what this project already does, so a small
+  sequence model over the window (below) is a genuinely open question,
+  not catching up to a known-better design
+- The real/shuffled/zero paired_loss comparison this project spent most
+  of a week building doesn't appear to be the kind of ablation CHSS's
+  own documentation reports
+
+See the Day85 post for the fuller writeup.
+
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
-- Action chunking (a la pi0): the action window is currently flattened
-  into one vector; encoding it with a small sequence model instead may
-  carry more usable signal into the predictor
-- Test whether more training data (Day80's validated lever, not more
-  epochs) also shrinks this specific bias, now that step count (Day81)
-  and sample count (Day82) have both been ruled out as the cause
+- Action chunking (a la pi0 / CHSS's own 12-step chunks): the action
+  window is currently flattened into one vector; encoding it with a
+  small sequence model instead may carry more usable signal into the
+  predictor
+- Test whether Self Forcing-style training (condition on the model's own
+  generated rollouts, not ground truth) reduces the Day81-82 drift,
+  since CHSS uses this to address what looks like the same failure mode
 
 ## Files
 
