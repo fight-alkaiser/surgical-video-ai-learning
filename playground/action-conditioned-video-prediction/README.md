@@ -484,25 +484,28 @@ answers at production scale:
   student on its own generated rollouts instead of ground truth,
   addressing exposure bias directly -- a plausible cause for the drift
   found in Day81-82, though not one this project tested
-- The "action chunking" idea below is already CHSS's actual design (a
-  fixed 12-step window flattened into one vector, added uniformly) --
-  no more sophisticated than what this project already does, so a small
-  sequence model over the window (below) is a genuinely open question,
-  not catching up to a known-better design
+- What this project already does -- flattening the action window into
+  one vector -- turns out to be exactly what's called action chunking,
+  and CHSS's own design (a fixed 12-step window, added uniformly) is
+  structurally the same. What's genuinely untried on both sides is
+  handling that window with a sequence model instead of flattening it
+  (below) -- an open question, not catching up to a known-better design
 - The real/shuffled/zero paired_loss comparison this project spent most
   of a week building doesn't appear to be the kind of ablation CHSS's
   own documentation reports
 
-See the Day85 post for the fuller writeup.
+Reading the source alone wasn't enough to see any of this -- a week of
+hands-on debugging is what made it visible. See the Day85 post for the
+fuller writeup; next up is actually trying the sequence-model approach.
 
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
-- Action chunking (a la pi0 / CHSS's own 12-step chunks): the action
-  window is currently flattened into one vector; encoding it with a
-  small sequence model instead may carry more usable signal into the
-  predictor
+- The action window is currently flattened into one vector (already
+  matching action chunking, a la pi0 / CHSS's own 12-step chunks);
+  encoding it with a small sequence model instead may carry more usable
+  signal into the predictor -- untried by this project or by CHSS
 - Test whether Self Forcing-style training (condition on the model's own
   generated rollouts, not ground truth) reduces the Day81-82 drift,
   since CHSS uses this to address what looks like the same failure mode
