@@ -301,3 +301,12 @@ Day 40 - Retrospective: Closing the CholecT50 Series (Day01-39)
 * Also includes a Clinical Implications section: the class-uniform macro-F1 metric this whole series optimized doesn't reflect what would actually matter in practice — a `grasp`/`retract` mix-up is closer to an interpretation difference than an error, while a `clip`/`cut` mistake at a safety-critical moment is a fundamentally different kind of failure the metric doesn't distinguish. Real intraoperative usefulness would look like hazard/next-step awareness (a driver-assistance model), not finer-grained instrument/verb/target labeling — a different task this series never built or evaluated toward. Closes the CholecT50 series; the project moves next to JIGSAWS (robotic bench-top gestures + synchronized kinematics).
 
 See [day40 details](day40_cholect50_series_retrospective/README.md).
+
+JIGSAWS (robotic bench-top surgical gestures + synchronized kinematics)
+
+Day 41 - JIGSAWS: First Look (EDA)
+
+* Plain exploratory data analysis on the three downloaded JIGSAWS tasks (Suturing, Needle Passing, Knot Tying) before any modeling: 103 trials across 7-8 subjects, 30fps stereo video, 76-dim synchronized kinematics (master/slave tooltip xyz, rotation, velocity, gripper angle), and gesture-segment transcriptions from a 15-gesture vocabulary (each task uses only a task-specific subset). Found a small, variable per-trial frame-count offset between video and kinematics that must be handled explicitly rather than assumed away, and confirmed the dataset's own standard cross-validation splits (`Experimental_setup/`, leave-one-user-out and leave-one-trial-out) are usable directly.
+* Sets the arc's direction after discussion: short-horizon kinematic trajectory forecasting (predict ~1-2s of future tooltip position from a past window, in the 76-dim kinematic state space, not pixels), presented as a video overlay of predicted-vs-actual tooltip path — a small, honest step toward the owner's stated interest in surgical world models, after explicitly ruling out full text-conditioned video generation as infeasible on this hardware and with this dataset. Includes a binding anti-fabrication rule for every future day in this arc: any trajectory shown as a "prediction" must use only past information, be evaluated on held-out trials, and be visually distinguished from ground truth.
+
+See [day41 details](day41_jigsaws_eda/README.md).

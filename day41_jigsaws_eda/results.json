@@ -1,0 +1,224 @@
+{
+  "Suturing": {
+    "num_trials": 39,
+    "subjects": [
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I"
+    ],
+    "self_proclaimed_skill_counts": {
+      "N": 19,
+      "I": 10,
+      "E": 10
+    },
+    "grs_min": 8,
+    "grs_max": 30,
+    "grs_mean": 19.128205128205128,
+    "gestures_used": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10,
+      11
+    ],
+    "gesture_frequency": {
+      "1": 29,
+      "5": 37,
+      "8": 48,
+      "2": 166,
+      "3": 164,
+      "6": 163,
+      "4": 119,
+      "11": 39,
+      "9": 24,
+      "10": 4
+    },
+    "segment_length_min": 10,
+    "segment_length_max": 1106,
+    "segment_length_mean": 161.8827238335435,
+    "kinematics_column_counts_observed": [
+      76
+    ],
+    "sample_video_info": {
+      "Suturing_B001": {
+        "width": 640,
+        "height": 480,
+        "fps": "30/1",
+        "video_frames": "5640",
+        "duration_s": "187.999812",
+        "kinematics_frames": 5635
+      },
+      "Suturing_B002": {
+        "width": 640,
+        "height": 480,
+        "fps": "30/1",
+        "video_frames": "3462",
+        "duration_s": "115.399885",
+        "kinematics_frames": 3445
+      },
+      "Suturing_B003": {
+        "width": 640,
+        "height": 480,
+        "fps": "30/1",
+        "video_frames": "3437",
+        "duration_s": "114.566552",
+        "kinematics_frames": 3432
+      }
+    }
+  },
+  "Needle_Passing": {
+    "num_trials": 28,
+    "subjects": [
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "H",
+      "I"
+    ],
+    "self_proclaimed_skill_counts": {
+      "N": 11,
+      "I": 8,
+      "E": 9
+    },
+    "grs_min": 7,
+    "grs_max": 24,
+    "grs_mean": 14.285714285714286,
+    "gestures_used": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10,
+      11
+    ],
+    "gesture_frequency": {
+      "1": 30,
+      "2": 117,
+      "3": 111,
+      "6": 112,
+      "4": 83,
+      "11": 25,
+      "5": 31,
+      "8": 28,
+      "9": 1,
+      "10": 1
+    },
+    "segment_length_min": 17,
+    "segment_length_max": 2659,
+    "segment_length_mean": 162.64192949907235,
+    "kinematics_column_counts_observed": [
+      76
+    ],
+    "sample_video_info": {
+      "Needle_Passing_B001": {
+        "width": 640,
+        "height": 480,
+        "fps": "30/1",
+        "video_frames": "3452",
+        "duration_s": "115.066552",
+        "kinematics_frames": 3438
+      },
+      "Needle_Passing_B002": {
+        "width": 640,
+        "height": 480,
+        "fps": "30/1",
+        "video_frames": "3182",
+        "duration_s": "106.066561",
+        "kinematics_frames": 3177
+      },
+      "Needle_Passing_B003": {
+        "width": 640,
+        "height": 480,
+        "fps": "30/1",
+        "video_frames": "3243",
+        "duration_s": "108.099892",
+        "kinematics_frames": 3238
+      }
+    }
+  },
+  "Knot_Tying": {
+    "num_trials": 36,
+    "subjects": [
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I"
+    ],
+    "self_proclaimed_skill_counts": {
+      "N": 16,
+      "I": 10,
+      "E": 10
+    },
+    "grs_min": 6,
+    "grs_max": 22,
+    "grs_mean": 14.416666666666666,
+    "gestures_used": [
+      1,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "gesture_frequency": {
+      "12": 70,
+      "13": 75,
+      "14": 98,
+      "15": 73,
+      "11": 36,
+      "1": 19
+    },
+    "segment_length_min": 18,
+    "segment_length_max": 883,
+    "segment_length_mean": 149.9757412398922,
+    "kinematics_column_counts_observed": [
+      76
+    ],
+    "sample_video_info": {
+      "Knot_Tying_B001": {
+        "width": 640,
+        "height": 480,
+        "fps": "30/1",
+        "video_frames": "1749",
+        "duration_s": "58.299942",
+        "kinematics_frames": 1735
+      },
+      "Knot_Tying_B002": {
+        "width": 640,
+        "height": 480,
+        "fps": "30/1",
+        "video_frames": "1485",
+        "duration_s": "49.499951",
+        "kinematics_frames": 1480
+      },
+      "Knot_Tying_B003": {
+        "width": 640,
+        "height": 480,
+        "fps": "30/1",
+        "video_frames": "1614",
+        "duration_s": "53.799946",
+        "kinematics_frames": 1612
+      }
+    }
+  }
+}
