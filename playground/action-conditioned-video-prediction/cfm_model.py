@@ -57,6 +57,30 @@ def sinusoidal_time_embedding(s: torch.Tensor, dim: int) -> torch.Tensor:
     return torch.cat([torch.sin(args), torch.cos(args)], dim=-1)
 
 
+class ActionSequenceEncoder(nn.Module):
+    """Day86: encodes the (H, action_dim_per_step) action window with a GRU,
+    instead of flattening it into one H*action_dim_per_step vector.
+
+    Flattening (what this project used through Day85) and CHSS's own action
+    chunking both treat the window as an unordered bag of H*D numbers -- the
+    network has to rediscover from scratch, if it can, that dims 0:16 come
+    before dims 16:32. A GRU is given that order for free: it reads the
+    window one timestep at a time and its final hidden state is the action
+    embedding. Whether that ordering actually helps this predictor is the
+    open question this file exists to test.
+    """
+
+    def __init__(self, action_dim_per_step: int, hidden: int = 64, out_dim: int = 64):
+        super().__init__()
+        self.gru = nn.GRU(action_dim_per_step, hidden, batch_first=True)
+        self.out = nn.Linear(hidden, out_dim)
+
+    def forward(self, action_seq: torch.Tensor) -> torch.Tensor:
+        # action_seq: (B, H, action_dim_per_step) -> (B, out_dim)
+        _, h_n = self.gru(action_seq)
+        return self.out(h_n[-1])
+
+
 class VelocityPredictor(nn.Module):
     """(z_s, s, z_t, action) -> velocity, i.e. the flow-matching predictor.
 
@@ -131,26 +155,52 @@ class GatedVelocityPredictor(nn.Module):
 
 class CFMActionModel(nn.Module):
     def __init__(
-        self, action_dim: int, embed_dim: int = 64, base_ch: int = 32, ema_decay: float = 0.99, gated: bool = False
+        self,
+        action_dim_per_step: int,
+        horizon: int,
+        embed_dim: int = 64,
+        base_ch: int = 32,
+        ema_decay: float = 0.99,
+        gated: bool = False,
+        action_mode: str = "flatten",
     ):
         super().__init__()
         self.embed_dim = embed_dim
+        self.horizon = horizon
+        self.action_mode = action_mode
         self.online_encoder = Encoder(base_ch, embed_dim)
         self.target_encoder = Encoder(base_ch, embed_dim)
         self.target_encoder.load_state_dict(self.online_encoder.state_dict())
         for p in self.target_encoder.parameters():
             p.requires_grad = False
+
+        if action_mode == "sequence":
+            self.action_encoder = ActionSequenceEncoder(action_dim_per_step, out_dim=embed_dim)
+            action_dim = embed_dim
+        else:
+            self.action_encoder = None
+            action_dim = action_dim_per_step * horizon
+
         self.velocity = GatedVelocityPredictor(embed_dim, action_dim) if gated else VelocityPredictor(embed_dim, action_dim)
         self.gated = gated
         self.ema_decay = ema_decay
 
+    def encode_action(self, action_window: torch.Tensor) -> torch.Tensor:
+        """action_window: (B, H, action_dim_per_step), raw (already-normalized)
+        actions -- always this shape regardless of action_mode, so callers
+        never need to know whether flattening or the GRU happens inside."""
+        if self.action_mode == "sequence":
+            return self.action_encoder(action_window)
+        return action_window.reshape(action_window.shape[0], -1)
+
     @torch.no_grad()
-    def mean_gate(self, z_t: torch.Tensor, action: torch.Tensor) -> float:
+    def mean_gate(self, z_t: torch.Tensor, action_window: torch.Tensor) -> float:
         """Diagnostic only (gated model): average gate value at a fixed
         reference point (z_s = z_t, s = 0.5), for comparing how open the gate
         is for real vs. shuffled vs. zero action."""
         if not self.gated:
             return float("nan")
+        action = self.encode_action(action_window)
         s = torch.full((z_t.shape[0],), 0.5, device=z_t.device)
         _, gate = self.velocity.forward_with_gate(z_t, s, z_t, action)
         return gate.mean().item()
@@ -160,7 +210,7 @@ class CFMActionModel(nn.Module):
         for online_p, target_p in zip(self.online_encoder.parameters(), self.target_encoder.parameters()):
             target_p.data.mul_(self.ema_decay).add_(online_p.data, alpha=1 - self.ema_decay)
 
-    def training_step(self, frame_t: torch.Tensor, action: torch.Tensor, frame_t1: torch.Tensor, source: str = "noise"):
+    def training_step(self, frame_t: torch.Tensor, action_window: torch.Tensor, frame_t1: torch.Tensor, source: str = "noise"):
         """One CFM training step. Returns (velocity_loss, z_t) -- z_t is exposed
         so the caller can add the anti-collapse variance_loss on it, exactly as
         jepa_train.py does.
@@ -178,6 +228,7 @@ class CFMActionModel(nn.Module):
         z_t = self.online_encoder(frame_t)
         with torch.no_grad():
             x1 = self.target_encoder(frame_t1)  # target latent, detached
+        action = self.encode_action(action_window)
         x0 = z_t.detach() if source == "zt" else torch.randn_like(x1)
         s = torch.rand(x1.shape[0], device=x1.device)
         z_s = (1 - s[:, None]) * x0 + s[:, None] * x1
@@ -187,10 +238,11 @@ class CFMActionModel(nn.Module):
         return velocity_loss, z_t
 
     @torch.no_grad()
-    def sample(self, z_t: torch.Tensor, action: torch.Tensor, steps: int = 16, source: str = "noise") -> torch.Tensor:
+    def sample(self, z_t: torch.Tensor, action_window: torch.Tensor, steps: int = 16, source: str = "noise") -> torch.Tensor:
         """Integrate dz/ds = v_theta(z_s, s, z_t, action) from s=0 to s=1 with a
         simple Euler solver, returning a sample of z_{t+H}. `source` must match
         what the model was trained with (see training_step)."""
+        action = self.encode_action(action_window)
         z = z_t.clone() if source == "zt" else torch.randn(z_t.shape[0], self.embed_dim, device=z_t.device)
         dt = 1.0 / steps
         for i in range(steps):

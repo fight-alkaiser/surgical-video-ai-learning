@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-84 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-86 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -498,14 +498,53 @@ Reading the source alone wasn't enough to see any of this -- a week of
 hands-on debugging is what made it visible. See the Day85 post for the
 fuller writeup; next up is actually trying the sequence-model approach.
 
+## Result (Day 86) -- encoding the action window with a GRU instead of flattening
+
+Day85's genuinely-untried item: replace flattening the H-step action window
+with a small sequence model. Added `ActionSequenceEncoder` (`cfm_model.py`)
+-- a GRU that reads the window one step at a time and uses its final hidden
+state as the action embedding -- selectable via `cfm_train.py --action-mode
+{flatten,sequence}`. Same setup as Day83-84 otherwise (n=200 episodes, 300
+epochs, 3 seeds), so results are directly comparable to that flatten
+baseline.
+
+| seed | mode | real best_of_n | zero best_of_n |
+|---|---|---|---|
+| 0 | flatten | 0.00359 | 0.00347 |
+| 0 | sequence | 0.0061 | 0.0060 |
+| 1 | flatten | 0.00547 | 0.00539 |
+| 1 | sequence | 0.0040 | 0.0039 |
+| 2 | flatten | 0.00306 | 0.00290 |
+| 2 | sequence | 0.0037 | 0.0037 |
+
+Zero action still ties or beats real action in all three seeds with the
+GRU encoder -- the sequence model didn't flip the Day83-84 result. Absolute
+loss values were also noisier than the flatten version (e.g. seed0's
+paired_loss jumped from ~0.15 to ~0.19), with a wider train/val gap
+suggesting mild overfitting from the added GRU parameters at this data
+scale (200 episodes).
+
+Rereading earlier notes on the pi0 paper (arXiv:2410.24164) afterward: pi0
+also chunks actions, but on the *output* side (its Action Expert generates a
+chunk as a policy) rather than the *input/conditioning* side (this
+project's world-model-style setup), and it encodes the chunk with
+bidirectional attention over the whole window, not step-by-step
+recurrence -- a more expressive architecture than the GRU tried here. ACT's
+chunking also leans on temporal ensembling across overlapping chunk
+predictions to suppress compounding error, a different lever than the
+encoder architecture change made today. So this result should be read
+narrowly: "this GRU didn't help," not "sequence modeling can't help."
+Attention-based encoding, or the Day81-82 velocity-field accuracy itself,
+remain more likely places to look next.
+
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
-- The action window is currently flattened into one vector (already
-  matching action chunking, a la pi0 / CHSS's own 12-step chunks);
-  encoding it with a small sequence model instead may carry more usable
-  signal into the predictor -- untried by this project or by CHSS
+- Try an attention-based (Transformer) action-window encoder instead of
+  the GRU tried in Day86, closer to pi0's Action Expert design
+- Read the ACT (Action Chunking with Transformers) paper properly and
+  check whether its temporal-ensembling idea applies to the Day81-82 drift
 - Test whether Self Forcing-style training (condition on the model's own
   generated rollouts, not ground truth) reduces the Day81-82 drift,
   since CHSS uses this to address what looks like the same failure mode
@@ -536,7 +575,10 @@ fuller writeup; next up is actually trying the sequence-model approach.
   restores that checkpoint instead of the final epoch, with val_loss
   averaged over 3 stochastic draws and smoothed (trailing moving average)
   before comparing epochs -- fixes both overfitting-past-the-optimum and
-  noisy single-epoch checkpoint selection
+  noisy single-epoch checkpoint selection. Day86: `--action-mode
+  {flatten,sequence}` picks how the `(H, action_dim)` window becomes one
+  embedding -- `flatten` (default, unchanged) concatenates all H steps;
+  `sequence` runs it through `ActionSequenceEncoder`, a small GRU, instead
 - `cfm_eval_steps.py` -- Day81: reloads a saved checkpoint and re-runs the
   sampling-based eval at several `--steps` values, without retraining;
   used to test whether the paired_loss/best_of_n_error gap is an ODE
@@ -545,8 +587,9 @@ fuller writeup; next up is actually trying the sequence-model approach.
   a large sample pool per condition to (1) recompute best-of-N at several
   `N` values and (2) decompose expected error into bias² vs. variance;
   also dumps a 2D PCA scatter of one example pair's samples
-- `make_day78_summary.py` .. `make_day82_summary.py` -- regenerate the
-  cross-seed comparison figures from `outputs/history_cfm_*.json`
+- `make_day78_summary.py` .. `make_day82_summary.py`,
+  `make_day86_summary.py` -- regenerate the cross-seed comparison figures
+  from `outputs/history_cfm_*.json`
 - `outputs/` -- loss curves, qualitative comparisons, training history;
   `day61_experiment_summary_v2.png` (six pixel-space attempts compared),
   `day62_jepa_action_sensitivity.png` (latent-space action sensitivity),

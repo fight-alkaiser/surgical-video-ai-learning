@@ -40,6 +40,14 @@ parser.add_argument(
     help="Day79: use GatedVelocityPredictor -- action is injected through a learned sigmoid gate "
     "(initialized mostly closed) instead of being concatenated in directly.",
 )
+parser.add_argument(
+    "--action-mode",
+    choices=["flatten", "sequence"],
+    default="flatten",
+    help="Day86: how the (H, action_dim) window becomes one embedding. 'flatten' (Day78-85 default) "
+    "concatenates all H steps into one vector, same as CHSS's own action chunking. 'sequence' runs "
+    "a small GRU over the window instead, so step order is available to the network for free.",
+)
 args = parser.parse_args()
 H = args.horizon
 torch.manual_seed(args.seed)
@@ -65,17 +73,20 @@ train_episodes = set(episode_ids) - val_episodes  # original 16 + any additional
 print(f"train episodes ({len(train_episodes)}): {sorted(train_episodes)}")
 print(f"val episodes ({len(val_episodes)}):   {sorted(val_episodes)}")
 
-tag = f"h{H}_{args.source}_n{len(episode_ids)}_seed{args.seed}" + ("_gated" if args.gated else "")
+tag = f"h{H}_{args.source}_n{len(episode_ids)}_seed{args.seed}_{args.action_mode}" + ("_gated" if args.gated else "")
 
 
 def build_pairs(ep_ids):
+    """action_window keeps shape (N, H, action_dim_per_step) -- unflattened.
+    Day86: flattening now happens inside the model (CFMActionModel.encode_action),
+    not here, so the same windows feed either action_mode without duplicating data."""
     all_frame_t, all_action_t, all_frame_t1 = [], [], []
     for ep_id in ep_ids:
         frames = np.load(f"data/episodes/{ep_id}_frames.npy")
         actions = np.load(f"data/episodes/{ep_id}_actions.npy")
         if len(frames) <= H:
             continue
-        action_window = np.stack([actions[i : i + H].reshape(-1) for i in range(len(actions) - H)])
+        action_window = np.stack([actions[i : i + H] for i in range(len(actions) - H)])
         all_frame_t.append(frames[:-H])
         all_action_t.append(action_window)
         all_frame_t1.append(frames[H:])
@@ -85,20 +96,29 @@ def build_pairs(ep_ids):
 train_frame_t, train_action_t, train_frame_t1 = build_pairs(train_episodes)
 val_frame_t, val_action_t, val_frame_t1 = build_pairs(val_episodes)
 print(f"train pairs: {len(train_frame_t)}, val pairs: {len(val_frame_t)}")
+print(f"action window shape: {train_action_t.shape} (N, H, action_dim_per_step)")
 
-action_mean = train_action_t.mean(axis=0)
-action_std = train_action_t.std(axis=0) + 1e-6
+action_dim_per_step = train_action_t.shape[-1]
+# normalize per physical action dim, pooling over episode-timestep and window-position
+# (position-in-window isn't a separate physical quantity, so it shouldn't get separate stats)
+action_mean = train_action_t.reshape(-1, action_dim_per_step).mean(axis=0)
+action_std = train_action_t.reshape(-1, action_dim_per_step).std(axis=0) + 1e-6
 
 
 def to_tensor_batch(frame_t, action_t, frame_t1, idx):
     f = torch.from_numpy(frame_t[idx]).float().permute(0, 3, 1, 2) / 255.0
-    a = torch.from_numpy((action_t[idx] - action_mean) / action_std).float()
+    a = torch.from_numpy((action_t[idx] - action_mean) / action_std).float()  # (B, H, action_dim_per_step)
     f1 = torch.from_numpy(frame_t1[idx]).float().permute(0, 3, 1, 2) / 255.0
     return f.to(DEVICE), a.to(DEVICE), f1.to(DEVICE)
 
 
-model = CFMActionModel(action_dim=train_action_t.shape[1], gated=args.gated).to(DEVICE)
-opt = torch.optim.Adam(list(model.online_encoder.parameters()) + list(model.velocity.parameters()), lr=args.lr)
+model = CFMActionModel(
+    action_dim_per_step=action_dim_per_step, horizon=H, gated=args.gated, action_mode=args.action_mode
+).to(DEVICE)
+trainable_params = list(model.online_encoder.parameters()) + list(model.velocity.parameters())
+if model.action_encoder is not None:
+    trainable_params += list(model.action_encoder.parameters())
+opt = torch.optim.Adam(trainable_params, lr=args.lr)
 
 history = {"train_loss": [], "val_loss": [], "z_std": []}
 best_val_loss = float("inf")
