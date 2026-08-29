@@ -168,6 +168,17 @@ one -- but the unconditioned version comes first.
 on the real endoscope video, next to the ground-truth continuation, so
 the forecast is visually checkable rather than just a number.
 
+*Correction, added at the start of Day42*: this specific plan turned
+out not to be feasible. JIGSAWS ships no camera calibration
+(intrinsic/extrinsic parameters) for either capture, and the tooltip
+xyz in kinematics is in robot/world coordinates, not image coordinates
+-- there is no documented way to project one onto the other correctly.
+Fitting a projection by hand would risk exactly the kind of
+plausible-looking-but-unjustified overlay the anti-fabrication rule
+below is meant to prevent. The presentation is changed to a 3D
+trajectory plot (predicted vs. ground truth, both shown together) with
+no video overlay.
+
 **An explicit anti-fabrication rule for this whole arc, raised by the
 owner and binding on every future day that touches this**: a trajectory
 overlay is trivial to fake -- plotting the *ground-truth* trajectory

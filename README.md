@@ -310,3 +310,10 @@ Day 41 - JIGSAWS: First Look (EDA)
 * Sets the arc's direction after discussion: short-horizon kinematic trajectory forecasting (predict ~1-2s of future tooltip position from a past window, in the 76-dim kinematic state space, not pixels), presented as a video overlay of predicted-vs-actual tooltip path — a small, honest step toward the owner's stated interest in surgical world models, after explicitly ruling out full text-conditioned video generation as infeasible on this hardware and with this dataset. Includes a binding anti-fabrication rule for every future day in this arc: any trajectory shown as a "prediction" must use only past information, be evaluated on held-out trials, and be visually distinguished from ground truth.
 
 See [day41 details](day41_jigsaws_eda/README.md).
+
+Day 42 - Trajectory Forecasting: Naive Baselines
+
+* Before any learned model, established what zero-training baselines achieve on the arc's core task: forecasting a surgical instrument's future position from its past kinematic state (Suturing, slave-right tooltip, 1s past predicting 1s ahead, 4,319 windows across 39 trials). Two closed-form baselines compared: last-position-held (predict no movement) and constant-velocity (extrapolate using the robot's own recorded velocity), both using only information from before the prediction start per Day41's anti-fabrication rule.
+* Found a clean crossover: constant-velocity wins at short horizons (0.46mm at +0.1s vs. 1.21mm) but loses badly at longer ones (12.57mm at +1.0s vs. 9.46mm), because real surgical motion changes direction within a second far more often than it continues straight. This gives any future learned model two concrete numbers to beat at two different horizons, and previews the design question for Day43: can a model combine short-term momentum with longer-term awareness of upcoming direction change?
+
+See [day42 details](day42_trajectory_forecasting_baseline/README.md).
