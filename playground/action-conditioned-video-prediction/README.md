@@ -537,14 +537,43 @@ narrowly: "this GRU didn't help," not "sequence modeling can't help."
 Attention-based encoding, or the Day81-82 velocity-field accuracy itself,
 remain more likely places to look next.
 
+## Note (Day 87) -- reading ACT properly, and why its tricks don't transplant directly
+
+Read ACT (Zhao et al., 2023, arXiv:2304.13705) in full. Two things
+clarified against Day86's finding that pi0/CHSS chunk actions on the
+output side while this project conditions on them as input:
+
+- ACT's temporal ensembling (averaging overlapping chunk predictions
+  across timesteps at execution time) looks similar in spirit to the
+  Day86 GRU -- both use temporal redundancy to fight noise near a
+  decision point -- but it operates on the *output* side and is only
+  safe because ACT's CVAE decoder is deterministic at inference. This
+  project's CFM sampling is stochastic and multimodal, so naively
+  averaging generated samples the same way would repeat the exact
+  mistake Day78 already ruled out (average-of-samples penalizes correct
+  multimodality; use best-of-N instead)
+- ACT trains as a Conditional VAE specifically because human
+  demonstrations are multimodal: the encoder sees the ground-truth chunk
+  during training and compresses "which style" into z, so the decoder
+  reproduces it precisely instead of regressing to a blurred average
+  across styles; at inference z is fixed to the prior's mean. This
+  project's CFM faces the same multimodality but resolves it differently
+  -- rather than collapsing to one representative output, it samples
+  different valid futures directly, which is the reason best-of_n_error
+  exists as a metric at all. Two different solutions to the same
+  underlying problem, not one more sophisticated than the other
+
+Net effect: ACT's own chunk decoder uses parallel cross-attention (not
+recurrence) to generate the chunk, reinforcing that an attention-based
+encoder is the natural next architecture to try, not a GRU refinement.
+
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
 - Try an attention-based (Transformer) action-window encoder instead of
-  the GRU tried in Day86, closer to pi0's Action Expert design
-- Read the ACT (Action Chunking with Transformers) paper properly and
-  check whether its temporal-ensembling idea applies to the Day81-82 drift
+  the GRU tried in Day86, closer to pi0's Action Expert / ACT's decoder
+  design
 - Test whether Self Forcing-style training (condition on the model's own
   generated rollouts, not ground truth) reduces the Day81-82 drift,
   since CHSS uses this to address what looks like the same failure mode
