@@ -42,11 +42,13 @@ parser.add_argument(
 )
 parser.add_argument(
     "--action-mode",
-    choices=["flatten", "sequence"],
+    choices=["flatten", "sequence", "transformer"],
     default="flatten",
-    help="Day86: how the (H, action_dim) window becomes one embedding. 'flatten' (Day78-85 default) "
-    "concatenates all H steps into one vector, same as CHSS's own action chunking. 'sequence' runs "
-    "a small GRU over the window instead, so step order is available to the network for free.",
+    help="How the (H, action_dim) window becomes one embedding. 'flatten' (Day78-85 default) "
+    "concatenates all H steps into one vector, same as CHSS's own action chunking. 'sequence' "
+    "(Day86) runs a small GRU over the window instead. 'transformer' (Day88) runs a small "
+    "self-attention encoder over the whole window at once, closer to ACT's decoder / pi0's Action "
+    "Expert design.",
 )
 args = parser.parse_args()
 H = args.horizon

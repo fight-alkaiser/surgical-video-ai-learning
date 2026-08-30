@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-86 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-88 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -567,13 +567,40 @@ Net effect: ACT's own chunk decoder uses parallel cross-attention (not
 recurrence) to generate the chunk, reinforcing that an attention-based
 encoder is the natural next architecture to try, not a GRU refinement.
 
+## Result (Day 88) -- an attention-based action-window encoder, and the first crack in the zero-wins streak
+
+Added `ActionTransformerEncoder` (`cfm_model.py`) -- linear per-step
+embedding + learned positional embeddings + 2 self-attention layers + mean
+pooling -- selectable via `cfm_train.py --action-mode transformer`.
+Every step can attend to every other step directly, unlike the Day86 GRU's
+single carried-forward hidden state. Same setup otherwise (n=200 episodes,
+300 epochs, 3 seeds).
+
+| seed | real best_of_n | zero best_of_n | winner |
+|---|---|---|---|
+| 0 | 0.0041 | 0.0031 | zero |
+| 1 | 0.0032 | 0.0045 | **real** |
+| 2 | 0.0155 | 0.0151 | zero (near tie) |
+
+Since Day80, across both flatten and GRU encodings, zero action beat real
+action in every seed, every time -- eight straight days of the same
+result. With the Transformer encoder, seed1 broke that pattern: real
+action won clearly. seed0 and seed2 stayed zero-favoring (seed2 nearly
+tied, though its absolute error scale is roughly 5x seed0/seed1's,
+suggesting a less-converged run).
+
+This should not be over-read from one seed out of three. This project has
+seen seed-sensitive training before (Day83-84: one seed failed to converge
+within 300 epochs at all), so this could be a genuine signal from the
+richer, more expressive architecture, or just noisier optimization from a
+harder-to-train model. More seeds are needed before concluding anything.
+
 ## Next steps (not yet done)
 
+- Rerun the Day88 Transformer action encoder with more seeds (5+) to check
+  whether seed1's real-beats-zero result is a real signal or training noise
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
-- Try an attention-based (Transformer) action-window encoder instead of
-  the GRU tried in Day86, closer to pi0's Action Expert / ACT's decoder
-  design
 - Test whether Self Forcing-style training (condition on the model's own
   generated rollouts, not ground truth) reduces the Day81-82 drift,
   since CHSS uses this to address what looks like the same failure mode
@@ -605,9 +632,11 @@ encoder is the natural next architecture to try, not a GRU refinement.
   averaged over 3 stochastic draws and smoothed (trailing moving average)
   before comparing epochs -- fixes both overfitting-past-the-optimum and
   noisy single-epoch checkpoint selection. Day86: `--action-mode
-  {flatten,sequence}` picks how the `(H, action_dim)` window becomes one
-  embedding -- `flatten` (default, unchanged) concatenates all H steps;
-  `sequence` runs it through `ActionSequenceEncoder`, a small GRU, instead
+  {flatten,sequence,transformer}` picks how the `(H, action_dim)` window
+  becomes one embedding -- `flatten` (default, unchanged) concatenates all
+  H steps; `sequence` runs it through `ActionSequenceEncoder`, a small
+  GRU, instead. Day88: `transformer` runs it through
+  `ActionTransformerEncoder`, a small self-attention encoder, instead
 - `cfm_eval_steps.py` -- Day81: reloads a saved checkpoint and re-runs the
   sampling-based eval at several `--steps` values, without retraining;
   used to test whether the paired_loss/best_of_n_error gap is an ODE
@@ -618,7 +647,8 @@ encoder is the natural next architecture to try, not a GRU refinement.
   also dumps a 2D PCA scatter of one example pair's samples
 - `make_day78_summary.py` .. `make_day82_summary.py`,
   `make_day86_summary.py` -- regenerate the cross-seed comparison figures
-  from `outputs/history_cfm_*.json`
+  from `outputs/history_cfm_*.json` (Day88's figure was generated inline,
+  not via a dedicated script)
 - `outputs/` -- loss curves, qualitative comparisons, training history;
   `day61_experiment_summary_v2.png` (six pixel-space attempts compared),
   `day62_jepa_action_sensitivity.png` (latent-space action sensitivity),

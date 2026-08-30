@@ -81,6 +81,43 @@ class ActionSequenceEncoder(nn.Module):
         return self.out(h_n[-1])
 
 
+class ActionTransformerEncoder(nn.Module):
+    """Day88: encodes the (H, action_dim_per_step) action window with a small
+    Transformer encoder, following the design ACT's decoder and pi0's Action
+    Expert actually use for chunks -- self-attention across the whole window
+    at once, not the step-by-step recurrence the Day86 GRU used. Every
+    timestep can attend to every other timestep directly, rather than being
+    forced through a single hidden-state bottleneck carried step to step.
+
+    Each step is linearly embedded, given a learned positional embedding
+    (order is not implicit here the way it is for a GRU -- attention itself
+    is permutation-invariant), passed through a couple of self-attention
+    layers, then mean-pooled across the H steps into one action embedding.
+    """
+
+    def __init__(
+        self,
+        action_dim_per_step: int,
+        horizon: int,
+        hidden: int = 64,
+        out_dim: int = 64,
+        nhead: int = 4,
+        num_layers: int = 2,
+    ):
+        super().__init__()
+        self.embed = nn.Linear(action_dim_per_step, hidden)
+        self.pos_embed = nn.Parameter(torch.randn(1, horizon, hidden) * 0.02)
+        layer = nn.TransformerEncoderLayer(d_model=hidden, nhead=nhead, dim_feedforward=hidden * 4, batch_first=True)
+        self.transformer = nn.TransformerEncoder(layer, num_layers=num_layers)
+        self.out = nn.Linear(hidden, out_dim)
+
+    def forward(self, action_seq: torch.Tensor) -> torch.Tensor:
+        # action_seq: (B, H, action_dim_per_step) -> (B, out_dim)
+        h = self.embed(action_seq) + self.pos_embed
+        h = self.transformer(h)
+        return self.out(h.mean(dim=1))
+
+
 class VelocityPredictor(nn.Module):
     """(z_s, s, z_t, action) -> velocity, i.e. the flow-matching predictor.
 
@@ -177,6 +214,9 @@ class CFMActionModel(nn.Module):
         if action_mode == "sequence":
             self.action_encoder = ActionSequenceEncoder(action_dim_per_step, out_dim=embed_dim)
             action_dim = embed_dim
+        elif action_mode == "transformer":
+            self.action_encoder = ActionTransformerEncoder(action_dim_per_step, horizon, out_dim=embed_dim)
+            action_dim = embed_dim
         else:
             self.action_encoder = None
             action_dim = action_dim_per_step * horizon
@@ -189,7 +229,7 @@ class CFMActionModel(nn.Module):
         """action_window: (B, H, action_dim_per_step), raw (already-normalized)
         actions -- always this shape regardless of action_mode, so callers
         never need to know whether flattening or the GRU happens inside."""
-        if self.action_mode == "sequence":
+        if self.action_encoder is not None:
             return self.action_encoder(action_window)
         return action_window.reshape(action_window.shape[0], -1)
 
