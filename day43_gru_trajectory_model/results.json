@@ -1,0 +1,40 @@
+{
+  "held_out_subject": "B",
+  "test_trials": [
+    "Suturing_B001",
+    "Suturing_B002",
+    "Suturing_B003",
+    "Suturing_B004",
+    "Suturing_B005"
+  ],
+  "num_test_windows": 612,
+  "methods": {
+    "gru_model": {
+      "mean_error_full_horizon_m": 0.004139230120927095,
+      "mean_error_by_checkpoint_m": {
+        "0.1": 0.0008153292001225054,
+        "0.3": 0.0022711975034326315,
+        "0.5": 0.003838821081444621,
+        "1.0": 0.007983480580151081
+      }
+    },
+    "last_position_held": {
+      "mean_error_full_horizon_m": 0.005109997902121032,
+      "mean_error_by_checkpoint_m": {
+        "0.1": 0.001110498795268579,
+        "0.3": 0.003138508290541898,
+        "0.5": 0.0050985015985699315,
+        "1.0": 0.009412302026834695
+      }
+    },
+    "constant_velocity": {
+      "mean_error_full_horizon_m": 0.005060053391544786,
+      "mean_error_by_checkpoint_m": {
+        "0.1": 0.00043301569867525445,
+        "0.3": 0.0022816936108285527,
+        "0.5": 0.004641692227364499,
+        "1.0": 0.011119756712946157
+      }
+    }
+  }
+}

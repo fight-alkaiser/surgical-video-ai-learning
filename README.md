@@ -317,3 +317,10 @@ Day 42 - Trajectory Forecasting: Naive Baselines
 * Found a clean crossover: constant-velocity wins at short horizons (0.46mm at +0.1s vs. 1.21mm) but loses badly at longer ones (12.57mm at +1.0s vs. 9.46mm), because real surgical motion changes direction within a second far more often than it continues straight. This gives any future learned model two concrete numbers to beat at two different horizons, and previews the design question for Day43: can a model combine short-term momentum with longer-term awareness of upcoming direction change?
 
 See [day42 details](day42_trajectory_forecasting_baseline/README.md).
+
+Day 43 - A GRU Trajectory Model: Wins on the Metric, Fails on Physical Plausibility
+
+* Built the arc's first learned model: a single GRU encoding the past 1s of slave-right tooltip kinematics, decoded in one shot to the future 30-frame position sequence, trained/evaluated with leave-one-subject-out (reproducing JIGSAWS' official UserOut split) and Day42's baselines recomputed on the same held-out subject for a fair comparison.
+* The GRU beats both baselines on mean displacement error (4.14mm vs. 5.11mm/5.06mm) and at every horizon checkpoint from +0.3s onward — a real win on the target metric. But an independent smoothness check (frame-to-frame step size, not compared to ground truth at all) shows the model's predicted path moves over 3x farther between consecutive frames than real tooltip motion ever does — a physically implausible, jittery trajectory the displacement metric can't detect, because a single-shot linear decoder has no constraint linking one predicted frame to the next. Sets up Day44 to fix this specific failure mode (autoregressive decoding or a smoothness-penalized loss) rather than treating the metric win as the finish line.
+
+See [day43 details](day43_gru_trajectory_model/README.md).
