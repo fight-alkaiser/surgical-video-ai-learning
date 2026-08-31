@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-88 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-89 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -595,10 +595,42 @@ within 300 epochs at all), so this could be a genuine signal from the
 richer, more expressive architecture, or just noisier optimization from a
 harder-to-train model. More seeds are needed before concluding anything.
 
+## Result (Day 89) -- the Day88 "crack" was undertrained checkpoints, not attention helping
+
+Added seed3 and seed4 to the Day88 Transformer sweep (5 seeds total) and
+checked `best_epoch` for each run against which condition (real/zero) won
+on `best_of_n_error`:
+
+| seed | best_epoch (of 300) | winner |
+|---|---|---|
+| 0 | 294 | zero |
+| 1 | 2 | real |
+| 2 | 290 | zero |
+| 3 | 6 | real |
+| 4 | 299 | zero |
+
+Every seed where zero won had a checkpoint from deep into training
+(genuinely converged). Both seeds where real "won" (seed1, seed3) had
+checkpoints from epoch 2 and epoch 6 -- essentially untrained, picked by
+the Day83 smoothed-best-checkpoint logic because this seed's val_loss
+never recovered below its very-early value even after 300 epochs (checked
+seed3's full curve: val_loss rises from ~0.19 to ~0.28 by epoch 60-80,
+then only partially recovers to ~0.18 by epoch 290, never beating the
+epoch-6 point). This isn't the Day83 bug re-appearing (the smoothing
+logic is working correctly) -- it's a real optimization-stability issue
+with the Transformer encoder at this data/parameter scale that the
+flatten and GRU encoders didn't show.
+
+Once only converged checkpoints are trusted, all three action-window
+encoders tried so far (flatten, GRU, attention) land on the same answer:
+zero action beats real action. Day88's "first crack in the streak" is
+better explained as noise from undertrained runs than as attention
+letting the model use the action after all. This shifts confidence away
+from encoder architecture as the bottleneck and back toward Day81-82's
+velocity-field accuracy as the more likely place to keep looking.
+
 ## Next steps (not yet done)
 
-- Rerun the Day88 Transformer action encoder with more seeds (5+) to check
-  whether seed1's real-beats-zero result is a real signal or training noise
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
 - Test whether Self Forcing-style training (condition on the model's own
