@@ -621,13 +621,17 @@ logic is working correctly) -- it's a real optimization-stability issue
 with the Transformer encoder at this data/parameter scale that the
 flatten and GRU encoders didn't show.
 
-Once only converged checkpoints are trusted, all three action-window
-encoders tried so far (flatten, GRU, attention) land on the same answer:
-zero action beats real action. Day88's "first crack in the streak" is
-better explained as noise from undertrained runs than as attention
-letting the model use the action after all. This shifts confidence away
-from encoder architecture as the bottleneck and back toward Day81-82's
-velocity-field accuracy as the more likely place to keep looking.
+Once only converged checkpoints are trusted, almost all runs across the
+three action-window encoders tried so far (flatten, GRU, attention) land
+on the same answer: zero action beats real action. The one exception is
+GRU seed2 (`h10_noise_n200_seed2_sequence`, best_epoch=269, genuinely
+converged), where real edged out zero by a razor-thin, near-noise-level
+margin (0.003720 vs 0.003742, ~0.6%) -- not a clean counterexample, but
+not nothing either. Day88's "first crack in the streak" is better
+explained as noise from undertrained runs than as attention letting the
+model use the action after all. This shifts confidence away from encoder
+architecture as the bottleneck and back toward Day81-82's velocity-field
+accuracy as the more likely place to keep looking.
 
 ## Next steps (not yet done)
 
