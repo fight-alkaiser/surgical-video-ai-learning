@@ -324,3 +324,10 @@ Day 43 - A GRU Trajectory Model: Wins on the Metric, Fails on Physical Plausibil
 * The GRU beats both baselines on mean displacement error (4.14mm vs. 5.11mm/5.06mm) and at every horizon checkpoint from +0.3s onward — a real win on the target metric. But an independent smoothness check (frame-to-frame step size, not compared to ground truth at all) shows the model's predicted path moves over 3x farther between consecutive frames than real tooltip motion ever does — a physically implausible, jittery trajectory the displacement metric can't detect, because a single-shot linear decoder has no constraint linking one predicted frame to the next. Sets up Day44 to fix this specific failure mode (autoregressive decoding or a smoothness-penalized loss) rather than treating the metric win as the finish line.
 
 See [day43 details](day43_gru_trajectory_model/README.md).
+
+Day 44 - Autoregressive Decoding: The Named Risk Materializes, Badly
+
+* Tested the structural fix aimed directly at Day43's jaggedness problem: a GRUCell decoder predicting one step at a time, chained through the recurrence, trained with teacher forcing and evaluated with free-running rollout (the model sees only its own predictions, matching real use). The exposure-bias risk was named explicitly before running anything.
+* The risk dominated everything: the autoregressive model is 4-5x worse than Day42's baselines (mean error 21.28mm vs. 5.06-5.11mm; 51.73mm vs. 9.41-11.12mm at +1.0s), despite near-zero teacher-forced training loss. The example plots show something more specific than plain drift — four different held-out trials converge to nearly the same generic curve regardless of their actual input, suggesting the free-running decoder's dynamics are dominated by the GRUCell's own attractor behavior rather than the encoder's context. Day43's flawed single-shot model remains this arc's only result beating both baselines; Day45 tries scheduled sampling to fix exposure bias without abandoning autoregression.
+
+See [day44 details](day44_autoregressive_trajectory_model/README.md).
