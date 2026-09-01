@@ -331,3 +331,10 @@ Day 44 - Autoregressive Decoding: The Named Risk Materializes, Badly
 * The risk dominated everything: the autoregressive model is 4-5x worse than Day42's baselines (mean error 21.28mm vs. 5.06-5.11mm; 51.73mm vs. 9.41-11.12mm at +1.0s), despite near-zero teacher-forced training loss. The example plots show something more specific than plain drift — four different held-out trials converge to nearly the same generic curve regardless of their actual input, suggesting the free-running decoder's dynamics are dominated by the GRUCell's own attractor behavior rather than the encoder's context. Day43's flawed single-shot model remains this arc's only result beating both baselines; Day45 tries scheduled sampling to fix exposure bias without abandoning autoregression.
 
 See [day44 details](day44_autoregressive_trajectory_model/README.md).
+
+Day 45 - Scheduled Sampling: Smoothness Fixed, Accuracy Still Not There
+
+* Applied the standard fix for Day44's exposure bias: scheduled sampling, ramping the probability of feeding the decoder its own prediction (instead of the true delta) linearly from 0 to 1.0 over training, so training conditions match free-running evaluation by the final epoch. Same architecture, held-out subject, and baselines as Day44.
+* Mean error dropped 3.3x (21.28mm to 6.51mm) and predicted-path smoothness now essentially matches real tooltip motion (0.353mm step size vs. ground truth's 0.388mm) — the best smoothness result in the arc. But the model still doesn't beat either of Day42's baselines on displacement error, and remains behind Day43's jagged-but-accurate single-shot model. Three learned models in, no single one has been both accurate and physically plausible at once. Also records a caveat raised by the owner: every method tried shows the same ~10x error growth from +0.1s to +1.0s, suggesting a 1-second horizon is close to trajectory data's actual predictability ceiling (driven by the surgeon's judgment, not encoded in past kinematics) rather than a gap a smarter model will simply close.
+
+See [day45 details](day45_scheduled_sampling/README.md).

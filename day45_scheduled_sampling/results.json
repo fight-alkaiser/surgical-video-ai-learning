@@ -1,0 +1,54 @@
+{
+  "held_out_subject": "B",
+  "test_trials": [
+    "Suturing_B001",
+    "Suturing_B002",
+    "Suturing_B003",
+    "Suturing_B004",
+    "Suturing_B005"
+  ],
+  "num_test_windows": 612,
+  "methods": {
+    "scheduled_sampling_gru": {
+      "mean_error_full_horizon_m": 0.006512846797704697,
+      "mean_error_by_checkpoint_m": {
+        "0.1": 0.0013262683060020208,
+        "0.3": 0.0035493315663188696,
+        "0.5": 0.00615048548206687,
+        "1.0": 0.012956168502569199
+      },
+      "mean_step_size_m": 0.0003528899687808007,
+      "median_step_size_m": 0.00029965618159621954,
+      "max_step_size_m": 0.004228245932608843
+    },
+    "last_position_held": {
+      "mean_error_full_horizon_m": 0.005109997902121032,
+      "mean_error_by_checkpoint_m": {
+        "0.1": 0.001110498795268579,
+        "0.3": 0.003138508290541898,
+        "0.5": 0.0050985015985699315,
+        "1.0": 0.009412302026834695
+      },
+      "mean_step_size_m": 0.0,
+      "median_step_size_m": 0.0,
+      "max_step_size_m": 0.0
+    },
+    "constant_velocity": {
+      "mean_error_full_horizon_m": 0.005060053391544786,
+      "mean_error_by_checkpoint_m": {
+        "0.1": 0.00043301569867525445,
+        "0.3": 0.0022816936108285527,
+        "0.5": 0.004641692227364499,
+        "1.0": 0.011119756712946157
+      },
+      "mean_step_size_m": 0.00039508424846741513,
+      "median_step_size_m": 0.0002292062762253844,
+      "max_step_size_m": 0.003568413100462955
+    }
+  },
+  "ground_truth_step_size_m": {
+    "mean": 0.000388158718124032,
+    "median": 0.00017625221516937017,
+    "max": 0.009623277001082897
+  }
+}
