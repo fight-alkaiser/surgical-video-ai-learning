@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-89 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-90 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -633,13 +633,67 @@ model use the action after all. This shifts confidence away from encoder
 architecture as the bottleneck and back toward Day81-82's velocity-field
 accuracy as the more likely place to keep looking.
 
+## Result (Day 90) -- Self Forcing-style training doesn't fix it, and a checkpoint-selection hypothesis is ruled out
+
+Implemented the Self Forcing test from the Day81-82/85 next-steps list.
+Added `self_forcing_prob`/`self_forcing_steps` to
+`CFMActionModel.training_step` (`cfm_model.py`): with probability
+`self_forcing_prob`, z_s is produced by rolling the model's own current
+velocity field forward 1..`self_forcing_steps`-1 Euler steps from x0
+(instead of taking the exact point on the x0-x1 line), and the target
+velocity is corrected to `(x1 - z_s) / (1 - s)` so it still points at x1
+from wherever the rollout actually landed -- training the model to
+correct its own drift, not just follow the ideal path. `--self-forcing-prob`
+/ `--self-forcing-steps` added to `cfm_train.py`.
+
+Hit one incident during implementation: allowing the rollout to reach
+s=1 exactly made `(1 - s)` underflow toward zero, exploding the
+corrective target and diverging training. Fixed by capping the rollout
+at `self_forcing_steps - 1` steps so `s < 1` always holds.
+
+Ran flatten mode, n=200, 300 epochs, `self_forcing_prob=0.3`,
+`self_forcing_steps=4`. Time-constrained to 2 seeds instead of 3:
+
+| seed | best_epoch (of 300) | real best_of_n | zero best_of_n |
+|---|---|---|---|
+| 0 | 0 (untrained, not usable) | 0.0052 | 0.0051 |
+| 1 | 295 (converged) | 0.0098 | 0.0096 |
+
+seed1 is the only usable data point: zero still edges out real, and the
+absolute error is ~1.8x the original flatten baseline's (seed1: real
+0.00547 / zero 0.00539) -- self-forcing did not help, and plausibly made
+optimization harder.
+
+Also tested a specific hypothesis for why `best_epoch` keeps landing
+suspiciously early across unrelated architectures (Day88 seed1/seed3,
+today's seed0, and -- checked freshly for this -- the original flatten
+seed1 too): that an early, deceptively-low val_loss reflects a
+still-collapsed encoder latent space rather than genuine model quality.
+Checked `z_std` at each early best_epoch against the same run's final
+epoch and epoch 0; it was not collapsed in any of them (already ~1.3-1.4
+by epoch 0, similar to converged runs). Hypothesis not supported.
+
+What the data did show instead: every run with an early `best_epoch`
+shares the same val_loss shape -- an early dip, then a long worse
+stretch that never fully recovers -- while every run with a late
+`best_epoch` never has that early dip at all. This split appears across
+flatten, GRU, transformer, and self-forcing alike, so it looks like a
+property of specific seeds interacting with this training setup (200
+episodes, this LR, embed_dim=64), not of any encoder architecture change
+tested since Day86.
+
+Three days of architecture changes (Day86-89) and one day of an
+objective change (today) have not moved the core result. No clear next
+experiment is identified; rereading this project's own paper notes for
+something missed seems more promising than another training run.
+
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
-- Test whether Self Forcing-style training (condition on the model's own
-  generated rollouts, not ground truth) reduces the Day81-82 drift,
-  since CHSS uses this to address what looks like the same failure mode
+- No concrete next experiment identified as of Day90 -- revisit after
+  rereading paper notes (pi0, ACT, CHSS, Self Forcing) for anything
+  missed, rather than trying another architecture/objective variant
 
 ## Files
 
@@ -672,7 +726,11 @@ accuracy as the more likely place to keep looking.
   becomes one embedding -- `flatten` (default, unchanged) concatenates all
   H steps; `sequence` runs it through `ActionSequenceEncoder`, a small
   GRU, instead. Day88: `transformer` runs it through
-  `ActionTransformerEncoder`, a small self-attention encoder, instead
+  `ActionTransformerEncoder`, a small self-attention encoder, instead.
+  Day90: `--self-forcing-prob`/`--self-forcing-steps` train on the
+  model's own partially-integrated rollout some fraction of the time
+  instead of the exact interpolated point, targeting the Day81-82
+  sampling drift (`CFMActionModel.training_step`)
 - `cfm_eval_steps.py` -- Day81: reloads a saved checkpoint and re-runs the
   sampling-based eval at several `--steps` values, without retraining;
   used to test whether the paired_loss/best_of_n_error gap is an ODE

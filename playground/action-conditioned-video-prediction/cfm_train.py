@@ -50,6 +50,21 @@ parser.add_argument(
     "self-attention encoder over the whole window at once, closer to ACT's decoder / pi0's Action "
     "Expert design.",
 )
+parser.add_argument(
+    "--self-forcing-prob",
+    type=float,
+    default=0.0,
+    help="Day90: probability that a training batch uses a self-forcing target instead of the exact "
+    "interpolated point -- see CFMActionModel.training_step docstring. 0.0 (default) reproduces "
+    "plain CFM training (Day78-89 behavior).",
+)
+parser.add_argument(
+    "--self-forcing-steps",
+    type=int,
+    default=4,
+    help="number of Euler steps available for the self-forcing rollout (a random count from 1 to this "
+    "many is used each time, so the model sees drift of varying severity)",
+)
 args = parser.parse_args()
 H = args.horizon
 torch.manual_seed(args.seed)
@@ -76,6 +91,8 @@ print(f"train episodes ({len(train_episodes)}): {sorted(train_episodes)}")
 print(f"val episodes ({len(val_episodes)}):   {sorted(val_episodes)}")
 
 tag = f"h{H}_{args.source}_n{len(episode_ids)}_seed{args.seed}_{args.action_mode}" + ("_gated" if args.gated else "")
+if args.self_forcing_prob > 0:
+    tag += f"_sf{args.self_forcing_prob}"
 
 
 def build_pairs(ep_ids):
@@ -122,7 +139,7 @@ if model.action_encoder is not None:
     trainable_params += list(model.action_encoder.parameters())
 opt = torch.optim.Adam(trainable_params, lr=args.lr)
 
-history = {"train_loss": [], "val_loss": [], "z_std": []}
+history = {"train_loss": [], "val_loss": [], "z_std": [], "self_forcing_prob": args.self_forcing_prob, "self_forcing_steps": args.self_forcing_steps}
 best_val_loss = float("inf")
 best_epoch = -1
 best_state = None
@@ -134,7 +151,9 @@ for epoch in range(args.epochs):
     for i in range(0, len(perm), BATCH_SIZE):
         batch_idx = perm[i : i + BATCH_SIZE]
         f, a, f1 = to_tensor_batch(train_frame_t, train_action_t, train_frame_t1, batch_idx)
-        velocity_loss, z_t = model.training_step(f, a, f1, source=args.source)
+        velocity_loss, z_t = model.training_step(
+            f, a, f1, source=args.source, self_forcing_prob=args.self_forcing_prob, self_forcing_steps=args.self_forcing_steps
+        )
         collapse_penalty = variance_loss(z_t)
         loss = velocity_loss + args.var_weight * collapse_penalty
         opt.zero_grad()

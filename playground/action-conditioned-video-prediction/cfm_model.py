@@ -250,7 +250,15 @@ class CFMActionModel(nn.Module):
         for online_p, target_p in zip(self.online_encoder.parameters(), self.target_encoder.parameters()):
             target_p.data.mul_(self.ema_decay).add_(online_p.data, alpha=1 - self.ema_decay)
 
-    def training_step(self, frame_t: torch.Tensor, action_window: torch.Tensor, frame_t1: torch.Tensor, source: str = "noise"):
+    def training_step(
+        self,
+        frame_t: torch.Tensor,
+        action_window: torch.Tensor,
+        frame_t1: torch.Tensor,
+        source: str = "noise",
+        self_forcing_prob: float = 0.0,
+        self_forcing_steps: int = 4,
+    ):
         """One CFM training step. Returns (velocity_loss, z_t) -- z_t is exposed
         so the caller can add the anti-collapse variance_loss on it, exactly as
         jepa_train.py does.
@@ -264,15 +272,52 @@ class CFMActionModel(nn.Module):
           "no change at all" is already the s=0 point of the path -- structurally
           closer to how model.py's residual/delta prediction fixed the Day61
           blur-tax problem in pixel space.
+
+        Day90: `self_forcing_prob` > 0 trains on *the model's own partially-
+        integrated rollouts* some fraction of the time, instead of always on
+        exact points on the straight x0-x1 line. Day81-82 found that sampling
+        (repeatedly applying the still-imperfect velocity field with an Euler
+        integrator) introduces a small, consistent drift that plain CFM
+        training can't see, because training only ever shows the model exact
+        interpolated points -- points it never actually visits once its own
+        field has any error. This is the same exposure-bias story CHSS's Self
+        Forcing distillation targets (train the student on its own generated
+        rollouts, not ground truth). Here, with probability
+        `self_forcing_prob`, z_s is instead produced by running 1..
+        self_forcing_steps Euler steps of the model's *current* (detached)
+        velocity field starting from x0, and the target velocity is corrected
+        to point from wherever that rollout actually landed straight at x1 in
+        the remaining time -- (x1 - z_s) / (1 - s) -- rather than the fixed
+        x1 - x0 direction of the ideal line, which is generally wrong once
+        z_s is already off that line.
         """
         z_t = self.online_encoder(frame_t)
         with torch.no_grad():
             x1 = self.target_encoder(frame_t1)  # target latent, detached
         action = self.encode_action(action_window)
         x0 = z_t.detach() if source == "zt" else torch.randn_like(x1)
-        s = torch.rand(x1.shape[0], device=x1.device)
-        z_s = (1 - s[:, None]) * x0 + s[:, None] * x1
-        u_target = x1 - x0
+
+        if self_forcing_prob > 0 and torch.rand(()).item() < self_forcing_prob:
+            # k stops short of self_forcing_steps so s_val < 1 always -- otherwise
+            # (1 - s_val) -> 0 and the corrective target below blows up.
+            k = torch.randint(1, self_forcing_steps, (1,)).item()
+            dt = 1.0 / self_forcing_steps
+            with torch.no_grad():
+                z = x0.clone()
+                s_val = 0.0
+                for i in range(k):
+                    s_i = torch.full((x1.shape[0],), s_val, device=x1.device)
+                    v = self.velocity(z, s_i, z_t, action)
+                    z = z + v * dt
+                    s_val += dt
+            z_s = z  # the model's own (possibly off-line) rollout state, detached
+            s = torch.full((x1.shape[0],), s_val, device=x1.device)
+            u_target = (x1 - z_s) / max(1e-3, 1 - s_val)  # velocity that still reaches x1 exactly at s=1
+        else:
+            s = torch.rand(x1.shape[0], device=x1.device)
+            z_s = (1 - s[:, None]) * x0 + s[:, None] * x1
+            u_target = x1 - x0
+
         v_pred = self.velocity(z_s, s, z_t, action)
         velocity_loss = F.mse_loss(v_pred, u_target)
         return velocity_loss, z_t
