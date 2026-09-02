@@ -1,0 +1,31 @@
+{
+  "checkpoint": "outputs/model_cfm_h10_noise_n200_seed2.pt",
+  "r_real": -0.026554574384091232,
+  "r_zero": -0.031221147078887877,
+  "quartiles": [
+    {
+      "quartile": 0,
+      "n": 328,
+      "real_mean_error": 0.002413625130429864,
+      "zero_mean_error": 0.0022922048810869455
+    },
+    {
+      "quartile": 1,
+      "n": 328,
+      "real_mean_error": 0.001888734521344304,
+      "zero_mean_error": 0.0017341891070827842
+    },
+    {
+      "quartile": 2,
+      "n": 328,
+      "real_mean_error": 0.006139075383543968,
+      "zero_mean_error": 0.0059870402328670025
+    },
+    {
+      "quartile": 3,
+      "n": 328,
+      "real_mean_error": 0.001203170046210289,
+      "zero_mean_error": 0.0009570083348080516
+    }
+  ]
+}

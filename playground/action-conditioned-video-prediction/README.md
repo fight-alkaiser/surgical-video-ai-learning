@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-90 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-91 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -687,13 +687,58 @@ objective change (today) have not moved the core result. No clear next
 experiment is identified; rereading this project's own paper notes for
 something missed seems more promising than another training run.
 
+## Result (Day 91) -- two more hypotheses ruled out; probable conclusion is a scale limit, not a fixable mistake
+
+Two scripts added, neither requiring new CFM training (both reuse the
+existing converged flatten checkpoint, `model_cfm_h10_noise_n200_seed2.pt`,
+best_epoch=299):
+
+**`probe_action_from_latents.py`** -- does the encoder discard
+action-relevant detail before the predictor ever sees it? Freezes the
+trained online/target encoders and trains a small MLP probe to regress the
+actual `(H, action_dim)` window from `(z_t, z_{t+H})` alone, no predictor
+or action encoder involved. Real val_mse (0.6631) clearly beat both a
+mean-action baseline (0.8091) and a shuffled control (0.8036-0.8120,
+matching the baseline as expected) -- R² ≈ 0.18 vs. the mean baseline. The
+encoder does preserve real, exploitable action-relevant signal.
+
+**`probe_action_magnitude_vs_bias.py`** -- does the real-action bias found
+in Day82 grow for actions further from the training mean (exactly where
+"zero" sits in normalized space)? Correlated `||real action - mean||`
+against per-example best_of_n_error. `r = -0.027` for real, `r = -0.031`
+for zero (control) -- essentially no relationship, and real/zero track
+almost identically across magnitude quartiles. Not supported.
+
+Rereading this project's own Cosmos-H-Surgical-Simulator notes
+(`Cosmos-H-Dreams.md`) surfaced two things: (1) Day61-62's original pixel-
+space toy model had a real bug where action modulation placed before a
+normalization layer erased it entirely -- checked, and the current CFM
+predictor (`VelocityPredictor`/`GatedVelocityPredictor`) uses no
+normalization layers at all, so this specific mistake isn't recurring; (2)
+CHSS substitutes an exact analytical velocity for known conditioning
+frames instead of asking the network to predict it (Day72 notes) --
+interesting, but doesn't map cleanly onto this project's single-step
+latent-jump setup (no partially-known target to exploit that way).
+
+Net conclusion: a genuinely accurate velocity field would make
+`paired_loss` and `best_of_n_error` agree, full stop -- their persistent
+disagreement is a symptom of an insufficiently accurate field (Day81's
+original underfitting hypothesis), not a separate, fixable cause.
+Doubling the data (100->200 episodes) didn't fix it (Day83-84), and each
+300-epoch run already takes hours on this Mac mini (no CUDA). The honest
+reading is that reaching sufficient accuracy may be out of reach at this
+project's data/compute scale -- not something a cleverer encoder
+architecture (Day86-89) or training objective (Day90) alone resolves.
+
 ## Next steps (not yet done)
 
 - Try masked/cropped instrument-region evaluation with an actual
   detector instead of a precomputed motion-saliency heuristic
-- No concrete next experiment identified as of Day90 -- revisit after
-  rereading paper notes (pi0, ACT, CHSS, Self Forcing) for anything
-  missed, rather than trying another architecture/objective variant
+- Write a short retrospective on the Day78-91 arc, then quantify how much
+  more data/compute CHSS itself needed for action-conditioning to work
+  (Open-H: 9 embodiments x 32 datasets vs. this project's 200 single-task
+  episodes; CHSS: A100/H100/B200-class ~65GB VRAM vs. this Mac mini),
+  before closing the arc
 
 ## Files
 
@@ -739,6 +784,15 @@ something missed seems more promising than another training run.
   a large sample pool per condition to (1) recompute best-of-N at several
   `N` values and (2) decompose expected error into bias² vs. variance;
   also dumps a 2D PCA scatter of one example pair's samples
+- `probe_action_from_latents.py` -- Day91: freezes a trained checkpoint's
+  encoders and trains a small MLP probe to regress the actual action
+  window from `(z_t, z_{t+H})` alone (no predictor involved), against a
+  mean-action baseline and a shuffled control -- tests whether the
+  encoder itself discards action-relevant signal
+- `probe_action_magnitude_vs_bias.py` -- Day91: correlates `||real action
+  - training mean||` against per-example best_of_n_error, for real and
+  zero conditions, to test whether the Day82 bias grows with how atypical
+  the action is
 - `make_day78_summary.py` .. `make_day82_summary.py`,
   `make_day86_summary.py` -- regenerate the cross-seed comparison figures
   from `outputs/history_cfm_*.json` (Day88's figure was generated inline,

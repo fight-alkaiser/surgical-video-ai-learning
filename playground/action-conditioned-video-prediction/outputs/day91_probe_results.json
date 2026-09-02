@@ -1,0 +1,7 @@
+{
+  "checkpoint": "outputs/model_cfm_h10_noise_n200_seed2.pt",
+  "mean_action_baseline_mse": 0.8091030120849609,
+  "shuffled_probe_mse": 0.8036447167396545,
+  "real_probe_mse": 0.6630938053131104,
+  "r2_vs_mean_baseline": 0.1804581179293876
+}
