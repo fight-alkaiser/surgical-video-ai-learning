@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-91 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62 and Day78-92 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -730,15 +730,55 @@ reading is that reaching sufficient accuracy may be out of reach at this
 project's data/compute scale -- not something a cleverer encoder
 architecture (Day86-89) or training objective (Day90) alone resolves.
 
+## Result (Day 92) -- which action dimensions the encoder actually preserves, and closing the arc
+
+Added `probe_action_per_dimension.py`, reusing Day91's frozen-encoder
+probe setup but reporting R² per action dimension instead of one
+aggregate number, to check whether Day91's R²≈0.18 signal is spread
+evenly across the 16-dim action or concentrated.
+
+| group | R² vs. mean-action baseline |
+|---|---|
+| left_xyz | 0.281 |
+| right_quat | 0.181 |
+| right_xyz | 0.133 |
+| left_quat | 0.119 |
+| left_gripper | 0.055 |
+| right_gripper | -0.017 (~0) |
+
+The opposite of the a priori guess (that gripper open/close, being
+coarse and near-binary, would be the easiest signal to recover). xyz
+position carries the most signal, quaternion is moderate, and gripper is
+essentially invisible. Makes sense once considered: the encoder learns
+from visual differences between frames, and a large instrument
+displacement changes far more pixels than a gripper's fingertip opening
+a few millimeters -- especially at 64x64 resolution. Day91's aggregate
+signal turns out to be concentrated in gross visual motion, not fine
+manipulation state.
+
+**Closing this arc here.** 15 days (Day78-92) chasing whether real
+robot action helps a small predictor never got past "no" as the headline
+answer, but got much more specific: the encoder keeps real signal, but
+only for gross visual motion; the paired_loss/best_of_n_error split
+reads as an undertrained velocity field (Day81's original underfitting
+hypothesis), not a fixable bug; and that's unsurprising given this
+project trains on 200 episodes on a CUDA-less Mac mini, next to
+production systems trained on tens of millions of hours of video. The
+reusable output is the evaluation and probing methodology built along
+the way (`paired_loss`, best-of-N, bias/variance decomposition, the two
+Day91-92 probes), not a working action-conditioned model.
+
+**Next**: stepping away from action-conditioning to revisit
+self-supervised representation learning without it -- reproducing
+something closer to I-JEPA/V-JEPA2's masked-prediction objective at the
+same small scale, which shouldn't run into the same scale-sensitivity.
+Likely a new playground subdirectory rather than continuing in this one.
+
 ## Next steps (not yet done)
 
-- Try masked/cropped instrument-region evaluation with an actual
-  detector instead of a precomputed motion-saliency heuristic
-- Write a short retrospective on the Day78-91 arc, then quantify how much
-  more data/compute CHSS itself needed for action-conditioning to work
-  (Open-H: 9 embodiments x 32 datasets vs. this project's 200 single-task
-  episodes; CHSS: A100/H100/B200-class ~65GB VRAM vs. this Mac mini),
-  before closing the arc
+- (Deferred, not abandoned) Try masked/cropped instrument-region
+  evaluation with an actual detector instead of a precomputed
+  motion-saliency heuristic, if this arc is revisited later
 
 ## Files
 
@@ -793,6 +833,9 @@ architecture (Day86-89) or training objective (Day90) alone resolves.
   - training mean||` against per-example best_of_n_error, for real and
   zero conditions, to test whether the Day82 bias grows with how atypical
   the action is
+- `probe_action_per_dimension.py` -- Day92: same frozen-encoder probe as
+  Day91, but reports R² per action dimension (xyz/quat/gripper x
+  left/right) instead of one aggregate number
 - `make_day78_summary.py` .. `make_day82_summary.py`,
   `make_day86_summary.py` -- regenerate the cross-seed comparison figures
   from `outputs/history_cfm_*.json` (Day88's figure was generated inline,
