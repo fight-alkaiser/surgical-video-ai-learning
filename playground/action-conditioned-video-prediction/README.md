@@ -761,12 +761,13 @@ robot action helps a small predictor never got past "no" as the headline
 answer, but got much more specific: the encoder keeps real signal, but
 only for gross visual motion; the paired_loss/best_of_n_error split
 reads as an undertrained velocity field (Day81's original underfitting
-hypothesis), not a fixable bug; and that's unsurprising given this
-project trains on 200 episodes on a CUDA-less Mac mini, next to
-production systems trained on tens of millions of hours of video. The
-reusable output is the evaluation and probing methodology built along
-the way (`paired_loss`, best-of-N, bias/variance decomposition, the two
-Day91-92 probes), not a working action-conditioned model.
+hypothesis), not a fixable bug -- unsurprising, really, comparing this
+project's modest 200 episodes on a CUDA-less Mac mini against production
+systems trained on tens of millions of hours of video. No working
+action-conditioned model to show for it, but plenty of hands-on
+experience evaluating and diagnosing one, via the methodology built
+along the way (`paired_loss`, best-of-N, bias/variance decomposition,
+the two Day91-92 probes).
 
 **Next**: stepping away from action-conditioning to revisit
 self-supervised representation learning without it -- reproducing
