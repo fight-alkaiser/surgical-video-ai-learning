@@ -28,6 +28,8 @@ parser.add_argument("--epochs", type=int, default=100)
 parser.add_argument("--lr", type=float, default=1e-3)
 parser.add_argument("--seed", type=int, default=0)
 parser.add_argument("--var-weight", type=float, default=5.0)
+parser.add_argument("--ema-decay", type=float, default=0.996)
+parser.add_argument("--clip-grad", type=float, default=0.0, help="max grad norm; 0 disables clipping")
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -65,7 +67,7 @@ def to_tensor(frames, idx):
     return f.to(DEVICE)
 
 
-model = IJEPAModel().to(DEVICE)
+model = IJEPAModel(ema_decay=args.ema_decay).to(DEVICE)
 trainable = list(model.context_encoder.parameters()) + list(model.predictor.parameters())
 opt = torch.optim.Adam(trainable, lr=args.lr)
 
@@ -109,6 +111,8 @@ for epoch in range(args.epochs):
         total_loss = loss + args.var_weight * (collapse_penalty + within_image_penalty)
         opt.zero_grad()
         total_loss.backward()
+        if args.clip_grad > 0:
+            torch.nn.utils.clip_grad_norm_(trainable, args.clip_grad)
         opt.step()
         model.update_target()
         epoch_losses.append(loss.item())
@@ -171,7 +175,7 @@ model.load_state_dict(best_state)
 history["best_epoch"] = best_epoch
 history["best_val_loss"] = best_val_loss
 
-tag = f"seed{args.seed}"
+tag = f"seed{args.seed}_lr{args.lr}_ema{args.ema_decay}" + (f"_clip{args.clip_grad}" if args.clip_grad > 0 else "")
 torch.save(model.state_dict(), f"outputs/model_ijepa_{tag}.pt")
 with open(f"outputs/history_ijepa_{tag}.json", "w") as f:
     json.dump(history, f, indent=2)

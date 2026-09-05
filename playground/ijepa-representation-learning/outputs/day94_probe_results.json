@@ -1,0 +1,8 @@
+{
+  "checkpoint": "outputs/model_ijepa_seed0_lr0.001_ema0.996_clip1.0.pt",
+  "mean_baseline_mse": 0.8098505735397339,
+  "random_encoder_mse": 0.6284821033477783,
+  "trained_encoder_mse": 0.800828218460083,
+  "r2_trained_vs_mean": 0.011140765191059332,
+  "r2_random_vs_mean": 0.22395300579861488
+}

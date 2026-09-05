@@ -1,6 +1,6 @@
 # I-JEPA Representation Learning (toy)
 
-Day 93+ of the "surgeon learning surgical video AI" series. A deliberate
+Day 93-94 of the "surgeon learning surgical video AI" series. A deliberate
 pivot away from ../action-conditioned-video-prediction/, which spent 15
 days (Day78-92) on whether conditioning on the robot action helps a small
 predictor and concluded that the negative result was most likely a
@@ -78,16 +78,57 @@ No working representation model to show for today, but two genuine,
 previously-invisible blind spots found in anti-collapse tooling this
 project has relied on since Day61.
 
+## Result (Day 94) -- oscillation is a real tradeoff, and the trained encoder loses to a random one
+
+Added `--clip-grad` to `ijepa_train.py` and swept `--lr` (0.001, 0.0003,
+0.0001) plus clip thresholds (1.0, 0.5) at 30 epochs each, tracking
+`ctx_cos_sim` (across-image) alongside `val_loss`:
+
+| config | frac(val_loss>3.0) | val_loss std | cos_sim(across-img) |
+|---|---|---|---|
+| lr=0.001 | 0.23 | 1.591 | ~0 by epoch 3 |
+| lr=0.0003 | 0.00 | 0.237 | stuck 0.6-0.9 |
+| lr=0.0001 | 0.00 | 0.167 | stuck 0.82-0.92 |
+| lr=0.001, clip=1.0 | 0.13 | 1.296 | ~0 |
+| lr=0.001, clip=0.5 | 0.17 | 1.412 | ~0 |
+
+Not a simple fix: high LR develops healthy, diverse representations fast
+but oscillates badly; low LR removes the oscillation but representation
+diversity never develops in 30 epochs -- a genuine tradeoff, not a bug.
+Gradient clipping (clip=1.0) partially helps (23%->13%) but
+non-monotonically (clip=0.5 was worse than clip=1.0).
+
+Rather than keep tuning around that noise, added
+`probe_representation_quality.py`: mean-pools the context encoder's
+patch embeddings (full, unmasked image, per I-JEPA's own evaluation
+convention) and probes them against the real per-frame action, comparing
+the trained checkpoint (lr=0.001, clip=1.0, best_epoch=29/30) to a
+randomly initialized encoder of identical architecture.
+
+| | val_mse | R² vs. mean-action baseline |
+|---|---|---|
+| mean-action baseline | 0.8099 | -- |
+| random (untrained) encoder | 0.6285 | 0.224 |
+| trained encoder | 0.8008 | 0.011 |
+
+The trained encoder is worse than a random one at this downstream
+signal. No collapse (both across- and within-image diversity checks
+pass) does not mean the representation is useful -- necessary, not
+sufficient. This lands the project in the same place as
+`../action-conditioned-video-prediction/`'s Day78-92 arc, reached by a
+completely different route: training from scratch on 200 episodes on a
+CUDA-less Mac mini doesn't beat a naive baseline here either.
+
 ## Next steps (not yet done)
 
-- Diagnose the val_loss oscillation (try a lower learning rate, a
-  different EMA decay, or logging what fraction of batches land near the
-  0 vs. ~4 ends of the range)
-- Once training is stable, evaluate representation quality -- e.g. a
-  linear probe from pooled patch embeddings to the actual per-frame
-  action (reusing this series' own action labels purely as a downstream
-  evaluation signal, not as a training input), analogous to the probes
-  built in `../action-conditioned-video-prediction/probe_action_from_latents.py`
+- Stop training encoders from scratch; try a small pretrained backbone
+  instead (starting with torchvision's ImageNet-pretrained ResNet18,
+  ~44MB, no new dependency, used frozen/inference-only), closer to how
+  production systems (CHSS included) actually work -- built on
+  large-scale pretraining, not trained from nothing on ~200 episodes
+- If diagnosing the oscillation further becomes relevant again later:
+  try a different EMA decay, or log what fraction of batches land near
+  the 0 vs. ~4 ends of val_loss within a single epoch
 
 ## Files
 
@@ -98,6 +139,13 @@ project has relied on since Day61.
 - `ijepa_train.py` -- training loop; pools every frame from the training
   episodes (no pairing/horizon needed); tracks `ctx_cos_sim`
   (across-image) and `ctx_within_cos_sim` (within-image) as direct
-  directional-collapse monitors, not just raw std
+  directional-collapse monitors, not just raw std. Day94: `--clip-grad`
+  (max grad norm; 0 disables)
+- `probe_representation_quality.py` -- Day94: mean-pools the context
+  encoder's patch embeddings and probes them against the real per-frame
+  action, comparing the trained checkpoint to a randomly initialized
+  encoder of identical architecture -- the real test of whether training
+  helped, independent of the training loss curve's own noise
 - `outputs/` -- loss curves, training history (`history_ijepa_seed*.json`
-  includes both collapse-fix runs' full curves)
+  includes both collapse-fix runs' full curves and the Day94 LR/clip
+  sweep), `day94_probe_results.json`
