@@ -1,0 +1,52 @@
+{
+  "held_out_subject": "B",
+  "test_trials": [
+    "Suturing_B001",
+    "Suturing_B002",
+    "Suturing_B003",
+    "Suturing_B004",
+    "Suturing_B005"
+  ],
+  "num_test_windows": 417,
+  "gesture_vocabulary": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    9,
+    10,
+    11
+  ],
+  "unconditioned": {
+    "mean_error_full_horizon_m": 0.003911408595740795,
+    "mean_error_by_checkpoint_m": {
+      "0.1": 0.0009212292497977614,
+      "0.3": 0.0023038522340357304,
+      "0.5": 0.003803914412856102,
+      "1.0": 0.007367570884525776
+    },
+    "mean_step_size_m": 0.0007696276879869401,
+    "mean_path_efficiency": 0.15084512531757355,
+    "median_path_efficiency": 0.13532409071922302
+  },
+  "gesture_conditioned": {
+    "mean_error_full_horizon_m": 0.004274691455066204,
+    "mean_error_by_checkpoint_m": {
+      "0.1": 0.0015643024817109108,
+      "0.3": 0.0029903308022767305,
+      "0.5": 0.003914039582014084,
+      "1.0": 0.00795314647257328
+    },
+    "mean_step_size_m": 0.001013073604553938,
+    "mean_path_efficiency": 0.2111625075340271,
+    "median_path_efficiency": 0.15969842672348022
+  },
+  "ground_truth": {
+    "mean_step_size_m": 0.0003417460829950869,
+    "mean_path_efficiency": 0.6912689805030823,
+    "median_path_efficiency": 0.7391054034233093
+  }
+}
