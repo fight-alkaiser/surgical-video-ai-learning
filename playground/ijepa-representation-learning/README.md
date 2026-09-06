@@ -1,6 +1,6 @@
 # I-JEPA Representation Learning (toy)
 
-Day 93-94 of the "surgeon learning surgical video AI" series. A deliberate
+Day 93-95 of the "surgeon learning surgical video AI" series. A deliberate
 pivot away from ../action-conditioned-video-prediction/, which spent 15
 days (Day78-92) on whether conditioning on the robot action helps a small
 predictor and concluded that the negative result was most likely a
@@ -115,20 +115,62 @@ The trained encoder is worse than a random one at this downstream
 signal. No collapse (both across- and within-image diversity checks
 pass) does not mean the representation is useful -- necessary, not
 sufficient. This lands the project in the same place as
-`../action-conditioned-video-prediction/`'s Day78-92 arc, reached by a
+`../action-conditioned-video-prediction/`'s Day78-92 work, reached by a
 completely different route: training from scratch on 200 episodes on a
 CUDA-less Mac mini doesn't beat a naive baseline here either.
 
+## Result (Day 95) -- a frozen, never-trained-on-this-data backbone beats everything built for this project
+
+Added `probe_pretrained_resnet18.py`: loads torchvision's ImageNet-
+pretrained ResNet18 (`ResNet18_Weights.IMAGENET1K_V1`, ~44MB, downloaded
+once and cached), drops the classifier head, uses the 512-dim pooled
+feature frozen (no fine-tuning -- inference only, lighter on this Mac
+mini than training anything from scratch), and runs the same probe
+methodology as Day91/94 against it.
+
+| encoder | val_mse | R² vs. mean-action baseline |
+|---|---|---|
+| mean-action baseline | 0.8099 | -- |
+| Day94 random I-JEPA encoder | 0.6285 | 0.224 |
+| Day94 trained I-JEPA encoder | 0.8008 | 0.011 |
+| **pretrained ResNet18 (frozen)** | **0.2500** | **0.691** |
+
+By far the clearest positive result either investigation in this series
+has produced. Per-dimension breakdown (same method as
+`../action-conditioned-video-prediction/probe_action_per_dimension.py`,
+Day92):
+
+| group | R² |
+|---|---|
+| left_xyz | 0.905 |
+| right_xyz | 0.892 |
+| left_quat | 0.552 |
+| right_quat | 0.527 |
+| left_gripper | 0.483 |
+| right_gripper | 0.384 |
+
+Even gripper open/close -- the one dimension every from-scratch encoder
+in this project (Day92's CNN, Day93-94's I-JEPA Transformer) failed to
+pick up at all -- is now clearly recoverable. A backbone that has never
+seen a surgical video, this task, or this data at all outperforms
+everything built specifically for it here. Both investigations in this
+series (action-conditioning, Day78-92; from-scratch representation
+learning, Day93-94) ran into the same wall by different routes: not
+enough data/compute on this Mac mini to learn useful vision from
+nothing. The fix was never "train harder" -- it was "don't train the
+vision part at all; borrow it."
+
 ## Next steps (not yet done)
 
-- Stop training encoders from scratch; try a small pretrained backbone
-  instead (starting with torchvision's ImageNet-pretrained ResNet18,
-  ~44MB, no new dependency, used frozen/inference-only), closer to how
-  production systems (CHSS included) actually work -- built on
-  large-scale pretraining, not trained from nothing on ~200 episodes
-- If diagnosing the oscillation further becomes relevant again later:
-  try a different EMA decay, or log what fraction of batches land near
-  the 0 vs. ~4 ends of val_loss within a single epoch
+- Revisit whether swapping this frozen pretrained backbone into
+  `../action-conditioned-video-prediction/`'s CFM predictor (in place of
+  its from-scratch CNN encoder) changes the Day78-92 "zero action beats
+  real action" result -- plausible given how much more signal this
+  backbone preserves, though the predictor/sampling-side issues found in
+  Day81-82/90 are a separate question a better encoder alone may not fix
+- If diagnosing the from-scratch training oscillation (Day93-94) becomes
+  relevant again: try a different EMA decay, or log what fraction of
+  batches land near the 0 vs. ~4 ends of val_loss within a single epoch
 
 ## Files
 
@@ -146,6 +188,10 @@ CUDA-less Mac mini doesn't beat a naive baseline here either.
   action, comparing the trained checkpoint to a randomly initialized
   encoder of identical architecture -- the real test of whether training
   helped, independent of the training loss curve's own noise
+- `probe_pretrained_resnet18.py` -- Day95: frozen, ImageNet-pretrained
+  ResNet18 (torchvision) as the encoder instead of anything trained on
+  this project's data, probed the same way -- the comparison point that
+  finally beat the mean-action baseline by a wide margin
 - `outputs/` -- loss curves, training history (`history_ijepa_seed*.json`
   includes both collapse-fix runs' full curves and the Day94 LR/clip
-  sweep), `day94_probe_results.json`
+  sweep), `day94_probe_results.json`, `day95_probe_results.json`
