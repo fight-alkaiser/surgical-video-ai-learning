@@ -65,6 +65,16 @@ parser.add_argument(
     help="number of Euler steps available for the self-forcing rollout (a random count from 1 to this "
     "many is used each time, so the model sees drift of varying severity)",
 )
+parser.add_argument(
+    "--encoder-type",
+    choices=["scratch", "pretrained_resnet18"],
+    default="scratch",
+    help="Day96: 'scratch' (Day78-95 default) trains an online/target CNN encoder pair from scratch "
+    "alongside the predictor. 'pretrained_resnet18' uses a frozen, ImageNet-pretrained ResNet18 "
+    "(../ijepa-representation-learning/ Day95 found this preserves far more action-relevant signal "
+    "than anything trained from scratch on this project's 200 episodes) -- no EMA pair, no "
+    "variance_loss needed, since nothing here can collapse.",
+)
 args = parser.parse_args()
 H = args.horizon
 torch.manual_seed(args.seed)
@@ -93,6 +103,8 @@ print(f"val episodes ({len(val_episodes)}):   {sorted(val_episodes)}")
 tag = f"h{H}_{args.source}_n{len(episode_ids)}_seed{args.seed}_{args.action_mode}" + ("_gated" if args.gated else "")
 if args.self_forcing_prob > 0:
     tag += f"_sf{args.self_forcing_prob}"
+if args.encoder_type != "scratch":
+    tag += f"_{args.encoder_type}"
 
 
 def build_pairs(ep_ids):
@@ -132,9 +144,15 @@ def to_tensor_batch(frame_t, action_t, frame_t1, idx):
 
 
 model = CFMActionModel(
-    action_dim_per_step=action_dim_per_step, horizon=H, gated=args.gated, action_mode=args.action_mode
+    action_dim_per_step=action_dim_per_step,
+    horizon=H,
+    gated=args.gated,
+    action_mode=args.action_mode,
+    encoder_type=args.encoder_type,
 ).to(DEVICE)
-trainable_params = list(model.online_encoder.parameters()) + list(model.velocity.parameters())
+trainable_params = list(model.velocity.parameters())
+if args.encoder_type == "scratch":
+    trainable_params += list(model.online_encoder.parameters())
 if model.action_encoder is not None:
     trainable_params += list(model.action_encoder.parameters())
 opt = torch.optim.Adam(trainable_params, lr=args.lr)

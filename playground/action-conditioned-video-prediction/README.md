@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62 and Day78-92 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62, Day78-92, and Day96 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -775,11 +775,31 @@ something closer to I-JEPA/V-JEPA2's masked-prediction objective at the
 same small scale, which shouldn't run into the same scale-sensitivity.
 Likely a new playground subdirectory rather than continuing in this one.
 
+## Note (Day 96) -- swapped in the pretrained ResNet18, but training didn't finish
+
+Following up on ../ijepa-representation-learning/'s Day95 finding
+(a frozen, ImageNet-pretrained ResNet18 preserved far more action-relevant
+signal than anything trained on this project's data), added
+`PretrainedResNet18Encoder` to `cfm_model.py` and `--encoder-type
+{scratch,pretrained_resnet18}` to `cfm_train.py`. With
+`pretrained_resnet18`, `online_encoder` and `target_encoder` are the same
+frozen module (no EMA pair needed -- nothing here can collapse), and
+`embed_dim` is fixed at 512 (ResNet18's pooled feature size).
+
+The swap itself worked in a smoke test (2 epochs), with `real`
+best_of_n_error already edging out `zero`'s. Full training (300 epochs,
+3 seeds) turned out far more expensive than any prior run in this
+project -- descoped to 100 epochs, then to a single seed, and even that
+had not finished after 6+ hours (still running in the background as of
+this note). No result to report yet; will follow up once it completes.
+
 ## Next steps (not yet done)
 
+- Report the Day96 pretrained-ResNet18 CFM result once the (still
+  running) training finishes
 - (Deferred, not abandoned) Try masked/cropped instrument-region
   evaluation with an actual detector instead of a precomputed
-  motion-saliency heuristic, if this arc is revisited later
+  motion-saliency heuristic, if this work is revisited later
 
 ## Files
 
@@ -816,7 +836,10 @@ Likely a new playground subdirectory rather than continuing in this one.
   Day90: `--self-forcing-prob`/`--self-forcing-steps` train on the
   model's own partially-integrated rollout some fraction of the time
   instead of the exact interpolated point, targeting the Day81-82
-  sampling drift (`CFMActionModel.training_step`)
+  sampling drift (`CFMActionModel.training_step`). Day96:
+  `--encoder-type {scratch,pretrained_resnet18}` swaps in a frozen
+  ImageNet-pretrained ResNet18 (`PretrainedResNet18Encoder`,
+  `cfm_model.py`) in place of the from-scratch online/target encoder pair
 - `cfm_eval_steps.py` -- Day81: reloads a saved checkpoint and re-runs the
   sampling-based eval at several `--steps` values, without retraining;
   used to test whether the paired_loss/best_of_n_error gap is an ODE

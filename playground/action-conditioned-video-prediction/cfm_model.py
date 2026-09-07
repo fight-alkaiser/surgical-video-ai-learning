@@ -35,8 +35,52 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.models as tv_models
 
 from jepa_model import Encoder, variance_loss  # noqa: F401  (variance_loss re-exported for cfm_train.py)
+
+_IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+_IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+
+
+class PretrainedResNet18Encoder(nn.Module):
+    """Day96: frozen, ImageNet-pretrained ResNet18 in place of the from-scratch
+    online/target encoder pair. Day91-92 (this project) showed the from-scratch
+    CNN encoder preserved only a partial, position-skewed slice of the action
+    signal (aggregate R^2~0.18, essentially 0 for gripper); Day94-95
+    (../ijepa-representation-learning/) showed a from-scratch encoder trained
+    on this same 200-episode dataset ended up *worse* than random init, while
+    this exact frozen backbone reached R^2~0.69 (up to ~0.9 on position, and
+    the first time gripper showed any recoverable signal at all, ~0.4).
+
+    Frozen means no online/target EMA pair is needed here -- there's nothing
+    to collapse, since the weights never change. embed_dim is fixed at 512
+    (ResNet18's pooled feature dimension); the rest of the model (VelocityPredictor
+    etc.) already takes embed_dim as a parameter, so nothing else needs to
+    special-case this.
+    """
+
+    embed_dim = 512
+
+    def __init__(self):
+        super().__init__()
+        resnet = tv_models.resnet18(weights=tv_models.ResNet18_Weights.IMAGENET1K_V1)
+        resnet.fc = nn.Identity()
+        self.resnet = resnet
+        for p in self.resnet.parameters():
+            p.requires_grad = False
+        self.eval()
+
+    def train(self, mode: bool = True):
+        # stay in eval mode always (frozen batchnorm/dropout statistics) even
+        # if the parent model's .train() is called for the rest of the network
+        return super().train(False)
+
+    @torch.no_grad()
+    def forward(self, frame: torch.Tensor) -> torch.Tensor:
+        x = F.interpolate(frame, size=224, mode="bilinear", align_corners=False)
+        x = (x - _IMAGENET_MEAN.to(x.device)) / _IMAGENET_STD.to(x.device)
+        return self.resnet(x)
 
 
 def per_example_normalized_mse(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -200,16 +244,27 @@ class CFMActionModel(nn.Module):
         ema_decay: float = 0.99,
         gated: bool = False,
         action_mode: str = "flatten",
+        encoder_type: str = "scratch",
     ):
         super().__init__()
-        self.embed_dim = embed_dim
+        self.encoder_type = encoder_type
         self.horizon = horizon
         self.action_mode = action_mode
-        self.online_encoder = Encoder(base_ch, embed_dim)
-        self.target_encoder = Encoder(base_ch, embed_dim)
-        self.target_encoder.load_state_dict(self.online_encoder.state_dict())
-        for p in self.target_encoder.parameters():
-            p.requires_grad = False
+        if encoder_type == "pretrained_resnet18":
+            # Day96: frozen, shared backbone -- no EMA pair needed, nothing to
+            # collapse. online_encoder and target_encoder are literally the
+            # same module; update_target becomes a no-op (see below).
+            shared = PretrainedResNet18Encoder()
+            self.online_encoder = shared
+            self.target_encoder = shared
+            embed_dim = shared.embed_dim
+        else:
+            self.online_encoder = Encoder(base_ch, embed_dim)
+            self.target_encoder = Encoder(base_ch, embed_dim)
+            self.target_encoder.load_state_dict(self.online_encoder.state_dict())
+            for p in self.target_encoder.parameters():
+                p.requires_grad = False
+        self.embed_dim = embed_dim
 
         if action_mode == "sequence":
             self.action_encoder = ActionSequenceEncoder(action_dim_per_step, out_dim=embed_dim)
@@ -247,6 +302,8 @@ class CFMActionModel(nn.Module):
 
     @torch.no_grad()
     def update_target(self):
+        if self.encoder_type == "pretrained_resnet18":
+            return  # frozen and shared -- nothing to move toward
         for online_p, target_p in zip(self.online_encoder.parameters(), self.target_encoder.parameters()):
             target_p.data.mul_(self.ema_decay).add_(online_p.data, alpha=1 - self.ema_decay)
 
