@@ -66,6 +66,16 @@ parser.add_argument(
     "many is used each time, so the model sees drift of varying severity)",
 )
 parser.add_argument(
+    "--batch-size",
+    type=int,
+    default=32,
+    help="Day96 follow-up: batches must now pay a frozen-encoder forward pass too when "
+    "--encoder-type=pretrained_resnet18 (224x224 upsampling + ResNet18), so the original "
+    "small batch size (picked for the from-scratch 64x64 CNN) means far more of those "
+    "forward passes per epoch than necessary -- a larger batch cuts wall-clock time a lot "
+    "with little effect on the from-scratch case.",
+)
+parser.add_argument(
     "--encoder-type",
     choices=["scratch", "pretrained_resnet18"],
     default="scratch",
@@ -81,7 +91,7 @@ torch.manual_seed(args.seed)
 np.random.seed(args.seed)  # separate from the rng(0) used below for the train/val episode split, which stays fixed
 
 DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-BATCH_SIZE = 32
+BATCH_SIZE = args.batch_size
 
 with open("data/episode_lengths.json") as f:
     episode_lengths = json.load(f)

@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62, Day78-92, and Day96 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62, Day78-92, and Day96-97 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -793,13 +793,43 @@ project -- descoped to 100 epochs, then to a single seed, and even that
 had not finished after 6+ hours (still running in the background as of
 this note). No result to report yet; will follow up once it completes.
 
+## Result (Day 97) -- real action beats zero in all 3 seeds, for the first time in this project
+
+Day96's seed0 (100 epochs, batch size 32) finished after 6+ hours:
+best_epoch=61/100, real best_of_n_error 0.4013 vs. zero's 0.4106 -- real
+wins. Given how slow that run was, added `--batch-size` to
+`cfm_train.py` (default still 32; larger batches mean far fewer
+224x224-upsample-plus-ResNet18 forward passes per epoch when
+`--encoder-type=pretrained_resnet18`, since batch size was originally
+tuned for the much cheaper from-scratch 64x64 CNN). Re-ran seed1/seed2
+at `--epochs 40 --batch-size 128` for speed.
+
+Running two of these in parallel briefly maxed out this Mac mini's 8GB
+of RAM (two Python processes over 4GB RSS each, 7.5GB/8GB used) and made
+the machine barely usable -- backed off to one run at a time.
+
+| seed | epochs | best_epoch | real | shuffled | zero | winner |
+|---|---|---|---|---|---|---|
+| 0 | 100 (batch 32) | 61 | 0.4013 | 0.4059 | 0.4106 | real |
+| 1 | 40 (batch 128) | 39 | 0.3826 | 0.3853 | 0.3888 | real |
+| 2 | 40 (batch 128) | 35 | 0.3778 | 0.3825 | 0.3859 | real |
+
+All three seeds: real < shuffled < zero, same order every time. After
+Day78-92's 15 days where zero action never lost, swapping in a frozen,
+pretrained encoder flips the result reproducibly. (Seed0 used a
+different batch size than seed1/seed2 due to the speed fix landing
+between runs -- noted for reproducibility, though batch size shouldn't
+meaningfully change what a frozen encoder's features look like.)
+
 ## Next steps (not yet done)
 
-- Report the Day96 pretrained-ResNet18 CFM result once the (still
-  running) training finishes
 - (Deferred, not abandoned) Try masked/cropped instrument-region
   evaluation with an actual detector instead of a precomputed
   motion-saliency heuristic, if this work is revisited later
+- Consider whether the Day81-82 bias/variance decomposition and Day91-92
+  probes still show the same patterns now that real action wins --
+  worth re-checking whether the story about *why* has also changed, not
+  just the headline result
 
 ## Files
 
@@ -839,7 +869,9 @@ this note). No result to report yet; will follow up once it completes.
   sampling drift (`CFMActionModel.training_step`). Day96:
   `--encoder-type {scratch,pretrained_resnet18}` swaps in a frozen
   ImageNet-pretrained ResNet18 (`PretrainedResNet18Encoder`,
-  `cfm_model.py`) in place of the from-scratch online/target encoder pair
+  `cfm_model.py`) in place of the from-scratch online/target encoder
+  pair. Day97: `--batch-size` (default 32) -- larger batches cut
+  wall-clock time a lot when the frozen ResNet18 has to run every batch
 - `cfm_eval_steps.py` -- Day81: reloads a saved checkpoint and re-runs the
   sampling-based eval at several `--steps` values, without retraining;
   used to test whether the paired_loss/best_of_n_error gap is an ODE
