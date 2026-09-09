@@ -1,6 +1,6 @@
 # Action-Conditioned Video Prediction (toy)
 
-Day 61-62, Day78-92, and Day96-97 of the "surgeon learning surgical video AI" series. This is not
+Day 61-62, Day78-92, and Day96-98 of the "surgeon learning surgical video AI" series. This is not
 Cosmos-H-Surgical-Simulator, and it does not run it -- that model needs
 about 65GB of GPU memory, far beyond what this Mac mini (Apple Silicon,
 no CUDA) can do. This is a small model written from scratch, inspired by
@@ -821,15 +821,54 @@ different batch size than seed1/seed2 due to the speed fix landing
 between runs -- noted for reproducibility, though batch size shouldn't
 meaningfully change what a frozen encoder's features look like.)
 
+## Result (Day 98) -- the Day82 bias story flips too, not just the headline number
+
+Reused `cfm_eval_distribution.py` (Day82's bias/variance decomposition
+and best-of-N-vs-step-count sweep) against the Day96-97 pretrained-
+ResNet18 checkpoints. The script had drifted from the current API
+(`CFMActionModel` constructor args, unflattened `(H, action_dim)` action
+windows since Day86) -- fixed both, plus a `pca_lowrank`/`linalg_qr` MPS
+gap (not implemented on this backend; that step now runs on CPU) and an
+outlier-dominated PCA plot (axis limits now clipped to the 1st-99th
+percentile of the projected points instead of the full range).
+
+Day82 (from-scratch encoder) found the entire real-vs-zero gap was
+bias -- zero's samples were simply better-centered on the true target,
+variance was a wash. This time it flipped:
+
+| seed | real bias² | zero bias² | real variance | zero variance |
+|---|---|---|---|---|
+| 0 | 0.0855 | 0.0905 | 0.3552 | 0.3614 |
+| 1 | 0.0937 | 0.0951 | 0.3807 | 0.3780 |
+| 2 | 0.0970 | 0.0983 | 0.3890 | 0.3854 |
+
+Real's bias² is lower than zero's in all 3 seeds; variance is close to a
+tie (real lower in seed0, marginally higher in seed1/seed2). Real also
+beats both shuffled and zero at every sample count from N=8 to N=256
+(seed0: e.g. N=8 real 0.4001/zero 0.4107, N=256 real 0.3640/zero
+0.3714) -- not an artifact of averaging.
+
+A PCA plot of one example pair's 256 samples per condition shows why
+this isn't visible by eye: all three conditions' clusters overlap
+heavily around the true target; the effect only emerges once bias is
+averaged across many pairs.
+
+Combined with Day91-92's probe (the from-scratch encoder preserved only
+a partial, position-skewed slice of the action signal) and Day95's
+(pretrained ResNet18 preserves far more, including gripper state for
+the first time), the mechanism reads as: the from-scratch encoder
+didn't preserve enough of what the real action actually did to the
+scene for the predictor to use it correctly, so conditioning on it
+added bias rather than reducing it. The pretrained encoder preserves
+enough that conditioning on the real action now pulls the prediction
+toward the truth. The predictor and training objective are unchanged --
+the fix was entirely upstream, in what the encoder could see.
+
 ## Next steps (not yet done)
 
 - (Deferred, not abandoned) Try masked/cropped instrument-region
   evaluation with an actual detector instead of a precomputed
   motion-saliency heuristic, if this work is revisited later
-- Consider whether the Day81-82 bias/variance decomposition and Day91-92
-  probes still show the same patterns now that real action wins --
-  worth re-checking whether the story about *why* has also changed, not
-  just the headline result
 
 ## Files
 
@@ -879,7 +918,12 @@ meaningfully change what a frozen encoder's features look like.)
 - `cfm_eval_distribution.py` -- Day82: reloads a saved checkpoint and draws
   a large sample pool per condition to (1) recompute best-of-N at several
   `N` values and (2) decompose expected error into bias² vs. variance;
-  also dumps a 2D PCA scatter of one example pair's samples
+  also dumps a 2D PCA scatter of one example pair's samples. Day98:
+  updated for the current `CFMActionModel` API and `--encoder-type`
+  (works with pretrained-backbone checkpoints too), PCA step moved to
+  CPU (`pca_lowrank`'s `linalg_qr` isn't implemented on MPS), and the
+  PCA plot's axis limits clipped to the 1st-99th percentile so a single
+  outlier sample can't dominate the scale
 - `probe_action_from_latents.py` -- Day91: freezes a trained checkpoint's
   encoders and trains a small MLP probe to regress the actual action
   window from `(z_t, z_{t+H})` alone (no predictor involved), against a

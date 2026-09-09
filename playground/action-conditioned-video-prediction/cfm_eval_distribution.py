@@ -41,6 +41,9 @@ parser.add_argument("--gated", action="store_true")
 parser.add_argument("--pool-size", type=int, default=256, help="total samples drawn per condition per pair")
 parser.add_argument("--steps", type=int, default=16)
 parser.add_argument("--n-pairs", type=int, default=64, help="number of val (z_t, action) pairs to evaluate on")
+parser.add_argument("--action-mode", choices=["flatten", "sequence", "transformer"], default="flatten")
+parser.add_argument("--encoder-type", choices=["scratch", "pretrained_resnet18"], default="scratch")
+parser.add_argument("--n-episodes", type=int, default=200, help="episode count used in the checkpoint's tag (n{N})")
 args = parser.parse_args()
 H = args.horizon
 
@@ -57,13 +60,15 @@ train_episodes = set(episode_ids) - val_episodes
 
 
 def build_pairs(ep_ids):
+    """action_window kept unflattened (N, H, action_dim_per_step), same convention
+    as cfm_train.py since Day86 -- flattening happens inside the model."""
     all_frame_t, all_action_t, all_frame_t1 = [], [], []
     for ep_id in ep_ids:
         frames = np.load(f"data/episodes/{ep_id}_frames.npy")
         actions = np.load(f"data/episodes/{ep_id}_actions.npy")
         if len(frames) <= H:
             continue
-        action_window = np.stack([actions[i : i + H].reshape(-1) for i in range(len(actions) - H)])
+        action_window = np.stack([actions[i : i + H] for i in range(len(actions) - H)])
         all_frame_t.append(frames[:-H])
         all_action_t.append(action_window)
         all_frame_t1.append(frames[H:])
@@ -71,8 +76,9 @@ def build_pairs(ep_ids):
 
 
 train_frame_t, train_action_t, _ = build_pairs(train_episodes)
-action_mean = train_action_t.mean(axis=0)
-action_std = train_action_t.std(axis=0) + 1e-6
+action_dim_per_step = train_action_t.shape[-1]
+action_mean = train_action_t.reshape(-1, action_dim_per_step).mean(axis=0)
+action_std = train_action_t.reshape(-1, action_dim_per_step).std(axis=0) + 1e-6
 val_frame_t, val_action_t, val_frame_t1 = build_pairs(val_episodes)
 
 
@@ -83,8 +89,16 @@ def to_tensor_batch(frame_t, action_t, frame_t1, idx):
     return f.to(DEVICE), a.to(DEVICE), f1.to(DEVICE)
 
 
-tag = f"h{H}_noise_n{len(episode_ids)}_seed{args.seed}" + ("_gated" if args.gated else "")
-model = CFMActionModel(action_dim=train_action_t.shape[1], gated=args.gated).to(DEVICE)
+tag = f"h{H}_noise_n{args.n_episodes}_seed{args.seed}_{args.action_mode}" + ("_gated" if args.gated else "")
+if args.encoder_type != "scratch":
+    tag += f"_{args.encoder_type}"
+model = CFMActionModel(
+    action_dim_per_step=action_dim_per_step,
+    horizon=H,
+    gated=args.gated,
+    action_mode=args.action_mode,
+    encoder_type=args.encoder_type,
+).to(DEVICE)
 model.load_state_dict(torch.load(f"outputs/model_cfm_{tag}.pt", map_location=DEVICE))
 model.eval()
 
@@ -139,14 +153,15 @@ print(f"\nsaved outputs/history_cfm_distribution_{tag}.json")
 # --- 2D PCA visualization for one example pair ---
 example = 0
 colors = {"real": "#2e7d32", "shuffled": "#c62828", "zero": "#9e9e9e"}
-all_points = torch.cat([sample_pools[c][:, example] for c in conditions], dim=0)  # (3*pool_size, embed_dim)
+all_points = torch.cat([sample_pools[c][:, example] for c in conditions], dim=0).cpu()  # (3*pool_size, embed_dim)
 all_points = all_points - all_points.mean(dim=0, keepdim=True)
+# pca_lowrank uses linalg_qr, not implemented on MPS -- run this bit on CPU (small: 3*pool_size x embed_dim)
 U, S, V = torch.pca_lowrank(all_points, q=2)
 proj = all_points @ V[:, :2]
 proj = proj.cpu().numpy()
 
-raw_points_mean = torch.cat([sample_pools[c][:, example] for c in conditions], dim=0).mean(dim=0, keepdim=True)
-target_centered = target_z[example : example + 1] - raw_points_mean
+raw_points_mean = torch.cat([sample_pools[c][:, example] for c in conditions], dim=0).cpu().mean(dim=0, keepdim=True)
+target_centered = target_z[example : example + 1].cpu() - raw_points_mean
 target_proj = (target_centered @ V[:, :2]).cpu().numpy()
 
 fig, ax = plt.subplots(figsize=(6, 6))
@@ -157,6 +172,14 @@ for i, cond in enumerate(conditions):
 ax.scatter(target_proj[:, 0], target_proj[:, 1], marker="*", s=400, color="black", label="true target", zorder=5)
 ax.set_title(f"Day82: {args.pool_size} samples per condition, one example pair\n(PCA projection of the 64-dim latent)")
 ax.legend()
+# Day98: a rare, extreme sample can dominate the PCA axes and squash everything
+# else into an unreadable line -- zoom to the 1st-99th percentile of the main
+# cluster instead of letting outliers set the axis range.
+lo_x, hi_x = np.percentile(proj[:, 0], [1, 99])
+lo_y, hi_y = np.percentile(proj[:, 1], [1, 99])
+pad_x, pad_y = 0.15 * (hi_x - lo_x), 0.15 * (hi_y - lo_y)
+ax.set_xlim(lo_x - pad_x, hi_x + pad_x)
+ax.set_ylim(lo_y - pad_y, hi_y + pad_y)
 plt.tight_layout()
 plt.savefig(f"outputs/day82_sample_distribution_pca_{tag}.png", dpi=150)
 print(f"saved outputs/day82_sample_distribution_pca_{tag}.png")
