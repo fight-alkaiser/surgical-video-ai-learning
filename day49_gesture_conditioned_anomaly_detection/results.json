@@ -1,0 +1,627 @@
+{
+  "feature_names": [
+    "vel_x",
+    "vel_y",
+    "vel_z",
+    "rot_vel_x",
+    "rot_vel_y",
+    "rot_vel_z",
+    "gripper_angle"
+  ],
+  "self_proclaimed_expert_reference": {
+    "reference_trials": [
+      "Suturing_D001",
+      "Suturing_D002",
+      "Suturing_D003",
+      "Suturing_D004",
+      "Suturing_D005",
+      "Suturing_E001",
+      "Suturing_E002",
+      "Suturing_E003",
+      "Suturing_E004",
+      "Suturing_E005"
+    ],
+    "usable_gestures": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      11
+    ],
+    "trial_results": {
+      "Suturing_B001": {
+        "skill": "N",
+        "grs": 13,
+        "mean_deviation": 9.6982903903038,
+        "num_scored_frames": 5555,
+        "num_total_frames": 5635
+      },
+      "Suturing_B002": {
+        "skill": "N",
+        "grs": 17,
+        "mean_deviation": 9.360107899070048,
+        "num_scored_frames": 3420,
+        "num_total_frames": 3445
+      },
+      "Suturing_B003": {
+        "skill": "N",
+        "grs": 14,
+        "mean_deviation": 11.79300758267762,
+        "num_scored_frames": 3267,
+        "num_total_frames": 3432
+      },
+      "Suturing_B004": {
+        "skill": "N",
+        "grs": 10,
+        "mean_deviation": 10.501885486671469,
+        "num_scored_frames": 3256,
+        "num_total_frames": 3257
+      },
+      "Suturing_B005": {
+        "skill": "N",
+        "grs": 12,
+        "mean_deviation": 11.622195596462493,
+        "num_scored_frames": 2847,
+        "num_total_frames": 2848
+      },
+      "Suturing_C001": {
+        "skill": "I",
+        "grs": 26,
+        "mean_deviation": 17.770012119687223,
+        "num_scored_frames": 3154,
+        "num_total_frames": 3180
+      },
+      "Suturing_C002": {
+        "skill": "I",
+        "grs": 20,
+        "mean_deviation": 12.89851790584574,
+        "num_scored_frames": 3266,
+        "num_total_frames": 3267
+      },
+      "Suturing_C003": {
+        "skill": "I",
+        "grs": 26,
+        "mean_deviation": 17.026449113123697,
+        "num_scored_frames": 3048,
+        "num_total_frames": 3161
+      },
+      "Suturing_C004": {
+        "skill": "I",
+        "grs": 30,
+        "mean_deviation": 22.928012454202197,
+        "num_scored_frames": 2449,
+        "num_total_frames": 2479
+      },
+      "Suturing_C005": {
+        "skill": "I",
+        "grs": 17,
+        "mean_deviation": 19.305770188977533,
+        "num_scored_frames": 2527,
+        "num_total_frames": 2577
+      },
+      "Suturing_D001": {
+        "skill": "E",
+        "grs": 14,
+        "mean_deviation": 8.192059321885742,
+        "num_scored_frames": 2653,
+        "num_total_frames": 2800
+      },
+      "Suturing_D002": {
+        "skill": "E",
+        "grs": 18,
+        "mean_deviation": 7.263717309305665,
+        "num_scored_frames": 2002,
+        "num_total_frames": 2214
+      },
+      "Suturing_D003": {
+        "skill": "E",
+        "grs": 14,
+        "mean_deviation": 7.94912483813616,
+        "num_scored_frames": 2303,
+        "num_total_frames": 2317
+      },
+      "Suturing_D004": {
+        "skill": "E",
+        "grs": 8,
+        "mean_deviation": 12.704436054575098,
+        "num_scored_frames": 2642,
+        "num_total_frames": 2742
+      },
+      "Suturing_D005": {
+        "skill": "E",
+        "grs": 15,
+        "mean_deviation": 10.95490021656442,
+        "num_scored_frames": 1758,
+        "num_total_frames": 1779
+      },
+      "Suturing_E001": {
+        "skill": "E",
+        "grs": 17,
+        "mean_deviation": 6.730058060308811,
+        "num_scored_frames": 3583,
+        "num_total_frames": 3593
+      },
+      "Suturing_E002": {
+        "skill": "E",
+        "grs": 20,
+        "mean_deviation": 6.398992144791561,
+        "num_scored_frames": 2925,
+        "num_total_frames": 2948
+      },
+      "Suturing_E003": {
+        "skill": "E",
+        "grs": 19,
+        "mean_deviation": 7.110469885220573,
+        "num_scored_frames": 2516,
+        "num_total_frames": 2605
+      },
+      "Suturing_E004": {
+        "skill": "E",
+        "grs": 19,
+        "mean_deviation": 6.9799468103231055,
+        "num_scored_frames": 2869,
+        "num_total_frames": 2926
+      },
+      "Suturing_E005": {
+        "skill": "E",
+        "grs": 19,
+        "mean_deviation": 6.355416332406019,
+        "num_scored_frames": 2482,
+        "num_total_frames": 2483
+      },
+      "Suturing_F001": {
+        "skill": "I",
+        "grs": 24,
+        "mean_deviation": 16.92564152448146,
+        "num_scored_frames": 2803,
+        "num_total_frames": 2838
+      },
+      "Suturing_F002": {
+        "skill": "I",
+        "grs": 26,
+        "mean_deviation": 15.176206780036386,
+        "num_scored_frames": 2374,
+        "num_total_frames": 2375
+      },
+      "Suturing_F003": {
+        "skill": "I",
+        "grs": 29,
+        "mean_deviation": 19.11254649538181,
+        "num_scored_frames": 2235,
+        "num_total_frames": 2265
+      },
+      "Suturing_F004": {
+        "skill": "I",
+        "grs": 24,
+        "mean_deviation": 16.5099416539889,
+        "num_scored_frames": 2372,
+        "num_total_frames": 2373
+      },
+      "Suturing_F005": {
+        "skill": "I",
+        "grs": 29,
+        "mean_deviation": 19.839197411626174,
+        "num_scored_frames": 2028,
+        "num_total_frames": 2039
+      },
+      "Suturing_G001": {
+        "skill": "N",
+        "grs": 13,
+        "mean_deviation": 9.52734969771827,
+        "num_scored_frames": 9011,
+        "num_total_frames": 9012
+      },
+      "Suturing_G002": {
+        "skill": "N",
+        "grs": 18,
+        "mean_deviation": 12.655459072183103,
+        "num_scored_frames": 3378,
+        "num_total_frames": 3379
+      },
+      "Suturing_G003": {
+        "skill": "N",
+        "grs": 13,
+        "mean_deviation": 13.357521336648764,
+        "num_scored_frames": 4423,
+        "num_total_frames": 5211
+      },
+      "Suturing_G004": {
+        "skill": "N",
+        "grs": 21,
+        "mean_deviation": 10.766562771890536,
+        "num_scored_frames": 2620,
+        "num_total_frames": 2650
+      },
+      "Suturing_G005": {
+        "skill": "N",
+        "grs": 23,
+        "mean_deviation": 9.397461145844439,
+        "num_scored_frames": 2453,
+        "num_total_frames": 2454
+      },
+      "Suturing_H001": {
+        "skill": "N",
+        "grs": 14,
+        "mean_deviation": 8.979126346319962,
+        "num_scored_frames": 5017,
+        "num_total_frames": 5654
+      },
+      "Suturing_H003": {
+        "skill": "N",
+        "grs": 25,
+        "mean_deviation": 9.242548988200934,
+        "num_scored_frames": 3320,
+        "num_total_frames": 3395
+      },
+      "Suturing_H004": {
+        "skill": "N",
+        "grs": 19,
+        "mean_deviation": 9.036409647666943,
+        "num_scored_frames": 4020,
+        "num_total_frames": 4094
+      },
+      "Suturing_H005": {
+        "skill": "N",
+        "grs": 21,
+        "mean_deviation": 9.379787746585363,
+        "num_scored_frames": 3279,
+        "num_total_frames": 3436
+      },
+      "Suturing_I001": {
+        "skill": "N",
+        "grs": 17,
+        "mean_deviation": 5.9808002870482415,
+        "num_scored_frames": 3845,
+        "num_total_frames": 4316
+      },
+      "Suturing_I002": {
+        "skill": "N",
+        "grs": 23,
+        "mean_deviation": 9.490212542429118,
+        "num_scored_frames": 4411,
+        "num_total_frames": 4412
+      },
+      "Suturing_I003": {
+        "skill": "N",
+        "grs": 17,
+        "mean_deviation": 9.032159913856573,
+        "num_scored_frames": 4145,
+        "num_total_frames": 4284
+      },
+      "Suturing_I004": {
+        "skill": "N",
+        "grs": 23,
+        "mean_deviation": 12.549395506183707,
+        "num_scored_frames": 3729,
+        "num_total_frames": 3730
+      },
+      "Suturing_I005": {
+        "skill": "N",
+        "grs": 19,
+        "mean_deviation": 17.050460124429822,
+        "num_scored_frames": 3700,
+        "num_total_frames": 3773
+      }
+    },
+    "mean_deviation_by_skill": {
+      "N": 10.495828530641644,
+      "I": 17.74922956473511,
+      "E": 8.063912097351714
+    },
+    "correlation_deviation_vs_grs": 0.5335536165176588
+  },
+  "top_grs_reference": {
+    "reference_trials": [
+      "Suturing_C004",
+      "Suturing_F003",
+      "Suturing_F005",
+      "Suturing_C001",
+      "Suturing_C003",
+      "Suturing_F002",
+      "Suturing_H003",
+      "Suturing_F001",
+      "Suturing_F004",
+      "Suturing_G005"
+    ],
+    "usable_gestures": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      11
+    ],
+    "trial_results": {
+      "Suturing_B001": {
+        "skill": "N",
+        "grs": 13,
+        "mean_deviation": 6.522261614887943,
+        "num_scored_frames": 5555,
+        "num_total_frames": 5635
+      },
+      "Suturing_B002": {
+        "skill": "N",
+        "grs": 17,
+        "mean_deviation": 6.27557097871156,
+        "num_scored_frames": 3420,
+        "num_total_frames": 3445
+      },
+      "Suturing_B003": {
+        "skill": "N",
+        "grs": 14,
+        "mean_deviation": 7.291217647789353,
+        "num_scored_frames": 3267,
+        "num_total_frames": 3432
+      },
+      "Suturing_B004": {
+        "skill": "N",
+        "grs": 10,
+        "mean_deviation": 6.388006396410591,
+        "num_scored_frames": 3256,
+        "num_total_frames": 3257
+      },
+      "Suturing_B005": {
+        "skill": "N",
+        "grs": 12,
+        "mean_deviation": 6.52405343759382,
+        "num_scored_frames": 2847,
+        "num_total_frames": 2848
+      },
+      "Suturing_C001": {
+        "skill": "I",
+        "grs": 26,
+        "mean_deviation": 5.721633305112539,
+        "num_scored_frames": 3154,
+        "num_total_frames": 3180
+      },
+      "Suturing_C002": {
+        "skill": "I",
+        "grs": 20,
+        "mean_deviation": 6.016338264908204,
+        "num_scored_frames": 3266,
+        "num_total_frames": 3267
+      },
+      "Suturing_C003": {
+        "skill": "I",
+        "grs": 26,
+        "mean_deviation": 6.28200870685227,
+        "num_scored_frames": 3048,
+        "num_total_frames": 3161
+      },
+      "Suturing_C004": {
+        "skill": "I",
+        "grs": 30,
+        "mean_deviation": 7.429553906747363,
+        "num_scored_frames": 2449,
+        "num_total_frames": 2479
+      },
+      "Suturing_C005": {
+        "skill": "I",
+        "grs": 17,
+        "mean_deviation": 6.821696884938887,
+        "num_scored_frames": 2527,
+        "num_total_frames": 2577
+      },
+      "Suturing_D001": {
+        "skill": "E",
+        "grs": 14,
+        "mean_deviation": 7.033376786077993,
+        "num_scored_frames": 2301,
+        "num_total_frames": 2800
+      },
+      "Suturing_D002": {
+        "skill": "E",
+        "grs": 18,
+        "mean_deviation": 7.1598093085272945,
+        "num_scored_frames": 1720,
+        "num_total_frames": 2214
+      },
+      "Suturing_D003": {
+        "skill": "E",
+        "grs": 14,
+        "mean_deviation": 7.078219778374626,
+        "num_scored_frames": 1874,
+        "num_total_frames": 2317
+      },
+      "Suturing_D004": {
+        "skill": "E",
+        "grs": 8,
+        "mean_deviation": 7.300133508097091,
+        "num_scored_frames": 2039,
+        "num_total_frames": 2742
+      },
+      "Suturing_D005": {
+        "skill": "E",
+        "grs": 15,
+        "mean_deviation": 6.216470781831148,
+        "num_scored_frames": 1568,
+        "num_total_frames": 1779
+      },
+      "Suturing_E001": {
+        "skill": "E",
+        "grs": 17,
+        "mean_deviation": 5.867685111212803,
+        "num_scored_frames": 3583,
+        "num_total_frames": 3593
+      },
+      "Suturing_E002": {
+        "skill": "E",
+        "grs": 20,
+        "mean_deviation": 5.901283787563125,
+        "num_scored_frames": 2925,
+        "num_total_frames": 2948
+      },
+      "Suturing_E003": {
+        "skill": "E",
+        "grs": 19,
+        "mean_deviation": 6.30363977031853,
+        "num_scored_frames": 2516,
+        "num_total_frames": 2605
+      },
+      "Suturing_E004": {
+        "skill": "E",
+        "grs": 19,
+        "mean_deviation": 6.158278218066012,
+        "num_scored_frames": 2776,
+        "num_total_frames": 2926
+      },
+      "Suturing_E005": {
+        "skill": "E",
+        "grs": 19,
+        "mean_deviation": 6.47447058054898,
+        "num_scored_frames": 2482,
+        "num_total_frames": 2483
+      },
+      "Suturing_F001": {
+        "skill": "I",
+        "grs": 24,
+        "mean_deviation": 8.814752809194466,
+        "num_scored_frames": 2803,
+        "num_total_frames": 2838
+      },
+      "Suturing_F002": {
+        "skill": "I",
+        "grs": 26,
+        "mean_deviation": 8.51129260505202,
+        "num_scored_frames": 2374,
+        "num_total_frames": 2375
+      },
+      "Suturing_F003": {
+        "skill": "I",
+        "grs": 29,
+        "mean_deviation": 8.925593148416763,
+        "num_scored_frames": 2235,
+        "num_total_frames": 2265
+      },
+      "Suturing_F004": {
+        "skill": "I",
+        "grs": 24,
+        "mean_deviation": 8.798031189205101,
+        "num_scored_frames": 2372,
+        "num_total_frames": 2373
+      },
+      "Suturing_F005": {
+        "skill": "I",
+        "grs": 29,
+        "mean_deviation": 11.449777061839601,
+        "num_scored_frames": 2028,
+        "num_total_frames": 2039
+      },
+      "Suturing_G001": {
+        "skill": "N",
+        "grs": 13,
+        "mean_deviation": 6.397999596328839,
+        "num_scored_frames": 8851,
+        "num_total_frames": 9012
+      },
+      "Suturing_G002": {
+        "skill": "N",
+        "grs": 18,
+        "mean_deviation": 8.377908048183583,
+        "num_scored_frames": 3378,
+        "num_total_frames": 3379
+      },
+      "Suturing_G003": {
+        "skill": "N",
+        "grs": 13,
+        "mean_deviation": 9.652015565697331,
+        "num_scored_frames": 4423,
+        "num_total_frames": 5211
+      },
+      "Suturing_G004": {
+        "skill": "N",
+        "grs": 21,
+        "mean_deviation": 5.912694945519872,
+        "num_scored_frames": 2620,
+        "num_total_frames": 2650
+      },
+      "Suturing_G005": {
+        "skill": "N",
+        "grs": 23,
+        "mean_deviation": 5.781304276483126,
+        "num_scored_frames": 2453,
+        "num_total_frames": 2454
+      },
+      "Suturing_H001": {
+        "skill": "N",
+        "grs": 14,
+        "mean_deviation": 4.128562796556951,
+        "num_scored_frames": 5017,
+        "num_total_frames": 5654
+      },
+      "Suturing_H003": {
+        "skill": "N",
+        "grs": 25,
+        "mean_deviation": 6.480130412114277,
+        "num_scored_frames": 3271,
+        "num_total_frames": 3395
+      },
+      "Suturing_H004": {
+        "skill": "N",
+        "grs": 19,
+        "mean_deviation": 5.593975382299286,
+        "num_scored_frames": 3943,
+        "num_total_frames": 4094
+      },
+      "Suturing_H005": {
+        "skill": "N",
+        "grs": 21,
+        "mean_deviation": 5.976454770783964,
+        "num_scored_frames": 3279,
+        "num_total_frames": 3436
+      },
+      "Suturing_I001": {
+        "skill": "N",
+        "grs": 17,
+        "mean_deviation": 3.4877414792132893,
+        "num_scored_frames": 3845,
+        "num_total_frames": 4316
+      },
+      "Suturing_I002": {
+        "skill": "N",
+        "grs": 23,
+        "mean_deviation": 5.025696178828945,
+        "num_scored_frames": 4411,
+        "num_total_frames": 4412
+      },
+      "Suturing_I003": {
+        "skill": "N",
+        "grs": 17,
+        "mean_deviation": 4.395100846719305,
+        "num_scored_frames": 4145,
+        "num_total_frames": 4284
+      },
+      "Suturing_I004": {
+        "skill": "N",
+        "grs": 23,
+        "mean_deviation": 6.943101001178908,
+        "num_scored_frames": 3729,
+        "num_total_frames": 3730
+      },
+      "Suturing_I005": {
+        "skill": "N",
+        "grs": 19,
+        "mean_deviation": 8.628769542498878,
+        "num_scored_frames": 3700,
+        "num_total_frames": 3773
+      }
+    },
+    "mean_deviation_by_skill": {
+      "N": 6.304345521989464,
+      "I": 7.877067788226721,
+      "E": 6.54933676306176
+    },
+    "correlation_deviation_vs_grs": 0.2810335037444302
+  },
+  "mean_grs_by_self_proclaimed_skill": {
+    "N": 17.473684210526315,
+    "I": 25.1,
+    "E": 16.3
+  }
+}
