@@ -1,0 +1,6 @@
+{
+  "within_image_cos_sim_mean": 0.5866637229919434,
+  "within_image_cos_sim_min": 0.30882054567337036,
+  "within_image_cos_sim_max": 0.9539428353309631,
+  "across_image_cos_sim_mean": 0.8342100977897644
+}

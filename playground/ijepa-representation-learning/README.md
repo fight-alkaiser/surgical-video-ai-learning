@@ -1,6 +1,6 @@
 # I-JEPA Representation Learning (toy)
 
-Day 93-95 of the "surgeon learning surgical video AI" series. A deliberate
+Day 93-95 and Day99 of the "surgeon learning surgical video AI" series. A deliberate
 pivot away from ../action-conditioned-video-prediction/, which spent 15
 days (Day78-92) on whether conditioning on the robot action helps a small
 predictor and concluded that the negative result was most likely a
@@ -77,6 +77,13 @@ changing.
 No working representation model to show for today, but two genuine,
 previously-invisible blind spots found in anti-collapse tooling this
 project has relied on since Day61.
+
+**Revised by Day99**: the within-image fix described above only held
+with the encoder in `train()` mode (dropout active during the
+collapse check). In `eval()` mode -- what every downstream use of this
+checkpoint actually calls -- the same "fixed" checkpoint is fully
+collapsed (cosine similarity 1.0000 across all patches). See the
+Day99 section below.
 
 ## Result (Day 94) -- oscillation is a real tradeoff, and the trained encoder loses to a random one
 
@@ -160,17 +167,92 @@ enough data/compute on this Mac mini to learn useful vision from
 nothing. The fix was never "train harder" -- it was "don't train the
 vision part at all; borrow it."
 
+## Result (Day 99) -- the Day93 "fix" only held in train mode; eval mode was never checked
+
+The day before Day100's retrospective was spent verifying earlier claims
+concretely instead of trusting summary numbers -- and that turned up
+something significant that revises the Day93/94 story.
+
+Day93 reported the within-image collapse fixed: `ctx_within_cos_sim`
+dropped from 1.0 to ~0 during training. To compare concretely,
+`repro_day93_collapse_for_review.py` reproduces the original bug (a
+short run with `variance_loss` applied to raw, non-normalized
+`ctx_tokens`, exactly as the first Day93 attempt did -- the original
+collapsed checkpoint no longer exists, each re-run overwrote the same
+filename). Loading the actual "fixed" checkpoint
+(`model_ijepa_seed0_lr0.001_ema0.996_clip1.0.pt`) and checking a real
+image's 64 patches pairwise: **cosine similarity 1.0000 across every
+pair, std 0.0000** -- fully collapsed, not fixed at all.
+
+The cause: `model.train()` vs `model.eval()`. Every training-time
+collapse check (`ctx_cos_sim`, `ctx_within_cos_sim` in `ijepa_train.py`)
+ran during the training loop, with `PatchEncoder`'s Transformer in train
+mode -- dropout actively injecting noise into every forward pass. Every
+actual downstream use of this checkpoint (Day94's
+`probe_representation_quality.py`, and this check) calls `model.eval()`
+first, as literally any real use of a trained model does. Switching the
+same loaded checkpoint from eval to train mode on the same image:
+
+| mode | mean cosine sim | std |
+|---|---|---|
+| eval (dropout off -- what every downstream check actually uses) | 1.0000 | 0.0000 |
+| train (dropout on -- what the training-time monitor measured) | -0.0082 | 0.8216 |
+
+The model never learned to genuinely distinguish patches. It leaned on
+dropout's randomness to satisfy the anti-collapse loss during training,
+and reverts to a constant output -- true collapse -- the moment that
+noise is turned off. This fully explains Day94's strangest finding (the
+trained encoder scoring worse than a random one, R²≈0.01 vs ≈0.22): at
+eval time it wasn't a badly-learned representation, it was no
+representation at all, the same output regardless of input -- consistent
+with the concrete example checked today, where the trained encoder's
+probe predicted the same gripper value (0.005) for six real examples
+whose true values ranged from -1.234 to 1.150, while a random-init
+encoder's predictions at least varied with the input.
+
+The anti-collapse check itself had a blind spot as real as the one it
+was built to catch: verified only in the one mode nothing downstream
+actually uses.
+
+## Result (Day 99, continued) -- checking the pretrained backbone against Day93's own collapse test
+
+**Done**: swapping the frozen pretrained ResNet18 into
+`../action-conditioned-video-prediction/`'s CFM predictor was completed
+in Day96-98 -- real action now beats zero action reproducibly across 3
+seeds, and the Day82 bias/variance story flips in real's favor too. See
+that project's README (Day96/97/98 sections) for the full result.
+
+Separately, closed a loose end specific to this project: does the
+pretrained backbone exhibit the exact collapse Day93 found and fixed in
+the from-scratch encoder -- every patch within one image mapping to
+(nearly) the same direction regardless of position? Added
+`probe_pretrained_patch_collapse.py`, which applies Day93's own cosine-
+similarity check to ResNet18's pre-pool feature map (`layer4` output,
+7x7x512 for a 224x224 input) instead of the from-scratch `PatchEncoder`.
+
+| check | mean cosine sim | range |
+|---|---|---|
+| within-image (different patches, same image) | 0.587 | 0.309 - 0.954 |
+| across-image (different images, same patch position) | 0.834 | 0.758 - 0.978 |
+
+No exact collapse (nothing pinned at 1.0, unlike Day93's original bug),
+but real, substantial correlation is present -- higher than the
+from-scratch encoder's post-fix state (~0, sometimes slightly negative).
+This isn't a defect to fix: ResNet18 was never trained to decorrelate
+patch-level features the way a JEPA-style anti-collapse objective
+demands, and neighboring 7x7-grid positions have overlapping receptive
+fields, so some shared structure is expected. It does mean the pretrained
+backbone's spatial features are "structured but correlated" rather than
+"maximally spread," a different character than either failure mode
+found earlier in this project.
+
 ## Next steps (not yet done)
 
-- Revisit whether swapping this frozen pretrained backbone into
-  `../action-conditioned-video-prediction/`'s CFM predictor (in place of
-  its from-scratch CNN encoder) changes the Day78-92 "zero action beats
-  real action" result -- plausible given how much more signal this
-  backbone preserves, though the predictor/sampling-side issues found in
-  Day81-82/90 are a separate question a better encoder alone may not fix
-- If diagnosing the from-scratch training oscillation (Day93-94) becomes
-  relevant again: try a different EMA decay, or log what fraction of
-  batches land near the 0 vs. ~4 ends of val_loss within a single epoch
+None outstanding for this specific thread. Both this project and
+`../action-conditioned-video-prediction/` independently hit the same
+wall (training from scratch on ~200 episodes on a CUDA-less Mac mini
+doesn't beat simple baselines) and independently resolved it the same
+way (borrow a pretrained backbone instead of training one).
 
 ## Files
 
@@ -192,6 +274,22 @@ vision part at all; borrow it."
   ResNet18 (torchvision) as the encoder instead of anything trained on
   this project's data, probed the same way -- the comparison point that
   finally beat the mean-action baseline by a wide margin
+- `probe_pretrained_patch_collapse.py` -- Day99: applies Day93's own
+  within-image / across-image cosine-similarity collapse check to
+  ResNet18's pre-pool `layer4` feature map (7x7 spatial grid) instead of
+  the from-scratch `PatchEncoder`
+- `repro_day93_collapse_for_review.py` -- Day99: reproduces the original
+  Day93 bug (unnormalized `variance_loss`) for a short run, purely so
+  the collapsed and "fixed" checkpoints can be compared side by side on
+  real images -- the original collapsed checkpoint no longer exists
+  (each Day93 re-run overwrote the same filename)
+- `day99_concrete_patch_comparison.py` -- Day99: picks one real frame, a
+  background patch and an instrument-region patch, and reports/plots the
+  encoder's actual cosine similarity between them (collapsed-repro vs.
+  the "fixed" checkpoint) -- the check that surfaced the train/eval mode
+  discrepancy
 - `outputs/` -- loss curves, training history (`history_ijepa_seed*.json`
   includes both collapse-fix runs' full curves and the Day94 LR/clip
-  sweep), `day94_probe_results.json`, `day95_probe_results.json`
+  sweep), `day94_probe_results.json`, `day95_probe_results.json`,
+  `day99_patch_collapse_check.json`, `day99_full_pairwise_heatmap.png`,
+  `day99_concrete_patches.png`
