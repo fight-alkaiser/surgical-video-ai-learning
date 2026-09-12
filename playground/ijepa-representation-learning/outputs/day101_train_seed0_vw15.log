@@ -1,0 +1,13 @@
+train episodes: 196, val episodes: 4
+train frames: 66109, val frames: 1352
+epoch    0  train_loss 0.2268  val_loss 0.3236  ctx_std 0.9839  cos_sim(across-img) 0.8576  cos_sim(within-img) 0.0115  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) -0.0119
+epoch   10  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0001  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   20  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   30  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0005  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   40  train_loss 0.0919  val_loss 0.0001  ctx_std 0.0006  cos_sim(across-img) 0.9999  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   50  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0001  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   59  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+
+best smoothed val_loss 0.0000 at epoch 22 (of 60); restoring that checkpoint
+restored (best_epoch) checkpoint eval-mode collapse check: cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+saved outputs/loss_curve_ijepa_seed0_lr0.001_ema0.996.png

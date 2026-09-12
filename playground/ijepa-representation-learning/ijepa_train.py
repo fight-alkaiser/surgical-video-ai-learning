@@ -12,13 +12,14 @@ pairs, from the same underlying video).
 
 import argparse
 import json
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
 
-from ijepa_model import IJEPAModel, normalized_mse_loss, variance_loss, within_image_variance_loss
+from ijepa_model import IJEPAModel, normalized_mse_loss, patchify, variance_loss, within_image_variance_loss
 from masking import sample_mask
 
 DATA_DIR = "../action-conditioned-video-prediction/data"
@@ -30,10 +31,20 @@ parser.add_argument("--seed", type=int, default=0)
 parser.add_argument("--var-weight", type=float, default=5.0)
 parser.add_argument("--ema-decay", type=float, default=0.996)
 parser.add_argument("--clip-grad", type=float, default=0.0, help="max grad norm; 0 disables clipping")
+parser.add_argument(
+    "--dropout",
+    type=float,
+    default=0.0,
+    help="Day101: TinyTransformer's internal dropout (was an unset 0.1 default before Day99's "
+    "fix). 0.0 is the fixed setting; pass 0.1 to reproduce the Day93 collapse-behind-dropout bug.",
+)
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
+
+args.checkpoint_tag = f"seed{args.seed}_vw{args.var_weight}_ema{args.ema_decay}"
+os.makedirs("outputs/checkpoints", exist_ok=True)
 
 DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 BATCH_SIZE = 64
@@ -67,11 +78,47 @@ def to_tensor(frames, idx):
     return f.to(DEVICE)
 
 
-model = IJEPAModel(ema_decay=args.ema_decay).to(DEVICE)
+model = IJEPAModel(ema_decay=args.ema_decay, dropout=args.dropout).to(DEVICE)
 trainable = list(model.context_encoder.parameters()) + list(model.predictor.parameters())
 opt = torch.optim.Adam(trainable, lr=args.lr)
 
-history = {"train_loss": [], "val_loss": [], "ctx_std": [], "ctx_cos_sim": [], "ctx_within_cos_sim": []}
+# Day101: fixed probe batch (all NUM_PATCHES visible, no masking) used to check
+# collapse in eval mode every epoch -- the check Day99 found was missing. Drawn once
+# from val_frames so it's identical across epochs and comparable over training.
+NUM_PATCHES_FULL = 64
+probe_idx = np.arange(min(8, len(val_frames)))
+probe_frames = to_tensor(val_frames, probe_idx)
+
+
+def eval_mode_collapse_check(model, frames):
+    """Same across-image / within-image cosine-similarity check as the train-mode
+    monitors below, but run with model.eval() (dropout off) -- what every real
+    downstream use of this checkpoint actually sees."""
+    model.eval()
+    with torch.no_grad():
+        B = frames.shape[0]
+        all_idx = torch.arange(NUM_PATCHES_FULL, device=DEVICE).unsqueeze(0).expand(B, -1)
+        tokens = model.context_encoder(patchify(frames), all_idx)
+        v = F.normalize(tokens[:, 0, :], dim=-1)
+        sim = v @ v.T
+        across = sim[~torch.eye(sim.shape[0], dtype=torch.bool, device=sim.device)].mean().item()
+
+        w = F.normalize(tokens[0], dim=-1)
+        sim2 = w @ w.T
+        within = sim2[~torch.eye(sim2.shape[0], dtype=torch.bool, device=sim2.device)].mean().item()
+    model.train()
+    return across, within
+
+
+history = {
+    "train_loss": [],
+    "val_loss": [],
+    "ctx_std": [],
+    "ctx_cos_sim": [],
+    "ctx_within_cos_sim": [],
+    "ctx_cos_sim_eval": [],
+    "ctx_within_cos_sim_eval": [],
+}
 best_val_loss = float("inf")
 best_epoch = -1
 best_state = None
@@ -152,11 +199,14 @@ for epoch in range(args.epochs):
     ctx_std = float(np.mean(epoch_std))
     ctx_cos_sim = float(np.mean(epoch_cos_sim))
     ctx_within_cos_sim = float(np.mean(epoch_within_cos_sim))
+    ctx_cos_sim_eval, ctx_within_cos_sim_eval = eval_mode_collapse_check(model, probe_frames)
     history["train_loss"].append(train_loss)
     history["val_loss"].append(val_loss)
     history["ctx_std"].append(ctx_std)
     history["ctx_cos_sim"].append(ctx_cos_sim)
     history["ctx_within_cos_sim"].append(ctx_within_cos_sim)
+    history["ctx_cos_sim_eval"].append(ctx_cos_sim_eval)
+    history["ctx_within_cos_sim_eval"].append(ctx_within_cos_sim_eval)
 
     smoothed = float(np.mean(history["val_loss"][-5:]))
     if smoothed < best_val_loss:
@@ -164,18 +214,41 @@ for epoch in range(args.epochs):
         best_epoch = epoch
         best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
 
+    # Day101: val_loss alone can't be trusted to pick a checkpoint here -- a fully
+    # collapsed model trivially scores val_loss=0, so the auto-selected "best" epoch
+    # can be the most-collapsed one. Save periodic checkpoints so an epoch can be
+    # picked by hand afterward, looking at val_loss AND the eval-mode collapse check
+    # together, instead of relying on the automatic argmin.
+    if epoch % 10 == 0 or epoch == args.epochs - 1:
+        torch.save(
+            model.state_dict(),
+            f"outputs/checkpoints/model_ijepa_{args.checkpoint_tag}_epoch{epoch:04d}.pt",
+        )
+
     if epoch % 10 == 0 or epoch == args.epochs - 1:
         print(
             f"epoch {epoch:4d}  train_loss {train_loss:.4f}  val_loss {val_loss:.4f}  "
-            f"ctx_std {ctx_std:.4f}  cos_sim(across-img) {ctx_cos_sim:.4f}  cos_sim(within-img) {ctx_within_cos_sim:.4f}"
+            f"ctx_std {ctx_std:.4f}  cos_sim(across-img) {ctx_cos_sim:.4f}  cos_sim(within-img) {ctx_within_cos_sim:.4f}  "
+            f"[eval mode] cos_sim(across-img) {ctx_cos_sim_eval:.4f}  cos_sim(within-img) {ctx_within_cos_sim_eval:.4f}"
         )
 
 print(f"\nbest smoothed val_loss {best_val_loss:.4f} at epoch {best_epoch} (of {args.epochs}); restoring that checkpoint")
 model.load_state_dict(best_state)
 history["best_epoch"] = best_epoch
+final_across_eval, final_within_eval = eval_mode_collapse_check(model, probe_frames)
+history["final_ctx_cos_sim_eval"] = final_across_eval
+history["final_ctx_within_cos_sim_eval"] = final_within_eval
+print(
+    f"restored (best_epoch) checkpoint eval-mode collapse check: "
+    f"cos_sim(across-img) {final_across_eval:.4f}  cos_sim(within-img) {final_within_eval:.4f}"
+)
 history["best_val_loss"] = best_val_loss
 
-tag = f"seed{args.seed}_lr{args.lr}_ema{args.ema_decay}" + (f"_clip{args.clip_grad}" if args.clip_grad > 0 else "")
+tag = (
+    f"seed{args.seed}_lr{args.lr}_ema{args.ema_decay}"
+    + (f"_clip{args.clip_grad}" if args.clip_grad > 0 else "")
+    + (f"_vw{args.var_weight}" if args.var_weight != 5.0 else "")
+)
 torch.save(model.state_dict(), f"outputs/model_ijepa_{tag}.pt")
 with open(f"outputs/history_ijepa_{tag}.json", "w") as f:
     json.dump(history, f, indent=2)
@@ -191,3 +264,22 @@ plt.title(f"Day93: I-JEPA training curve ({tag})")
 plt.tight_layout()
 plt.savefig(f"outputs/loss_curve_ijepa_{tag}.png", dpi=150)
 print(f"saved outputs/loss_curve_ijepa_{tag}.png")
+
+# Day101: val_loss and eval-mode collapse side by side -- val_loss alone rewards
+# collapse (a fully collapsed model trivially scores val_loss=0), so picking a
+# checkpoint by hand needs both curves, not just the loss.
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 7), sharex=True)
+ax1.plot(history["val_loss"], label="val_loss")
+ax1.axvline(best_epoch, color="gray", linestyle="--", label=f"auto best_epoch={best_epoch}")
+ax1.set_ylabel("val_loss")
+ax1.legend()
+ax2.plot(history["ctx_cos_sim_eval"], label="cos_sim(across-img), eval mode")
+ax2.plot(history["ctx_within_cos_sim_eval"], label="cos_sim(within-img), eval mode")
+ax2.axhline(1.0, color="red", linestyle=":", linewidth=0.8, label="collapsed (1.0)")
+ax2.set_xlabel("epoch")
+ax2.set_ylabel("eval-mode cosine similarity")
+ax2.legend()
+fig.suptitle(f"Day101: val_loss vs. eval-mode collapse check ({tag})")
+fig.tight_layout()
+fig.savefig(f"outputs/day101_collapse_check_{tag}.png", dpi=150)
+print(f"saved outputs/day101_collapse_check_{tag}.png")

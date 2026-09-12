@@ -1,0 +1,23 @@
+train episodes: 196, val episodes: 4
+train frames: 66109, val frames: 1352
+epoch    0  train_loss 0.2564  val_loss 0.3155  ctx_std 0.9869  cos_sim(across-img) 0.9072  cos_sim(within-img) 0.0075  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 0.0000
+epoch   10  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0096  cos_sim(across-img) 0.9931  cos_sim(within-img) 0.9975  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   20  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   30  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   40  train_loss 0.0382  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   50  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   60  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0004  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   70  train_loss 0.0146  val_loss 0.0731  ctx_std 0.1058  cos_sim(across-img) 0.9853  cos_sim(within-img) 0.9987  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   80  train_loss 0.1964  val_loss 0.3055  ctx_std 0.5581  cos_sim(across-img) 0.7518  cos_sim(within-img) 0.9808  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch   90  train_loss 0.4903  val_loss 1.0198  ctx_std 0.8028  cos_sim(across-img) 0.4680  cos_sim(within-img) 0.9628  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 0.9375
+epoch  100  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch  110  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch  120  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch  130  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch  140  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+epoch  149  train_loss 0.0000  val_loss 0.0000  ctx_std 0.0000  cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000  [eval mode] cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+
+best smoothed val_loss 0.0000 at epoch 124 (of 150); restoring that checkpoint
+restored (best_epoch) checkpoint eval-mode collapse check: cos_sim(across-img) 1.0000  cos_sim(within-img) 1.0000
+saved outputs/loss_curve_ijepa_seed0_lr0.001_ema0.996_vw30.0.png
+saved outputs/day101_collapse_check_seed0_lr0.001_ema0.996_vw30.0.png

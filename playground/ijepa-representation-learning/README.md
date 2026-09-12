@@ -246,25 +246,90 @@ backbone's spatial features are "structured but correlated" rather than
 "maximally spread," a different character than either failure mode
 found earlier in this project.
 
+## Result (Day 101) -- removing the dropout crutch doesn't buy a non-collapsed encoder; it just removes the disguise
+
+Day99 found that the Day93 "fix" only avoided collapse because
+`TinyTransformer` never set `dropout` explicitly, so `nn.TransformerEncoderLayer`'s
+default (0.1) was silently active in train mode and off in eval mode -- the
+anti-collapse loss was satisfied by dropout noise, not by genuinely
+distinguishable patches. The natural next question: with that disguise
+removed (`dropout=0.0`, so train mode and eval mode see the same network),
+can this architecture actually learn a non-collapsed representation?
+
+Three runs, seed 0, otherwise unchanged from Day93's setup:
+
+| run | var_weight | what happened |
+|---|---|---|
+| baseline | 5.0 (unchanged) | fully collapsed by epoch 10 (`ctx_std`, `train_loss` -> 0.0000) and stayed there for all 100 epochs |
+| stronger penalty | 15.0 | same -- fully collapsed by epoch 10, 60 epochs, no recovery |
+| stronger still | 30.0, 150 epochs | collapses by epoch 10, later escapes into a loud, unstable oscillation in train-mode loss (epoch ~65-95, val_loss swinging between 0.05 and 1.6), then collapses again and stays collapsed through epoch 150 |
+
+The var_weight=30 run's oscillation looked promising in train-mode metrics
+alone (`ctx_std` reached 0.80, train-mode `cos_sim(across-img)` dropped to
+0.47) -- but `outputs/day101_collapse_check_seed0_lr0.001_ema0.996_vw30.0.png`
+(new per-epoch eval-mode logging added this session, see below) shows the
+eval-mode across-image cosine similarity never leaves 1.0000 for the entire
+150-epoch run, including during the loud oscillation. Only within-image
+similarity dips briefly (1.0 -> ~0.93, epoch 88-95) before returning to 1.0.
+Whatever instability var_weight=30 introduced in training dynamics, it never
+translated into a genuinely non-collapsed representation under the
+conditions that matter (`model.eval()`).
+
+**Methodological side-finding**: the training loop's automatic checkpoint
+selection (lowest smoothed `val_loss`) is fooled by collapse the same way
+the old anti-collapse check was -- a fully collapsed model trivially scores
+`val_loss` at or near 0.0, so on all three runs the auto-selected
+"best_epoch" was a collapsed checkpoint, even in the var_weight=30 run where
+a genuinely different (if unstable) regime existed for ~30 epochs. Fixed by
+adding periodic checkpoint saving (`outputs/checkpoints/`, every 10 epochs)
+and a second plot (`day101_collapse_check_*.png`) showing `val_loss` next to
+the eval-mode collapse curve, so a checkpoint can be picked by looking at
+both instead of trusting `argmin(val_loss)` alone.
+
+**Reading**: removing the dropout disguise didn't turn up a fixable bug to
+patch -- at this architecture and data scale (196 training episodes'
+frames, 3-layer/64-dim Transformer, Mac mini), the anti-collapse loss did
+not reliably out-compete the collapse-to-constant-output solution, even at
+6x its original weight. This is consistent with Day95's lesson but adds a
+separate point: it's not just that a from-scratch encoder underperforms a
+pretrained one here -- at this scale, a from-scratch encoder trained with
+this objective did not reliably converge to any non-degenerate solution at
+all in these runs, independent of the dropout-monitoring bug Day99 found.
+
 ## Next steps (not yet done)
 
-None outstanding for this specific thread. Both this project and
-`../action-conditioned-video-prediction/` independently hit the same
-wall (training from scratch on ~200 episodes on a CUDA-less Mac mini
-doesn't beat simple baselines) and independently resolved it the same
-way (borrow a pretrained backbone instead of training one).
+None outstanding for this specific thread. This project and
+`../action-conditioned-video-prediction/` independently hit the same wall
+(training from scratch on ~200 episodes on a CUDA-less Mac mini doesn't
+beat simple baselines) and independently resolved it the same way (borrow
+a pretrained backbone instead of training one) -- Day101 confirmed that
+wall goes deeper than the Day99 dropout-monitoring bug: strengthening the
+anti-collapse loss up to 6x doesn't produce a stable non-collapsed
+from-scratch encoder either.
 
 ## Files
 
 - `ijepa_model.py` -- `PatchEncoder`, `Predictor`, `IJEPAModel`,
-  `normalized_mse_loss`, `variance_loss`, `within_image_variance_loss`
+  `normalized_mse_loss`, `variance_loss`, `within_image_variance_loss`.
+  Day101: `TinyTransformer`/`PatchEncoder`/`IJEPAModel` take an explicit
+  `dropout` argument (default 0.0) instead of relying on
+  `nn.TransformerEncoderLayer`'s unset 0.1 default -- the root cause behind
+  Day99's train/eval mode discrepancy
 - `masking.py` -- I-JEPA-style multi-block context/target mask sampling
   on the 8x8 patch grid (one shared mask per batch)
 - `ijepa_train.py` -- training loop; pools every frame from the training
   episodes (no pairing/horizon needed); tracks `ctx_cos_sim`
   (across-image) and `ctx_within_cos_sim` (within-image) as direct
   directional-collapse monitors, not just raw std. Day94: `--clip-grad`
-  (max grad norm; 0 disables)
+  (max grad norm; 0 disables). Day101: `--dropout` (default 0.0, see
+  `ijepa_model.py` above); `eval_mode_collapse_check()` runs the same
+  cosine-similarity check with `model.eval()` on a fixed probe batch every
+  epoch (`ctx_cos_sim_eval`/`ctx_within_cos_sim_eval` in the saved
+  history), since Day99 showed the train-mode-only monitor can't be
+  trusted; saves a checkpoint every 10 epochs to `outputs/checkpoints/`
+  and a second plot (`day101_collapse_check_*.png`, val_loss next to the
+  eval-mode collapse curve) because the automatic best-epoch selection
+  (lowest `val_loss`) is itself fooled by collapse
 - `probe_representation_quality.py` -- Day94: mean-pools the context
   encoder's patch embeddings and probes them against the real per-frame
   action, comparing the trained checkpoint to a randomly initialized

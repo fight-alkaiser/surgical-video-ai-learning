@@ -52,9 +52,18 @@ def patchify(frame: torch.Tensor) -> torch.Tensor:
 
 
 class TinyTransformer(nn.Module):
-    def __init__(self, embed_dim: int, depth: int, nhead: int):
+    def __init__(self, embed_dim: int, depth: int, nhead: int, dropout: float = 0.0):
         super().__init__()
-        layer = nn.TransformerEncoderLayer(d_model=embed_dim, nhead=nhead, dim_feedforward=embed_dim * 4, batch_first=True)
+        # Day99: nn.TransformerEncoderLayer defaults to dropout=0.1. That default was
+        # never set here, so every layer had it active in train() mode and off in
+        # eval() mode -- the anti-collapse loss (Day93) could be, and was, satisfied by
+        # dropout noise alone in train mode while the model collapsed to a constant
+        # output the moment eval() turned that noise off. Default to 0.0 so train-mode
+        # behavior matches eval-mode behavior, forcing genuine position-dependent
+        # structure to satisfy the loss instead of noise.
+        layer = nn.TransformerEncoderLayer(
+            d_model=embed_dim, nhead=nhead, dim_feedforward=embed_dim * 4, dropout=dropout, batch_first=True
+        )
         self.net = nn.TransformerEncoder(layer, num_layers=depth)
 
     def forward(self, x, key_padding_mask=None):
@@ -64,11 +73,11 @@ class TinyTransformer(nn.Module):
 class PatchEncoder(nn.Module):
     """patches (B, N, PATCH_DIM) + their position indices -> (B, N, embed_dim)"""
 
-    def __init__(self, embed_dim: int = 64, depth: int = 3, nhead: int = 4):
+    def __init__(self, embed_dim: int = 64, depth: int = 3, nhead: int = 4, dropout: float = 0.0):
         super().__init__()
         self.embed = nn.Linear(PATCH_DIM, embed_dim)
         self.pos_embed = nn.Parameter(torch.randn(1, NUM_PATCHES, embed_dim) * 0.02)
-        self.transformer = TinyTransformer(embed_dim, depth, nhead)
+        self.transformer = TinyTransformer(embed_dim, depth, nhead, dropout=dropout)
 
     def forward(self, patches: torch.Tensor, positions: torch.Tensor) -> torch.Tensor:
         """patches: (B, N, PATCH_DIM); positions: (B, N) long indices into pos_embed."""
@@ -106,10 +115,10 @@ class Predictor(nn.Module):
 
 
 class IJEPAModel(nn.Module):
-    def __init__(self, embed_dim: int = 64, enc_depth: int = 3, pred_depth: int = 2, ema_decay: float = 0.996):
+    def __init__(self, embed_dim: int = 64, enc_depth: int = 3, pred_depth: int = 2, ema_decay: float = 0.996, dropout: float = 0.0):
         super().__init__()
-        self.context_encoder = PatchEncoder(embed_dim, depth=enc_depth)
-        self.target_encoder = PatchEncoder(embed_dim, depth=enc_depth)
+        self.context_encoder = PatchEncoder(embed_dim, depth=enc_depth, dropout=dropout)
+        self.target_encoder = PatchEncoder(embed_dim, depth=enc_depth, dropout=dropout)
         self.target_encoder.load_state_dict(self.context_encoder.state_dict())
         for p in self.target_encoder.parameters():
             p.requires_grad = False
