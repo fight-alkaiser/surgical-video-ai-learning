@@ -864,14 +864,49 @@ enough that conditioning on the real action now pulls the prediction
 toward the truth. The predictor and training objective are unchanged --
 the fix was entirely upstream, in what the encoder could see.
 
+## Result (Day 102) -- a working per-frame instrument detector, no pretrained model needed
+
+Groundwork for the deferred instrument-region evaluation above: before
+doing that analysis, needed a way to localize the instrument in each frame
+that's better than `data/motion_weight_map.npy` (one static (64, 64) map
+computed once across the whole dataset -- a fixed prior, not a per-frame
+detection).
+
+No existing pretrained detector applies to this domain: these are dVRK
+peg-transfer dry-lab frames, not laparoscopic surgery, so tool detectors
+trained on EndoVis/Cholec-style data don't transfer, and generic detectors
+(COCO, etc.) have no "robot instrument" class. Plain HSV-value thresholding
+on the instrument shafts (they're near-black) doesn't work either: at this
+resolution the frame corners are also near-black from lens vignetting, and
+HSV saturation is a noisy, unreliable signal for very dark pixels -- vignette
+and instrument look almost identical in raw color terms (checked directly:
+corner pixel `[0,5,5]` RGB vs. an instrument-tip pixel `[0,7,8]` RGB, both
+reading as near-identical dark teal in HSV).
+
+What separates them is time, not color: the vignette is a static camera
+property, the instrument moves. Switched to per-episode background
+subtraction (`instrument_detector.py`): estimate each pixel's brightness
+baseline as its median (HSV value channel) across the whole episode, then
+flag a frame's pixel as instrument wherever it's darker than that baseline
+by more than a margin (0.12). Checked visually across 4 episodes x 5 frames
+each (`probe_instrument_detector.py`,
+`outputs/day102_instrument_detector_check.png`) -- corners stay clean, and
+the instrument shafts are tracked frame-by-frame with only minor speckle
+noise on the drape. No new dependency: this is classical image processing,
+not a trained model.
+
 ## Next steps (not yet done)
 
-- (Deferred, not abandoned) Try masked/cropped instrument-region
-  evaluation with an actual detector instead of a precomputed
-  motion-saliency heuristic, if this work is revisited later
+- Use `instrument_detector.py`'s per-frame mask to redo the Day82/Day98
+  bias/variance decomposition restricted to the instrument region, instead
+  of the whole frame -- the actual question this was groundwork for
 
 ## Files
 
+- `instrument_detector.py` -- Day102: `instrument_mask(frames)`, per-episode
+  background-subtraction instrument detector (see Day102 section above)
+- `probe_instrument_detector.py` -- Day102: visual check, overlays
+  `instrument_detector.py`'s mask on sampled frames from several episodes
 - `prepare_data.py` -- extract frames + actions from raw episodes
 - `download_more_episodes.sh <start> <end>` -- fetch additional Open-H
   peg-transfer episodes into `data/raw/`; Day80 used `20 99`, Day83 used
