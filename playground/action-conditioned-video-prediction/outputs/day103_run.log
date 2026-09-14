@@ -1,0 +1,20 @@
+val pairs: 1312, motion score range [0.00, 28.76], mean 2.10
+Q1 (least motion): motion in [0.00, 0.37), 328 pairs available, using 64
+Q2: motion in [0.37, 1.08), 328 pairs available, using 64
+Q3: motion in [1.08, 2.63), 328 pairs available, using 64
+Q4 (most motion): motion in [2.63, 28.76), 328 pairs available, using 64
+seed0 Q1 (least motion)     real bias^2=0.0860  zero bias^2=0.0919  gap(zero-real)=+0.0059
+seed0 Q2                    real bias^2=0.0912  zero bias^2=0.0967  gap(zero-real)=+0.0055
+seed0 Q3                    real bias^2=0.0935  zero bias^2=0.0974  gap(zero-real)=+0.0039
+seed0 Q4 (most motion)      real bias^2=0.0940  zero bias^2=0.0966  gap(zero-real)=+0.0026
+seed1 Q1 (least motion)     real bias^2=0.0916  zero bias^2=0.0944  gap(zero-real)=+0.0028
+seed1 Q2                    real bias^2=0.0989  zero bias^2=0.1003  gap(zero-real)=+0.0014
+seed1 Q3                    real bias^2=0.1005  zero bias^2=0.1021  gap(zero-real)=+0.0016
+seed1 Q4 (most motion)      real bias^2=0.1022  zero bias^2=0.1033  gap(zero-real)=+0.0011
+seed2 Q1 (least motion)     real bias^2=0.0918  zero bias^2=0.0943  gap(zero-real)=+0.0024
+seed2 Q2                    real bias^2=0.0985  zero bias^2=0.1007  gap(zero-real)=+0.0022
+seed2 Q3                    real bias^2=0.1001  zero bias^2=0.1024  gap(zero-real)=+0.0024
+seed2 Q4 (most motion)      real bias^2=0.1000  zero bias^2=0.1026  gap(zero-real)=+0.0027
+
+saved outputs/day103_instrument_motion_results.json
+saved outputs/day103_instrument_motion_gap.png

@@ -895,11 +895,71 @@ the instrument shafts are tracked frame-by-frame with only minor speckle
 noise on the drape. No new dependency: this is classical image processing,
 not a trained model.
 
+## Result (Day 103) -- the real-action advantage doesn't concentrate where the instrument moves, and a follow-up hypothesis doesn't explain why
+
+Used Day102's detector for the question the Day92 "Next steps" note (and
+Day102's groundwork) were pointed at: does the real-vs-zero-action
+bias/variance gap (Day96-98) concentrate on windows where the instrument
+actually moved a lot? Retraining with masked/cropped input was avoided
+deliberately -- the pretrained ResNet18 encoder was never trained on
+masked frames, so that would shift its input distribution away from
+anything it has seen and make the existing checkpoint's predictions
+meaningless. Instead, kept the encoder and checkpoint untouched and
+stratified which validation pairs get evaluated: for each pair, computed
+an instrument-motion score (Euclidean distance between the instrument
+mask's centroid at frame t and at frame t+H, using `instrument_detector.py`),
+split into four motion quartiles, and reran Day96-98's bias/variance
+decomposition per quartile (`cfm_eval_instrument_motion.py`).
+
+Real action beat zero action in every quartile, in all 3 seeds --
+consistent with Day96-98. But the size of that advantage did not grow with
+motion; in the clearest seed it more than halved from the lowest-motion
+quartile to the highest:
+
+| seed | Q1 (least motion) | Q2 | Q3 | Q4 (most motion) |
+|---|---|---|---|---|
+| 0 | +0.0059 | +0.0055 | +0.0039 | +0.0026 |
+| 1 | +0.0028 | +0.0014 | +0.0016 | +0.0011 |
+| 2 | +0.0024 | +0.0022 | +0.0024 | +0.0027 |
+
+(bias^2 gap, zero minus real; positive = real action helps. See
+`outputs/day103_instrument_motion_gap.png`.)
+
+Considered a hypothesis: net displacement over the full H-step window
+isn't the same as how fast the instrument moved *within* that window -- a
+pair could cover the same net distance steadily or in one fast burst, and
+if the encoder can't track fast motion between single frames, peak
+instantaneous speed should predict error better than net displacement
+does. Tested directly without touching the target frame (an earlier idea
+to time-average frames was set aside because blurring the target itself
+would confound "better tracking" with "an easier, blurrier target"):
+per pair, computed both net displacement and peak per-step speed within
+the window, and checked which correlates more with per-pair prediction
+error (`cfm_eval_instrument_velocity.py`, seed0, 256 pairs, pool size 32).
+
+```
+real:  corr(net_motion, error) = +0.127   corr(peak_speed, error) = -0.007
+zero:  corr(net_motion, error) = +0.036   corr(peak_speed, error) = -0.133
+```
+
+Neither correlation is meaningful (all under 0.15, inconsistent in sign
+between conditions and between this run and a smaller dry run of the same
+setup). The instantaneous-tracking-speed hypothesis isn't supported by
+this data.
+
+**Reading**: the real-action advantage from Day96-98 is real and
+reproducible, but this session didn't find what determines its size --
+it isn't simply "more instrument motion = more to gain from knowing the
+action," and the natural follow-up hypothesis (fast motion breaks
+frame-to-frame tracking) didn't hold up either. Stopping here rather than
+running more diagnostics for a signal that was already weakening.
+
 ## Next steps (not yet done)
 
-- Use `instrument_detector.py`'s per-frame mask to redo the Day82/Day98
-  bias/variance decomposition restricted to the instrument region, instead
-  of the whole frame -- the actual question this was groundwork for
+None outstanding for this specific thread; the instrument-motion question
+this was chasing didn't resolve cleanly (see Day103 above), and further
+stratification is likely to chase noise rather than signal at this sample
+size.
 
 ## Files
 
@@ -907,6 +967,14 @@ not a trained model.
   background-subtraction instrument detector (see Day102 section above)
 - `probe_instrument_detector.py` -- Day102: visual check, overlays
   `instrument_detector.py`'s mask on sampled frames from several episodes
+- `cfm_eval_instrument_motion.py` -- Day103: stratifies validation pairs
+  into instrument-motion quartiles (mask centroid displacement over the
+  H-step window) and reruns Day82/98's bias/variance decomposition per
+  quartile, reusing the existing pretrained-ResNet18 checkpoints unchanged
+- `cfm_eval_instrument_velocity.py` -- Day103: per-pair correlation between
+  prediction error and two motion statistics (net displacement vs. peak
+  per-step speed within the window), testing whether fast instantaneous
+  motion (rather than net displacement) explains the Day103 result above
 - `prepare_data.py` -- extract frames + actions from raw episodes
 - `download_more_episodes.sh <start> <end>` -- fetch additional Open-H
   peg-transfer episodes into `data/raw/`; Day80 used `20 99`, Day83 used
