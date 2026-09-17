@@ -1,0 +1,15 @@
+train episodes (16): ['episode_000000', 'episode_000001', 'episode_000003', 'episode_000005', 'episode_000007', 'episode_000008', 'episode_000009', 'episode_000010', 'episode_000011', 'episode_000012', 'episode_000013', 'episode_000014', 'episode_000015', 'episode_000016', 'episode_000017', 'episode_000018']
+val episodes (4):   [np.str_('episode_000002'), np.str_('episode_000004'), np.str_('episode_000006'), np.str_('episode_000019')]
+train pairs: 4385, val pairs: 944
+epoch    0  train_loss 1.1501  val_loss 1.1042
+epoch   10  train_loss 0.9262  val_loss 1.0131
+epoch   20  train_loss 0.9102  val_loss 0.9713
+epoch   30  train_loss 0.9022  val_loss 0.9835
+epoch   39  train_loss 0.8962  val_loss 0.9828
+
+best smoothed val_loss 0.9703 at epoch 35 (of 40); restoring that checkpoint
+
+      real -- paired_loss: 0.9774   best_of_n_error: 0.7089
+  shuffled -- paired_loss: 0.9772   best_of_n_error: 0.7133
+      zero -- paired_loss: 0.9762   best_of_n_error: 0.7092
+saved outputs/loss_curve_cfm_h20_n20_seed0.png
