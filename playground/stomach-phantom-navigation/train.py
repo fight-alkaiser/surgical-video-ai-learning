@@ -22,6 +22,15 @@ parser.add_argument("--seed", type=int, default=0)
 parser.add_argument("--batch-size", type=int, default=32)
 parser.add_argument("--sample-steps", type=int, default=16)
 parser.add_argument("--num-samples", type=int, default=8)
+parser.add_argument(
+    "--action-mode",
+    choices=["flatten", "sequence"],
+    default="flatten",
+    help="Day110: 'flatten' (Day106-109 default) concatenates the (H, action_dim) window into one "
+    "vector. 'sequence' runs it through a small GRU instead, giving the network the step order for "
+    "free -- this task's action is an instantaneous motor velocity, so 'where things ended up' "
+    "requires integrating the window over time, which flattening doesn't make easy to recover.",
+)
 args = parser.parse_args()
 H = args.horizon
 torch.manual_seed(args.seed)
@@ -77,8 +86,13 @@ def to_tensor_batch(frame_t, action_t, frame_t1, idx):
 
 
 tag = f"h{H}_n{len(episode_ids)}_seed{args.seed}"
-model = CFMActionModel(action_dim_per_step=action_dim_per_step, horizon=H).to(DEVICE)
-opt = torch.optim.Adam(model.velocity.parameters(), lr=args.lr)
+if args.action_mode != "flatten":
+    tag += f"_{args.action_mode}"
+model = CFMActionModel(action_dim_per_step=action_dim_per_step, horizon=H, action_mode=args.action_mode).to(DEVICE)
+trainable_params = list(model.velocity.parameters())
+if model.action_encoder is not None:
+    trainable_params += list(model.action_encoder.parameters())
+opt = torch.optim.Adam(trainable_params, lr=args.lr)
 
 history = {"train_loss": [], "val_loss": []}
 best_val_loss = float("inf")

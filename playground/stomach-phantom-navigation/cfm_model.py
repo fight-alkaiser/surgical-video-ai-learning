@@ -91,6 +91,29 @@ def sinusoidal_time_embedding(s: torch.Tensor, dim: int) -> torch.Tensor:
     return torch.cat([torch.sin(args), torch.cos(args)], dim=-1)
 
 
+class ActionSequenceEncoder(nn.Module):
+    """Day110: encodes the (H, action_dim_per_step) window with a GRU instead
+    of flattening it into one H*action_dim_per_step vector. Flattening treats
+    the window as an unordered bag of H*D numbers; a GRU reads it one
+    timestep at a time and its final hidden state is the action embedding,
+    giving the network the step order for free. Same idea as
+    ../action-conditioned-video-prediction/cfm_model.py's
+    ActionSequenceEncoder (Day86 there) -- worth retrying here because this
+    task's action is an instantaneous motor *velocity* command, not an
+    absolute position/orientation, so recovering "where things ended up"
+    requires integrating the window over time. Flattening buries that
+    order; a GRU is given it directly."""
+
+    def __init__(self, action_dim_per_step: int, hidden: int = 64, out_dim: int = 64):
+        super().__init__()
+        self.gru = nn.GRU(action_dim_per_step, hidden, batch_first=True)
+        self.out = nn.Linear(hidden, out_dim)
+
+    def forward(self, action_seq: torch.Tensor) -> torch.Tensor:
+        _, h_n = self.gru(action_seq)
+        return self.out(h_n[-1])
+
+
 class VelocityPredictor(nn.Module):
     def __init__(self, embed_dim: int, action_dim: int, time_dim: int = 32, hidden: int = 256):
         super().__init__()
@@ -110,17 +133,26 @@ class VelocityPredictor(nn.Module):
 
 
 class CFMActionModel(nn.Module):
-    def __init__(self, action_dim_per_step: int, horizon: int):
+    def __init__(self, action_dim_per_step: int, horizon: int, action_mode: str = "flatten"):
         super().__init__()
         self.horizon = horizon
+        self.action_mode = action_mode
         shared = PretrainedResNet18Encoder()
         self.online_encoder = shared
         self.target_encoder = shared  # same frozen module; kept as two names for readability at call sites
         self.embed_dim = shared.embed_dim
-        action_dim = action_dim_per_step * horizon
+
+        if action_mode == "sequence":
+            self.action_encoder = ActionSequenceEncoder(action_dim_per_step, out_dim=self.embed_dim)
+            action_dim = self.embed_dim
+        else:
+            self.action_encoder = None
+            action_dim = action_dim_per_step * horizon
         self.velocity = VelocityPredictor(self.embed_dim, action_dim)
 
     def encode_action(self, action_window: torch.Tensor) -> torch.Tensor:
+        if self.action_encoder is not None:
+            return self.action_encoder(action_window)
         return action_window.reshape(action_window.shape[0], -1)
 
     def training_step(self, frame_t: torch.Tensor, action_window: torch.Tensor, frame_t1: torch.Tensor):
