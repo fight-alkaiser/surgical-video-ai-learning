@@ -136,10 +136,73 @@ representation, or by undertraining, rather than a structural dead end.
 Basis for running a longer (100-epoch) training run next rather than
 abandoning this task.
 
+## Day109 -- 100 epochs still tied on paired_loss, but bias/variance shows a small, consistent signal
+
+The overnight 100-epoch run (200 episodes, seed 0) finished. val_loss kept
+decreasing through the very last epoch (0.8515 at epoch 90 to 0.8503 at
+epoch 99), so it wasn't obviously undertrained, but the headline metrics
+were still essentially tied:
+
+```
+     real -- paired_loss: 0.8519   best_of_n_error: 0.6124
+ shuffled -- paired_loss: 0.8525   best_of_n_error: 0.6126
+     zero -- paired_loss: 0.8502   best_of_n_error: 0.6127
+```
+
+Reran Day82's bias/variance decomposition on this checkpoint
+(`cfm_eval_distribution.py`) rather than accepting the tied paired_loss as
+the final word -- that probe question (Day108) was post-hoc (given both
+`z_t` and `z_t+H`, can the action be explained?), a different and easier
+question than what the predictor actually faces (predicting `z_t+H` from
+`z_t` and the action alone, without ever seeing the answer). This
+decomposition asks the forward-facing question directly:
+
+```
+      real  bias^2=0.1879  variance=0.5377  sum=0.7256
+  shuffled  bias^2=0.1911  variance=0.5413  sum=0.7324
+      zero  bias^2=0.1895  variance=0.5383  sum=0.7278
+```
+
+The ordering **real < zero < shuffled** holds on bias^2, variance, and
+best_of_N at nearly every N from 8 to 256 (`outputs/day109_distribution_h20_n200_seed0.json`)
+-- small differences, but consistent across every angle this script
+checks, not noise in one metric. Shuffled action (a real but mismatched
+action) scoring worst throughout is the more informative part: the model
+distinguishes a correct action from an incorrect one, it isn't simply
+indifferent to action content the way the raw paired_loss numbers alone
+would suggest. A PCA plot of one example pair's 256 samples per condition
+(`outputs/day109_sample_distribution_pca_h20_n200_seed0.png`) shows the
+same story as Day82's: all three conditions' clusters overlap heavily
+around the true target at the single-pair level -- this effect only shows
+up once bias is averaged across many pairs.
+
+**Reading**: real action does carry real, usable predictive signal on this
+task, not just post-hoc explanatory signal (Day108) -- but the effect size
+is small enough that it doesn't show up in the coarser paired_loss/best_of_n
+comparison used through Day106-107. Given the current 2D motor-velocity
+action representation, 64x64 downsampled frames, and this encoder, that
+may be close to the ceiling for this exact setup; whether a different
+action representation, resolution, or horizon would widen the gap is not
+yet tested.
+
+**Also fixed this session**: overnight, `caffeinate -disu` was used to keep
+the display and system fully awake, based on an initial (mistaken) theory
+that display sleep was stalling MPS computation -- the training run
+actually completed normally over the full ~7h53m span, most of which had
+no caffeinate assertion active at all, so that theory wasn't supported by
+the outcome. Switched to `caffeinate -i` (prevents idle *system* sleep
+only, lets the display sleep normally) for future long runs, since keeping
+the display on for many hours serves no purpose here and needlessly wears
+the hardware. This Mac mini's `pmset` was already configured with system
+sleep disabled (`sleep 0`), so the safety margin `caffeinate -i` adds is
+mostly a low-cost backstop, not a hard requirement.
+
 ## Next steps (not yet done)
 
-- 100-epoch run at 200 episodes, seed 0 (running overnight as of Day108) --
-  see if training converges to a clear real-vs-zero gap given more budget
+- Test whether the small real-vs-zero gap widens with a different action
+  representation (e.g. an encoded/sequence action window instead of flat
+  concatenation), a shorter horizon, or higher-resolution input frames --
+  the current setup may simply be near its ceiling for this task
 
 ## Files
 
@@ -160,6 +223,13 @@ abandoning this task.
   z_t+H)` alone (no predictor involved) against a mean-action baseline and
   a shuffled control -- tests whether the encoder itself discards
   action-relevant signal
+- `cfm_eval_distribution.py` -- Day109: reloads a trained checkpoint and
+  draws a large sample pool per condition to (1) recompute best-of-N at
+  several `N` values and (2) decompose expected error into bias^2 vs.
+  variance; also dumps a 2D PCA scatter of one example pair's samples
+  (same method as
+  `../action-conditioned-video-prediction/cfm_eval_distribution.py`,
+  Day82 there)
 - `outputs/` -- loss curves, training history, logs
 - `data/raw/`, `data/episodes/` -- source parquet + mp4 + extracted
   frames/actions per episode (not committed to git, see `.gitignore`)
