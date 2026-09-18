@@ -67,10 +67,49 @@ from-scratch encoder at this data scale) instead of re-discovering it.
   showed up once that project scaled past 20 episodes to 200. No collapse,
   nothing broke -- just not enough data yet to see an effect.
 
+## Day107 -- 10x more data didn't move the needle either
+
+Downloaded episodes 20-199 (180 more, 200 total) and reran training twice:
+25 epochs, then 50 epochs, both at `--batch-size 128` (larger batches cut
+wall-clock time a lot with a frozen encoder that has to run every batch --
+same fix `../action-conditioned-video-prediction/` made on Day97). Neither
+run showed real action clearly beating zero:
+
+```
+25 epochs:      real -- paired_loss: 0.8848   best_of_n_error: 0.6135
+             shuffled -- paired_loss: 0.8849   best_of_n_error: 0.6139
+                 zero -- paired_loss: 0.8843   best_of_n_error: 0.6133
+
+50 epochs:      real -- paired_loss: 0.8667   best_of_n_error: 0.6069
+             shuffled -- paired_loss: 0.8680   best_of_n_error: 0.6071
+                 zero -- paired_loss: 0.8668   best_of_n_error: 0.6062
+```
+
+real and zero stayed within ~0.0001 of each other on paired_loss both
+times -- essentially tied, with shuffled a hair worse (so the model isn't
+completely indifferent to the action's content, just not helped by it
+specifically). This is not what happened in
+`../action-conditioned-video-prediction/` when that project scaled past 20
+episodes with a pretrained encoder (Day96-98's turnaround); here, 10x more
+data didn't change the picture.
+
+Not a clean negative result yet, though: at 50 epochs, val_loss was still
+slowly decreasing between epoch 40 (0.8755) and epoch 49 (0.8659), not
+clearly converged. Two explanations remain open -- undertrained, or
+something about this task's action representation (2D motor-speed
+commands, vs. the dVRK project's absolute position/orientation) that a
+single before/after frame pair can't use regardless of training budget.
+Timing note for reproducing: 25 epochs + evaluation took ~2h8m wall-clock
+on this Mac mini (`--batch-size 128`, MPS); 50 epochs + evaluation took
+correspondingly longer.
+
 ## Next steps (not yet done)
 
-- Download more episodes (this dataset has 462 available, vs. the 20 used
-  so far) and rerun training -- Day107
+- Probe diagnostic (same method as
+  `../action-conditioned-video-prediction/probe_action_per_dimension.py`)
+  to check whether the frozen ResNet18 encoder preserves recoverable
+  information about this task's 2-dim action at all, before spending more
+  compute on longer training runs -- Day108
 
 ## Files
 
