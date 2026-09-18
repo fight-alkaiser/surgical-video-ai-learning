@@ -1,0 +1,31 @@
+train pairs: 36272, val pairs: 9292
+encoding train/val frames with the frozen encoder...
+z_t torch.Size([36272, 512]), z_t+H torch.Size([36272, 512]), action (flat) torch.Size([36272, 40])
+
+--- probe: real (z_t, z_t+H) -> the action that actually happened ---
+  [real] epoch   0  val_mse 0.7465
+  [real] epoch  10  val_mse 0.7456
+  [real] epoch  20  val_mse 0.7521
+  [real] epoch  30  val_mse 0.7503
+  [real] epoch  40  val_mse 0.7459
+  [real] epoch  49  val_mse 0.7622
+
+--- control: mean-action baseline (predict the training mean action, ignore z entirely) ---
+  mean-action baseline val_mse 0.9665
+
+--- control: shuffled -- same (z_t, z_t+H) pairs, but actions randomly reassigned ---
+  [shuffled] epoch   0  val_mse 0.9631
+  [shuffled] epoch  10  val_mse 0.9677
+  [shuffled] epoch  20  val_mse 0.9676
+  [shuffled] epoch  30  val_mse 0.9674
+  [shuffled] epoch  40  val_mse 0.9692
+  [shuffled] epoch  49  val_mse 0.9682
+
+=== summary ===
+mean-action baseline (ignores z entirely): 0.9665
+probe on shuffled actions (z has no relation to target): 0.9631
+probe on real actions:                                   0.7269
+
+R^2 of real-action probe vs. mean-action baseline: 0.2480
+
+saved outputs/day108_probe_results.json

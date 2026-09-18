@@ -1,0 +1,6 @@
+{
+  "mean_action_baseline_mse": 0.9665427803993225,
+  "shuffled_probe_mse": 0.963100254535675,
+  "real_probe_mse": 0.7268515825271606,
+  "r2_vs_mean_baseline": 0.24798819331425204
+}

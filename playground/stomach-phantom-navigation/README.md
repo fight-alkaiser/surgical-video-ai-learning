@@ -103,13 +103,43 @@ Timing note for reproducing: 25 epochs + evaluation took ~2h8m wall-clock
 on this Mac mini (`--batch-size 128`, MPS); 50 epochs + evaluation took
 correspondingly longer.
 
+## Day108 -- probe: the encoder isn't the bottleneck
+
+Before spending more compute on longer training, ruled out the more
+discouraging explanation for Day107's tied result first: that the frozen
+ResNet18 encoder simply doesn't preserve this task's action-relevant
+information at all, in which case no amount of additional training could
+fix it. Same method as
+`../action-conditioned-video-prediction/probe_action_from_latents.py`
+(Day91 there): freeze the encoder, train a small separate probe to regress
+the real 2-dim action window from `(z_t, z_t+H)` alone, no predictor
+involved (`probe_action_from_latents.py`).
+
+```
+mean-action baseline (ignores z entirely): 0.9665
+probe on shuffled actions (z unrelated to target): 0.9631-0.9682
+probe on real actions:                             0.7269
+
+R^2 vs. mean-action baseline: 0.2480
+```
+
+The shuffled-action control stayed near the mean-action baseline, as
+expected (no relationship to recover). The real-action probe scored
+clearly better. R^2~0.25 is lower than the ~0.69 this same frozen encoder
+achieved on `../action-conditioned-video-prediction/`'s dVRK task (Day95
+there), but well above the shuffled/mean-baseline noise floor -- the
+encoder is not blind to this task's action.
+
+**Reading**: Day107's tied real/zero result is more likely explained by
+the predictor not yet exploiting a signal that does exist in the
+representation, or by undertraining, rather than a structural dead end.
+Basis for running a longer (100-epoch) training run next rather than
+abandoning this task.
+
 ## Next steps (not yet done)
 
-- Probe diagnostic (same method as
-  `../action-conditioned-video-prediction/probe_action_per_dimension.py`)
-  to check whether the frozen ResNet18 encoder preserves recoverable
-  information about this task's 2-dim action at all, before spending more
-  compute on longer training runs -- Day108
+- 100-epoch run at 200 episodes, seed 0 (running overnight as of Day108) --
+  see if training converges to a clear real-vs-zero gap given more budget
 
 ## Files
 
@@ -125,6 +155,11 @@ correspondingly longer.
 - `train.py` -- training loop + real/shuffled/zero action evaluation
   (`paired_loss`, `best_of_n_error`, same metrics as
   `../action-conditioned-video-prediction/`'s Day78/96-98)
+- `probe_action_from_latents.py` -- Day108: freezes the encoder and trains
+  a small MLP probe to regress the actual action window from `(z_t,
+  z_t+H)` alone (no predictor involved) against a mean-action baseline and
+  a shuffled control -- tests whether the encoder itself discards
+  action-relevant signal
 - `outputs/` -- loss curves, training history, logs
 - `data/raw/`, `data/episodes/` -- source parquet + mp4 + extracted
   frames/actions per episode (not committed to git, see `.gitignore`)
