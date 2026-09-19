@@ -197,12 +197,50 @@ the hardware. This Mac mini's `pmset` was already configured with system
 sleep disabled (`sleep 0`), so the safety margin `caffeinate -i` adds is
 mostly a low-cost backstop, not a hard requirement.
 
+## Day110 -- GRU action encoding raises overall accuracy but muddies the bias/variance story
+
+Added `ActionSequenceEncoder` (a small GRU over the `(H, action_dim)`
+window, same idea as `../action-conditioned-video-prediction/`'s Day86) as
+a `--action-mode sequence` option, on the theory that this task's action is
+an instantaneous motor *velocity*, so recovering "where things ended up"
+requires integrating the window over time -- something flattening doesn't
+make easy. Reran the 100-epoch training and Day109's bias/variance
+decomposition with it.
+
+```
+paired_loss / best_of_n_error:
+     real -- paired_loss: 0.8444   best_of_n_error: 0.6198
+ shuffled -- paired_loss: 0.8461   best_of_n_error: 0.6211
+     zero -- paired_loss: 0.8428   best_of_n_error: 0.6216
+
+bias/variance decomposition:
+      real  bias^2=0.2057  variance=0.5694  sum=0.7750
+  shuffled  bias^2=0.2048  variance=0.5662  sum=0.7710
+      zero  bias^2=0.2049  variance=0.5672  sum=0.7722
+```
+
+Two things pull in different directions. Overall prediction quality
+improved noticeably (val_loss 0.8401 at epoch 99, vs. flatten's 0.8503),
+and on paired_loss real now beats shuffled by 3x the margin flatten
+showed. But the bias/variance decomposition -- the more sensitive
+diagnostic that found a small, *consistent* `real < zero < shuffled`
+ordering for flatten (Day109) -- inverts here: shuffled scores best on
+bias^2, variance, and the sum, with real scoring worst on all three.
+best_of_N is similarly inconsistent across N (see
+`outputs/day109_distribution_h20_n200_seed0_sequence.json`).
+
+**Reading**: GRU action encoding produced a better predictor overall, but
+not obviously a predictor that uses the action content more reliably --
+the one diagnostic that gave a clean, if small, signal for flatten doesn't
+reproduce here. Not treating this as resolved; interpretation to align on
+before drawing a conclusion (see repo/Obsidian discussion).
+
 ## Next steps (not yet done)
 
-- Test whether the small real-vs-zero gap widens with a different action
-  representation (e.g. an encoded/sequence action window instead of flat
-  concatenation), a shorter horizon, or higher-resolution input frames --
-  the current setup may simply be near its ceiling for this task
+- Reconcile the sequence-mode paired_loss improvement with its inverted
+  bias/variance ordering -- discuss interpretation before deciding what
+  (if anything) to try next (shorter horizon, higher resolution, more
+  seeds for either action mode)
 
 ## Files
 

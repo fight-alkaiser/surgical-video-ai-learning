@@ -40,6 +40,7 @@ parser.add_argument("--checkpoint", type=str, default="outputs/model_cfm_h20_n20
 parser.add_argument("--pool-size", type=int, default=256, help="total samples drawn per condition per pair")
 parser.add_argument("--steps", type=int, default=16)
 parser.add_argument("--n-pairs", type=int, default=64, help="number of val (z_t, action) pairs to evaluate on")
+parser.add_argument("--action-mode", choices=["flatten", "sequence"], default="flatten")
 args = parser.parse_args()
 H = args.horizon
 
@@ -85,8 +86,8 @@ def to_tensor_batch(frame_t, action_t, frame_t1, idx):
     return f.to(DEVICE), a.to(DEVICE), f1.to(DEVICE)
 
 
-tag = f"h{H}_n{len(episode_ids)}_seed0"
-model = CFMActionModel(action_dim_per_step=action_dim_per_step, horizon=H).to(DEVICE)
+tag = f"h{H}_n{len(episode_ids)}_seed0" + (f"_{args.action_mode}" if args.action_mode != "flatten" else "")
+model = CFMActionModel(action_dim_per_step=action_dim_per_step, horizon=H, action_mode=args.action_mode).to(DEVICE)
 model.load_state_dict(torch.load(args.checkpoint, map_location=DEVICE))
 model.eval()
 
