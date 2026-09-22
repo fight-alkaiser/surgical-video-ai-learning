@@ -26,6 +26,7 @@ regardless of what a post-hoc probe can find.
 
 import argparse
 import json
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,6 +44,15 @@ parser.add_argument("--n-pairs", type=int, default=64, help="number of val (z_t,
 parser.add_argument("--action-mode", choices=["flatten", "sequence"], default="flatten")
 args = parser.parse_args()
 H = args.horizon
+
+# Day111 fix: model.sample()'s ODE integration starts from torch.randn noise
+# with no seed set anywhere in this script, so re-running this eval on the
+# exact same checkpoint produced different bias/variance numbers -- and a
+# different real/shuffled/zero ordering -- each time (see Day111 README
+# notes). Seed once here so a given checkpoint's evaluation is at least
+# reproducible; this does not, by itself, mean 64 pairs x 256 samples is
+# enough to distinguish a genuine small effect from this sampling noise.
+torch.manual_seed(0)
 
 DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
@@ -86,7 +96,12 @@ def to_tensor_batch(frame_t, action_t, frame_t1, idx):
     return f.to(DEVICE), a.to(DEVICE), f1.to(DEVICE)
 
 
-tag = f"h{H}_n{len(episode_ids)}_seed0" + (f"_{args.action_mode}" if args.action_mode != "flatten" else "")
+# Day111 fix: this used to hardcode "seed0" regardless of which checkpoint was
+# actually loaded, so evaluating a seed1/seed2 checkpoint silently overwrote
+# seed0's output files instead of erroring -- derive the tag from the
+# checkpoint's own filename instead, so it can never disagree with what was
+# actually loaded.
+tag = os.path.basename(args.checkpoint).removeprefix("model_cfm_").removesuffix(".pt")
 model = CFMActionModel(action_dim_per_step=action_dim_per_step, horizon=H, action_mode=args.action_mode).to(DEVICE)
 model.load_state_dict(torch.load(args.checkpoint, map_location=DEVICE))
 model.eval()

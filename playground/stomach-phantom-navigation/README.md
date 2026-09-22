@@ -235,12 +235,58 @@ the one diagnostic that gave a clean, if small, signal for flatten doesn't
 reproduce here. Not treating this as resolved; interpretation to align on
 before drawing a conclusion (see repo/Obsidian discussion).
 
+## Day111 -- the bias/variance decomposition's own sampling noise is as large as the effect it was measuring
+
+Started checking whether Day109/110's bias/variance orderings reproduce
+across seeds (train seed1/seed2 for both action modes, 50 epochs each,
+rerun the decomposition on each checkpoint). Stopped partway through after
+finding a more basic problem: `cfm_eval_distribution.py`'s `model.sample()`
+call starts each ODE integration from `torch.randn` noise with no seed set
+anywhere in the script. Re-running the exact same evaluation on the exact
+same checkpoint (seed1, flatten) three times in a row gave three different
+bias^2 orderings:
+
+```
+run 1:  shuffled 0.1883  <  real 0.1884  <  zero 0.1889
+run 2:  zero     0.1925  <  real 0.1929  <  shuffled 0.1933
+run 3:  real     0.1862  <  zero 0.1869  <  shuffled 0.1872
+```
+
+The spread between runs (~0.003-0.007) is comparable to or larger than
+Day109's seed0 "signal" (real 0.1879 vs. zero 0.1895 vs. shuffled 0.1911,
+a spread of 0.0032). That signal cannot be trusted at face value: this
+evaluation's own unseeded sampling noise, at the current 64 pairs x 256
+samples, is not obviously smaller than the effect it was trying to detect.
+
+Fixed the immediate bug (`torch.manual_seed(0)` added to
+`cfm_eval_distribution.py`, so a given checkpoint's evaluation is at least
+reproducible run-to-run now) but decided not to chase this further with
+bigger sampling budgets or more seeds -- getting the noise floor reliably
+below an effect this small would need a much larger evaluation (more pairs
+and/or more samples per pair), for a payoff that's still just "a small
+action-conditioning effect exists," not a result this playground's scope
+calls for chasing harder. One seeded rerun of seed1/flatten for the
+record: `real 0.1911, zero 0.1910, shuffled 0.1917` -- zero and real
+effectively tied, shuffled marginally worst, consistent with "the model
+can weakly tell right from wrong actions apart, but real-vs-zero isn't a
+reliable win" as the honest summary rather than Day109's cleaner-looking
+story.
+
+**Reading, revised**: Day109's `real < zero < shuffled` ordering, and
+Day110's inverted `shuffled < zero < real` for the sequence encoder, were
+each single, unseeded, noisy draws -- not confirmed, contradicting
+findings. The safest conclusion across Day106-111 is that this task's 2D
+motor-velocity action provides at most a very small, hard-to-pin-down
+predictive edge with this encoder/predictor/data-scale combination, too
+small for this playground's evaluation setup to characterize reliably
+without a much larger compute budget than is worth spending here.
+
 ## Next steps (not yet done)
 
-- Reconcile the sequence-mode paired_loss improvement with its inverted
-  bias/variance ordering -- discuss interpretation before deciding what
-  (if anything) to try next (shorter horizon, higher resolution, more
-  seeds for either action mode)
+None planned for this specific thread. If revisited, the priority would be
+fixing the evaluation methodology first (seeded, larger sampling budget)
+before drawing any conclusion from bias/variance numbers this close
+together, rather than trying another architecture change.
 
 ## Files
 
