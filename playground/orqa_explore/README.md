@@ -49,24 +49,56 @@ shallower spot rather than resolving it outright:
    (`numpy.dtypes.StringDType`). Installing everything in one combined pip
    call (instead of two separate invocations fighting each other) plus
    explicitly pinning `numpy==2.0.2` got past this specific error
-6. Most recent error: `ModuleNotFoundError: No module named 'trl'` -- a
-   missing plain dependency, not a version conflict; the easiest kind of
-   failure in this whole sequence, and where Day113 stopped
+6. `ModuleNotFoundError: No module named 'trl'` even after adding it to the
+   combined pip install (Day113) -- installing it in its own separate cell,
+   right before it's needed, worked
+7. `llamafactory.data.collator` also unconditionally imports `open3d`
+   (point-cloud library) even for a pure image+text run -- added it too
+   (plain prebuilt wheels, unlike spconv/torch-scatter)
+8. `ImportError: cannot import name 'AutoModelForVision2Seq' from
+   'transformers'` -- installing `trl` pulled in `trl==1.14.0`, which
+   requires `transformers>=4.56.2`, silently upgrading transformers to
+   5.16.1 and removing the older `AutoModelForVision2Seq` API
+   LLaMA-Factory's 2024-era code depends on. ORQA's own requirements.txt
+   pins `trl>=0.8.6,<=0.9.6` for exactly this reason
+9. (Day114) `pip install --force-reinstall "transformers==4.46.1"
+   "trl==0.9.6"` to fix #8 cascaded into a much bigger mess: it also bumped
+   torch to 2.14.0 (breaking torchvision, which wants 2.11.0) and dropped
+   numpy back to 1.26.4 (breaking a dozen of Colab's own preinstalled
+   tools -- jax, cudf, opencv, shap, etc., all via "pip's dependency
+   resolver does not currently take into account all the packages already
+   installed" warnings) -- and the *original* AutoModelForVision2Seq error
+   was still there afterward. Stopped here; this runtime's package state is
+   corrupted enough that further patching in place isn't worth pursuing.
 
 **Reading**: this is less about ORQA specifically and more a case study in
-research-code bit-rot. ORQA's `requirements.txt` pins versions from
-roughly two years before this attempt -- reasonable at the time (exact
-pins protect a paper's reported numbers from silently drifting if a
-library's internals change), but nobody has strong incentive to keep a
-research repo's dependencies current after publication, while the
+research-code bit-rot, and in a mistake of our own. ORQA's `requirements.txt`
+pins versions from roughly two years before this attempt -- reasonable at
+the time (exact pins protect a paper's reported numbers from silently
+drifting if a library's internals change), but nobody has strong incentive
+to keep a research repo's dependencies current after publication, while the
 ecosystem underneath keeps moving. numpy 2.0 (2024) was an unusually
-disruptive breaking release across the ML ecosystem, and this is a
-textbook case of the gap it left behind.
+disruptive breaking release across the ML ecosystem, and this is a textbook
+case of the gap it left behind.
+
+The mistake on our side: every install in this notebook went straight into
+Colab's shared system Python (`/usr/local/lib/python3.13/dist-packages`),
+which is *also* where Colab's own large preinstalled stack lives (jax,
+cudf, google-colab's own tooling, a modern numpy/pandas/transformers).
+Every attempt to pin this 2024-era stack's versions fought that shared
+environment in both directions -- our old pins broke Colab's tools, and
+Colab's newer already-installed packages (like the `trl` that quietly
+pulled transformers forward) broke our old code. None of this would happen
+inside an isolated virtual environment.
 
 ## Next steps (not yet done)
 
-- Install `trl` and continue past wherever the next dependency gap turns
-  up, or decide the dependency chase itself has run its course
+- Start over on a *freshly deleted* Colab runtime (Runtime -> Disconnect
+  and delete runtime, not just Restart -- this one's package state is too
+  tangled to keep patching), and this time create an isolated virtual
+  environment inside it (`python -m venv` or similar) before installing
+  any of ORQA's pinned dependencies, so this old stack never touches
+  Colab's own preinstalled packages in either direction
 
 ## Files
 
