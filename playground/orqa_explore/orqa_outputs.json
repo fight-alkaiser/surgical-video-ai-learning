@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "checkpoint": "/content/saves/qwen2vl_lora_sft_qlora_1000000_unfreeze8_0.5mmdrop_336res_578imgtoks_pkd_050_depthreduce4/checkpoint-124806",
+    "teacher_standin": "Qwen/Qwen2-VL-2B-Instruct",
+    "dtype": "torch.float32",
+    "visual_block": "truncated; 222 readable tensors identical to model.safetensors, 208 not comparable",
+    "llm_attn": "eager",
+    "vision_attn": "eager",
+    "params_not_covered_by_checkpoint": [],
+    "gpu": "Tesla T4"
+  },
+  "results": [
+    {
+      "image": "or_room_nci.jpg",
+      "question": "List all entities in the OR.",
+      "answer": "All entities present are head surgeon, drill, instrument table, assistant surgeon, drape, operating table, patient, anaesthetist, mps station, nurse, head surgeon, saw, mako robot.",
+      "new_tokens": 44,
+      "seconds": 2.84
+    },
+    {
+      "image": "or_room_nci.jpg",
+      "question": "What action is being performed at this time?",
+      "answer": "They are currently incision.",
+      "new_tokens": 7,
+      "seconds": 0.43
+    },
+    {
+      "image": "or_room_nci.jpg",
+      "question": "Describe what you see in this image.",
+      "answer": "The position of hammer is 303, 443, 418, 724 in the image.",
+      "new_tokens": 29,
+      "seconds": 0.72
+    },
+    {
+      "image": "phantom_endoscope_f050.jpg",
+      "question": "List all entities in the OR.",
+      "answer": "The OR has mouth gag, other hands left.",
+      "new_tokens": 11,
+      "seconds": 0.5
+    },
+    {
+      "image": "phantom_endoscope_f050.jpg",
+      "question": "What action is being performed at this time?",
+      "answer": "They are currently incision.",
+      "new_tokens": 7,
+      "seconds": 0.43
+    },
+    {
+      "image": "phantom_endoscope_f050.jpg",
+      "question": "Describe what you see in this image.",
+      "answer": "The position of mouth gag is 622, 998, 428, 998 in the image.",
+      "new_tokens": 30,
+      "seconds": 0.8
+    }
+  ]
+}

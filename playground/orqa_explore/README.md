@@ -1,6 +1,6 @@
 # ORQA inference exploration (toy)
 
-Day112-113+. Not a training project like the other `playground/` entries --
+Day112-115. Not a training project like the other `playground/` entries --
 ORQA ("Specialized Foundation Models for Intelligent Operating Rooms",
 [egeozsoy/ORQA](https://github.com/egeozsoy/ORQA), arXiv:2505.12890) trains
 a Qwen2-VL-based multimodal foundation model for operating-room
@@ -24,7 +24,7 @@ inference is actually built on) rather than hand-rolled model loading, so
 it reuses tested logic for combining the quantized base model with the LoRA
 adapter.
 
-**Status: not yet working end to end.** Every attempt so far got stuck in
+**Status (Day113-114): not yet working end to end** -- resolved on Day115, see below. Every attempt so far got stuck in
 dependency setup, in this order, each fix moving the failure to a new,
 shallower spot rather than resolving it outright:
 
@@ -91,20 +91,116 @@ Colab's newer already-installed packages (like the `trl` that quietly
 pulled transformers forward) broke our old code. None of this would happen
 inside an isolated virtual environment.
 
-## Next steps (not yet done)
+## Day115 -- isolated venv, authors' own loading path, and it runs
 
-- Start over on a *freshly deleted* Colab runtime (Runtime -> Disconnect
-  and delete runtime, not just Restart -- this one's package state is too
-  tangled to keep patching), and this time create an isolated virtual
-  environment inside it (`python -m venv` or similar) before installing
-  any of ORQA's pinned dependencies, so this old stack never touches
-  Colab's own preinstalled packages in either direction
+`day113_orqa_colab_inference.ipynb` was rewritten (same filename, so the
+links above still work). Every step now raises and stops on failure
+instead of `!cmd`, which never raises on a non-zero exit code.
+
+**Environment.** A plain `python -m venv` would not have been enough:
+Colab's Python is 3.13, and `torch==2.4.1` (like `open3d==0.18.0` and the
+prebuilt `torch-scatter` wheels) only ships up to Python 3.12. The
+authors used Python 3.10 (their README mentions
+`ENV/lib/python3.10/site-packages`), so the venv is built on a
+standalone CPython 3.10 via `uv` (`uv venv --python 3.10`). Nothing
+ORQA-related is installed into Colab's own Python; the model runs as a
+script (`orqa_infer.py`) executed by the venv's interpreter.
+Re-reading the earlier errors with this in mind:
+- #1 (`torch==2.4.1` "not resolvable") was most likely the missing
+  Python 3.13 wheel, not Colab's pip index moving on
+- #6 (`No module named 'trl'`) was most likely an unsatisfiable install:
+  the combined call pinned `numpy==2.0.2`, while LLaMA-Factory's own
+  `requirements.txt` says `numpy<2.0.0`, so pip installed nothing, and
+  `-q` hid the resolver error
+- The dependency set was checked offline first (`uv pip compile
+  --python-version 3.10 --python-platform x86_64-manylinux_2_28`):
+  transformers 4.46.1, trl 0.9.6, numpy 1.26.4, spconv-cu121,
+  torch-scatter `+pt24cu121` all resolve with prebuilt wheels
+
+**What following the authors' code (instead of `ChatModel`) turned up.**
+Loading now mirrors `qwen2_vl_helpers.load_pretrained_model` (`_pkd`
+branch), `ORQAWrapperQA`, and `web_demo_orqa.py`:
+1. **Dist-S is not a LoRA adapter.** It is a complete, shrunken
+   Qwen2-VL (LLM hidden 768 vs 1536, 8 of 28 LLM layers kept by
+   `depthreduce4`) plus ORQA's custom visual pooler. Day113's
+   `ChatModel(adapter_name_or_path=...)` could not have loaded it, and
+   LLaMA-Factory's inference loader never reads `visual_block.pt`
+   (`model/loader.py:173` only does so when a training argument is set)
+2. **The authors' loader needs an unreleased `_pkd_teacher` checkpoint**
+   as an architecture template. `Qwen/Qwen2-VL-2B-Instruct` stands in;
+   the script asserts the rebuilt architecture matches the checkpoint's
+   own `config.json` and counts parameters the checkpoint did not
+   overwrite (result: 0)
+3. **ORQA replaces transformers' `Qwen2VLImageProcessor`** via a
+   `sys.modules` patch at the top of `scene_graph_prediction/main.py`;
+   without it preprocessing fails (`batch_images_to_idx` /
+   `pixel_values_to_batch_idx`). Copied verbatim, then asserted
+4. **`PointTransformerV3` asserts `flash_attn` is importable in its
+   constructor**, even for image-only use; a placeholder gets past
+   construction, and the point-cloud branch is deleted immediately
+   afterwards (asserted)
+5. **The released Dist-S `visual_block.pt` is truncated** at exactly
+   734,003,200 bytes (700 MiB); `torch.load` fails with "failed finding
+   central directory". PKD trains with `only_llm=True`, which freezes
+   every `visual.*` parameter, so the file should duplicate the visual
+   weights in `model.safetensors`. The script walks the truncated zip's
+   local headers and compares every readable tensor: 222 compared,
+   0 different
+6. T4 constraints: `eager` attention (FlashAttention-2 needs sm80+; eager
+   is the authors' own non-CUDA fallback) and fp32 (no native bf16)
+
+Measured size: the Dist-S checkpoint is 938.1M parameters including the
+vision tower. The paper's "Dist-S 278M" most likely counts only the
+language model.
+
+**Result (2 images x 3 questions, greedy).**
+
+| image | question | answer |
+|---|---|---|
+| OR photo (thoracoscopy) | List all entities in the OR. | head surgeon, drill, instrument table, assistant surgeon, drape, operating table, patient, anaesthetist, mps station, nurse, head surgeon, saw, mako robot |
+| OR photo | What action is being performed at this time? | They are currently incision. |
+| OR photo | Describe what you see in this image. | The position of hammer is 303, 443, 418, 724 in the image. |
+| endoscope frame | List all entities in the OR. | The OR has mouth gag, other hands left. |
+| endoscope frame | What action is being performed at this time? | They are currently incision. |
+| endoscope frame | Describe what you see in this image. | The position of mouth gag is 622, 998, 428, 998 in the image. |
+
+OR photo: "Operating Room", National Cancer Institute (NIH),
+photographer John Crawford, public domain, via
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Operating_room.jpg).
+Endoscope frame: frame 50 of the Day106 stomach-phantom episode.
+
+**Reading (preliminary -- two out-of-domain images, not an evaluation).**
+Answers come back in the label vocabulary of ORQA's training datasets.
+Some fit the photo (surgeons, nurse, instrument table, drape), but it
+also lists a drill, saw, MAKO robot and hammer -- typical of MM-OR's knee
+arthroplasty -- for a thoracoscopy, and answers "incision" for both
+images. The endoscope frame switches to EgoSurgery vocabulary (mouth
+gag, other hands), so the image does influence the output; the model
+seems to map an unfamiliar scene onto the closest training dataset's
+frame of reference. This echoes object hallucination / language-prior
+effects described for VLMs (CHAIR, Rohrbach et al. 2018; POPE, Li et
+al. 2023) and, loosely, the action-conditioned toy model's
+real-vs-zero-action finding -- but unlike that toy model, nothing here
+was tested in-distribution, so it cannot yet separate "ORQA ignores the
+image" from "ORQA is out of its domain".
+
+## Next steps (not yet done; implementation paused from Day116)
+
+Same three-condition design as the action-conditioned toy model
+(real / shuffled / zero):
+- **real**: in-distribution frames cropped from ORQA's own
+  `figures/teaser.jpg` (4D-OR / MM-OR), no data request needed
+- **zero**: a uniform gray image -- if it still gets "incision" and a
+  similar entity list, those answers come from the prior alone
+- **shuffled**: a frame from a different scene
 
 ## Files
 
-- `day113_orqa_colab_inference.ipynb` -- Colab notebook, image+text
-  inference against ORQA's Dist-S checkpoint via LLaMA-Factory's
-  `ChatModel` API; see Day113 notes above for its fix history
+- `day113_orqa_colab_inference.ipynb` -- Colab notebook (rewritten on
+  Day115): isolated Python 3.10 venv, ORQA's own loading path, Dist-S
+  image+text inference; Day113-114 history above
+- `orqa_outputs.json` -- Day115 raw outputs (answers, token counts,
+  timings, and the load-time verification results in `meta`)
 - `ORQA/` -- upstream clone (not committed, see `.gitignore`) used locally
   only to inspect config files, checkpoint paths, and `requirements.txt`
   while writing the notebook
