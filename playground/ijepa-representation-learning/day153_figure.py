@@ -27,11 +27,11 @@ consec = [rows[("sigreg-image", e)][0] for e in epochs]
 shuf = [rows[("sigreg-image", e)][1] for e in epochs]
 
 fig = plt.figure(figsize=(13, 4.4))
-gs = fig.add_gridspec(2, 2, width_ratios=[1.35, 1], hspace=0.25, wspace=0.12)
+gs = fig.add_gridspec(2, 2, width_ratios=[1.35, 1], hspace=0.25, wspace=0.2)
 
 for r, (idx, title, color) in enumerate([
-    (consec_idx, "A. What the val batch was: 64 consecutive frames of one episode", BLUE),
-    (shuf_idx, "B. Shuffled: 64 frames drawn across the 4 val episodes", ORANGE),
+    (consec_idx, "Batch A: 64 consecutive frames of one episode (8 shown)", BLUE),
+    (shuf_idx, "Batch B: 64 shuffled frames from 4 episodes (8 shown)", ORANGE),
 ]):
     sub = gs[r, 0].subgridspec(1, 8, wspace=0.05)
     for k, i in enumerate(idx):
@@ -44,17 +44,17 @@ for r, (idx, title, color) in enumerate([
             ax.set_title(title, loc="left", fontsize=11, color=INK, pad=8, x=0)
 
 ax = fig.add_subplot(gs[:, 1])
-ax.plot(epochs, consec, color=BLUE, lw=2, marker="o", ms=8, label="consecutive batches (A)")
-ax.plot(epochs, shuf, color=ORANGE, lw=2, marker="o", ms=8, label="shuffled batches (B)")
+ax.plot(epochs, consec, color=BLUE, lw=2, marker="o", ms=8, label="measured on batch A (consecutive)")
+ax.plot(epochs, shuf, color=ORANGE, lw=2, marker="o", ms=8, label="measured on batch B (shuffled)")
 ax.annotate("auto-selected:\nepoch 0 = collapsed", xy=(0, consec[0]), xytext=(2, 5),
             fontsize=10, color=INK, arrowprops=dict(arrowstyle="->", color=MUTED))
 ax.text(epochs[-1], consec[-1] + 2, f"{consec[-1]:.0f}", ha="center", fontsize=10, color=INK)
 ax.text(epochs[-1], shuf[-1] - 4, f"{shuf[-1]:.0f}", ha="center", fontsize=10, color=INK)
 ax.set_xticks(epochs)
 ax.set_xlabel("training epoch (same saved checkpoints)", color=MUTED)
-ax.set_ylabel("SIGReg on val (lower = more spread out, better)", color=MUTED)
-ax.set_title("C. Same models, scored on A vs B", loc="left", fontsize=11, color=INK)
-ax.set_ylim(0, 58)
+ax.set_ylabel("SIGReg on val (lower = better)", color=MUTED)
+ax.set_title("SIGReg of the same saved models", loc="left", fontsize=11, color=INK)
+ax.set_ylim(0, 68)
 ax.grid(axis="y", color=GRID); ax.set_axisbelow(True)
 for s in ["top", "right"]:
     ax.spines[s].set_visible(False)
