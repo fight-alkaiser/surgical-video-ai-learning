@@ -130,6 +130,25 @@ class IJEPAModel(nn.Module):
         for online_p, target_p in zip(self.context_encoder.parameters(), self.target_encoder.parameters()):
             target_p.data.mul_(self.ema_decay).add_(online_p.data, alpha=1 - self.ema_decay)
 
+    def forward_online_target(self, frame: torch.Tensor, context_positions: torch.Tensor, target_positions: torch.Tensor):
+        """Day153: LeJEPA-style variant -- no EMA target encoder, no stop-gradient.
+        The *same* (context) encoder embeds the full, unmasked image, and gradients
+        flow through both the prediction and the target side; SIGReg alone is meant
+        to keep this from collapsing. Also returns the full-image patch tokens
+        (B, NUM_PATCHES, D) so SIGReg can be applied to them."""
+        all_patches = patchify(frame)
+        B = frame.shape[0]
+        ctx_patches = torch.gather(
+            all_patches, 1, context_positions.unsqueeze(-1).expand(-1, -1, PATCH_DIM)
+        )
+        ctx_tokens = self.context_encoder(ctx_patches, context_positions)
+        pred_target = self.predictor(ctx_tokens, context_positions, target_positions)
+
+        all_idx = torch.arange(NUM_PATCHES, device=frame.device).unsqueeze(0).expand(B, -1)
+        full_tokens = self.context_encoder(all_patches, all_idx)
+        true_target = torch.gather(full_tokens, 1, target_positions.unsqueeze(-1).expand(-1, -1, full_tokens.shape[-1]))
+        return pred_target, true_target, full_tokens
+
     def forward(self, frame: torch.Tensor, context_positions: torch.Tensor, target_positions: torch.Tensor):
         """context_positions / target_positions: (B, Nc) / (B, Nt) long indices,
         assumed same Nc/Nt across the batch (fixed mask shape per batch)."""
@@ -168,6 +187,34 @@ def variance_loss(z: torch.Tensor, gamma: float = 1.0, eps: float = 1e-4) -> tor
     z = z.reshape(-1, z.shape[-1])
     std = torch.sqrt(z.var(dim=0) + eps)
     return F.relu(gamma - std).mean()
+
+
+def sigreg_loss(z: torch.Tensor, num_slices: int = 256, generator: torch.Generator = None) -> torch.Tensor:
+    """Day153: SIGReg (LeJEPA, Balestriero & LeCun 2025, arXiv 2511.08544,
+    Algorithm 1), single-device version.
+
+    z: (N, D) embeddings. Pushes their distribution toward an isotropic
+    Gaussian N(0, I) by checking it along random 1-D directions: project z
+    onto num_slices random unit vectors, and for each direction compare the
+    empirical characteristic function of the projected values against that of
+    N(0, 1) (Epps-Pulley statistic, 17 integration points on [-5, 5]).
+
+    The paper's code uses complex exp(i*t*x); MPS doesn't support complex
+    tensors, so the real and imaginary parts (cos, sin) are computed
+    separately -- same quantity. Directions are redrawn on every call (the
+    paper redraws every step; Fig 7: 16 redrawn directions beat thousands of
+    fixed ones)."""
+    N, D = z.shape
+    A = torch.randn(D, num_slices, device=z.device, generator=generator)
+    A = A / A.norm(dim=0, keepdim=True)
+    t = torch.linspace(-5, 5, 17, device=z.device)
+    target_cf = torch.exp(-0.5 * t**2)  # CF of N(0,1); also used as the weighting window
+    x_t = (z @ A).unsqueeze(2) * t  # (N, M, T)
+    ecf_real = torch.cos(x_t).mean(0)  # (M, T)
+    ecf_imag = torch.sin(x_t).mean(0)
+    err = ((ecf_real - target_cf) ** 2 + ecf_imag**2) * target_cf
+    stat = torch.trapezoid(err, t, dim=1) * N  # (M,)
+    return stat.mean()
 
 
 def within_image_variance_loss(z: torch.Tensor, gamma: float = 1.0, eps: float = 1e-4) -> torch.Tensor:

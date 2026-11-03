@@ -1,0 +1,9 @@
+checkpoint                              SIGReg consec  SIGReg shuffled  cos consec  cos shuffled
+sigreg-image epoch  0                              26.25            26.25       1.000         0.999
+sigreg-image epoch 10                              38.47            23.54       0.867         0.452
+sigreg-image epoch 20                              51.61            19.43       0.881         0.285
+sigreg-image epoch 29                              48.37            13.12       0.820         0.198
+sigreg-patch epoch  0                              48.85            40.88       0.959         0.856
+sigreg-patch epoch 10                              36.66            20.35       0.801         0.328
+sigreg-patch epoch 20                              34.34            19.09       0.766         0.335
+sigreg-patch epoch 29                              33.33            18.76       0.713         0.279

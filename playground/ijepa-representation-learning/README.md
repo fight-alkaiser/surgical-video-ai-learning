@@ -1,6 +1,6 @@
 # I-JEPA Representation Learning (toy)
 
-Day 93-95 and Day99 of the "surgeon learning surgical video AI" series. A deliberate
+Day 93-95, Day99, Day101 and Day153 of the "surgeon learning surgical video AI" series. A deliberate
 pivot away from ../action-conditioned-video-prediction/, which spent 15
 days (Day78-92) on whether conditioning on the robot action helps a small
 predictor and concluded that the negative result was most likely a
@@ -296,9 +296,103 @@ pretrained one here -- at this scale, a from-scratch encoder trained with
 this objective did not reliably converge to any non-degenerate solution at
 all in these runs, independent of the dropout-monitoring bug Day99 found.
 
+## Result (Day 153) -- LeJEPA's SIGReg replaces EMA, but label-free model selection picks the collapsed checkpoint when val batches are consecutive frames
+
+Paper: Balestriero & LeCun, *LeJEPA: Provable and Scalable Self-Supervised
+Learning Without the Heuristics*, arXiv 2511.08544 (2025, not peer reviewed;
+read on Day151-152). Its two claims tested here on this project's toy:
+
+1. SIGReg alone (no EMA teacher, no stop-gradient, no extra variance terms)
+   prevents collapse.
+2. The training objective itself, `(1-λ)·pred + λ·SIGReg`, tracks
+   representation quality, so a checkpoint can be picked without labels.
+
+**What changed** (`--anti-collapse sigreg`; the default `variance` mode is
+untouched):
+
+- `ijepa_model.py`: `sigreg_loss()` -- the paper's Algorithm 1 (random 1-D
+  projections, Epps-Pulley characteristic-function test against N(0,1), 17
+  knots on [-5, 5], directions resampled every step), single-device, with
+  cos/sin instead of complex tensors because MPS has none.
+  `IJEPAModel.forward_online_target()` -- the context encoder produces both
+  the prediction target and the full-image tokens, with gradients; no EMA.
+- `ijepa_train.py`: plain MSE as in the paper, λ=0.05, 256 slices.
+  `--sigreg-on image` applies SIGReg to one mean-pooled vector per image (as
+  in the paper's code); `--sigreg-on patch` applies it to every patch token.
+  Checkpoint selection uses smoothed val `(1-λ)·pred + λ·SIGReg`.
+
+Sanity check of `sigreg_loss` on known 64-dim inputs: standard
+Gaussian 1.1, all-zeros (full collapse) 26, 3x-scaled Gaussian 38,
+anisotropic 14 -- it does flag collapse.
+
+**Runs**: seed 0, 30 epochs each, otherwise the Day101 setup (dropout 0.0).
+
+| run | across-image cos (train) | within-image cos (train) | auto-selected epoch |
+|---|---|---|---|
+| `sigreg-image` | 0.97 at epoch 0 -> 0.005 by epoch 29 | **1.000 throughout** | **0 (collapsed)** |
+| `sigreg-patch` | 0.85 -> 0.30 | -0.015 | 29 |
+
+`sigreg-image` collapsed in the first epoch, then escaped by epoch 10 (so a
+pre-run guess -- that SIGReg's gradient nearly vanishes at full collapse,
+~0.004, and so can't pull the model out -- did not hold here). But every
+patch inside one image stayed the same vector: image-level SIGReg separates
+images and says nothing about patches, the gap noted on Day151.
+
+**Main finding -- the selection criterion was fooled by correlated frames.**
+`sigreg-image`'s val SIGReg *rose* over training (25 -> 46-50) while train
+SIGReg fell (36 -> 3.4), so the label-free criterion picked the collapsed
+epoch 0. The cause is how val batches are drawn: `np.arange(i, i+64)` over 4
+concatenated val episodes, i.e. 64 consecutive, near-identical frames of one
+episode. SIGReg tests whether a batch looks like i.i.d. samples from an
+isotropic Gaussian; a batch of near-duplicates fails that test however good
+the encoder is. Re-scoring the saved checkpoints with shuffled val batches
+(`day153_val_batch_check.py`, `outputs/day153_val_batch_check.txt`, eval
+mode, fixed projection seed; SIGReg, lower is better):
+
+| checkpoint | consecutive batches | shuffled batches |
+|---|---|---|
+| image, epoch 0 | 26.3 | 26.3 |
+| image, epoch 10 | 38.5 | 23.5 |
+| image, epoch 20 | 51.6 | 19.4 |
+| image, epoch 29 | 48.4 | **13.1** |
+| patch, epoch 0 | 48.9 | 40.9 |
+| patch, epoch 29 | 33.3 | **18.8** |
+
+(Re-running the script moves these by up to ~1 on MPS despite the fixed
+projection seed; the ordering does not change.)
+
+`outputs/day153_consecutive_vs_shuffled.png` (`day153_figure.py`) shows
+what the two kinds of batch actually look like on these frames, next to the
+image-run numbers above.
+
+With shuffled batches the criterion improves monotonically with training and
+would no longer pick the collapsed checkpoint. The same artifact explains why
+Day101's eval-mode collapse probe reports across-image cos ~1.0 for every run
+here: its 8 probe images are consecutive val frames.
+
+**Reading**: LeJEPA's label-free model selection assumes the evaluation
+batch is a sample of independent images. Surgical video (and these robot
+episodes) breaks that by default -- frames are consecutive, and even
+shuffled val here has only 4 episodes (val SIGReg ~13 vs train ~3.4 over 196
+episodes, plausibly the effective-sample-size gap, not yet tested). So in
+this setting the criterion is only meaningful if the evaluation batches are
+sampled across cases, not along time. This is the Day152 concern ("300,000
+frames from 100 cases are closer to 100 cases of variation") showing up
+directly in the loss value.
+
+**Not measured**: representation quality (no probe yet -- only collapse);
+one seed only; λ, slice count and lr not varied; no projector/BatchNorm
+before SIGReg (LeVLJEPA reported SIGReg working poorly right after a final
+LayerNorm, which is what `TinyTransformer`'s post-norm output is).
+
 ## Next steps (not yet done)
 
-None outstanding for this specific thread. This project and
+- Day154: select checkpoints with shuffled val batches, check whether that
+  choice holds across seeds, and run the Day94 action probe on the selected
+  checkpoint to see whether "lower shuffled SIGReg" means a better
+  representation, not just a less collapsed one.
+
+Earlier thread (Day101) closed with nothing outstanding: This project and
 `../action-conditioned-video-prediction/` independently hit the same wall
 (training from scratch on ~200 episodes on a CUDA-less Mac mini doesn't
 beat simple baselines) and independently resolved it the same way (borrow
@@ -353,6 +447,13 @@ from-scratch encoder either.
   encoder's actual cosine similarity between them (collapsed-repro vs.
   the "fixed" checkpoint) -- the check that surfaced the train/eval mode
   discrepancy
+- `day153_figure.py` -- Day153: real val frames from one consecutive vs one
+  shuffled batch, next to the SIGReg each gives the same checkpoints
+  (`outputs/day153_consecutive_vs_shuffled.png`)
+- `day153_val_batch_check.py` -- Day153: re-scores the saved SIGReg
+  checkpoints' val SIGReg and across-image cosine similarity with
+  consecutive vs shuffled val batches (output in
+  `outputs/day153_val_batch_check.txt`)
 - `outputs/` -- loss curves, training history (`history_ijepa_seed*.json`
   includes both collapse-fix runs' full curves and the Day94 LR/clip
   sweep), `day94_probe_results.json`, `day95_probe_results.json`,

@@ -19,7 +19,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from ijepa_model import IJEPAModel, normalized_mse_loss, patchify, variance_loss, within_image_variance_loss
+from ijepa_model import IJEPAModel, normalized_mse_loss, patchify, sigreg_loss, variance_loss, within_image_variance_loss
 from masking import sample_mask
 
 DATA_DIR = "../action-conditioned-video-prediction/data"
@@ -38,12 +38,32 @@ parser.add_argument(
     help="Day101: TinyTransformer's internal dropout (was an unset 0.1 default before Day99's "
     "fix). 0.0 is the fixed setting; pass 0.1 to reproduce the Day93 collapse-behind-dropout bug.",
 )
+parser.add_argument(
+    "--anti-collapse",
+    choices=["variance", "sigreg"],
+    default="variance",
+    help="Day153: 'variance' = this series' own setup (EMA target encoder + stop-gradient + "
+    "VICReg-style variance terms, Day93-101). 'sigreg' = LeJEPA-style: no EMA, no stop-gradient, "
+    "plain MSE prediction loss, and SIGReg as the only anti-collapse term.",
+)
+parser.add_argument(
+    "--sigreg-on",
+    choices=["image", "patch"],
+    default="image",
+    help="Day153: what SIGReg sees. 'image' = one mean-pooled vector per image (as in the LeJEPA "
+    "paper, one embedding per view). 'patch' = every patch token of every image, pooled together.",
+)
+parser.add_argument("--sigreg-lambda", type=float, default=0.05, help="LeJEPA's lambda: (1-l)*pred + l*SIGReg")
+parser.add_argument("--sigreg-slices", type=int, default=256)
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 
-args.checkpoint_tag = f"seed{args.seed}_vw{args.var_weight}_ema{args.ema_decay}"
+if args.anti_collapse == "sigreg":
+    args.checkpoint_tag = f"seed{args.seed}_sigreg-{args.sigreg_on}_lam{args.sigreg_lambda}"
+else:
+    args.checkpoint_tag = f"seed{args.seed}_vw{args.var_weight}_ema{args.ema_decay}"
 os.makedirs("outputs/checkpoints", exist_ok=True)
 
 DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
@@ -110,8 +130,18 @@ def eval_mode_collapse_check(model, frames):
     return across, within
 
 
+def sigreg_input(full_tokens):
+    """(B, N, D) full-image patch tokens -> (num_vectors, D) for SIGReg."""
+    if args.sigreg_on == "image":
+        return full_tokens.mean(dim=1)
+    return full_tokens.reshape(-1, full_tokens.shape[-1])
+
+
 history = {
     "train_loss": [],
+    "train_sigreg": [],
+    "val_sigreg": [],
+    "val_total": [],
     "val_loss": [],
     "ctx_std": [],
     "ctx_cos_sim": [],
@@ -126,7 +156,7 @@ best_state = None
 for epoch in range(args.epochs):
     model.train()
     perm = np.random.permutation(len(train_frames))
-    epoch_losses, epoch_std, epoch_cos_sim, epoch_within_cos_sim = [], [], [], []
+    epoch_losses, epoch_std, epoch_cos_sim, epoch_within_cos_sim, epoch_sig = [], [], [], [], []
     for i in range(0, len(perm), BATCH_SIZE):
         idx = perm[i : i + BATCH_SIZE]
         if len(idx) < 2:
@@ -136,6 +166,32 @@ for epoch in range(args.epochs):
         B = f.shape[0]
         ctx_pos = torch.tensor(ctx_idx, device=DEVICE).unsqueeze(0).expand(B, -1)
         tgt_pos = torch.tensor(tgt_idx, device=DEVICE).unsqueeze(0).expand(B, -1)
+
+        if args.anti_collapse == "sigreg":
+            # Day153: LeJEPA-style step. No EMA, no stop-gradient: the same encoder
+            # produces both sides, plain (unnormalized) MSE as in the paper, and SIGReg
+            # is the only thing standing between this and collapse. ctx_tokens here is
+            # the full-image token set, used for the same collapse monitors below.
+            pred, target, ctx_tokens = model.forward_online_target(f, ctx_pos, tgt_pos)
+            loss = ((pred - target) ** 2).mean()
+            sig = sigreg_loss(sigreg_input(ctx_tokens), num_slices=args.sigreg_slices)
+            total_loss = (1 - args.sigreg_lambda) * loss + args.sigreg_lambda * sig
+            opt.zero_grad()
+            total_loss.backward()
+            if args.clip_grad > 0:
+                torch.nn.utils.clip_grad_norm_(trainable, args.clip_grad)
+            opt.step()
+            epoch_losses.append(loss.item())
+            epoch_sig.append(sig.item())
+            epoch_std.append(ctx_tokens.detach().std(dim=(0, 1)).mean().item())
+            with torch.no_grad():
+                v = F.normalize(ctx_tokens[:, 0, :].detach(), dim=-1)
+                sim = v @ v.T
+                epoch_cos_sim.append(sim[~torch.eye(sim.shape[0], dtype=torch.bool, device=sim.device)].mean().item())
+                w = F.normalize(ctx_tokens[0].detach(), dim=-1)
+                sim2 = w @ w.T
+                epoch_within_cos_sim.append(sim2[~torch.eye(sim2.shape[0], dtype=torch.bool, device=sim2.device)].mean().item())
+            continue
 
         pred, target, ctx_tokens = model(f, ctx_pos, tgt_pos)
         loss = normalized_mse_loss(pred, target)
@@ -180,7 +236,7 @@ for epoch in range(args.epochs):
             epoch_within_cos_sim.append(off_diag2.mean().item())
 
     model.eval()
-    val_losses = []
+    val_losses, val_sigs = [], []
     with torch.no_grad():
         for _ in range(3):
             for i in range(0, len(val_frames), BATCH_SIZE):
@@ -192,9 +248,23 @@ for epoch in range(args.epochs):
                 B = f.shape[0]
                 ctx_pos = torch.tensor(ctx_idx, device=DEVICE).unsqueeze(0).expand(B, -1)
                 tgt_pos = torch.tensor(tgt_idx, device=DEVICE).unsqueeze(0).expand(B, -1)
-                pred, target, _ = model(f, ctx_pos, tgt_pos)
-                val_losses.append(normalized_mse_loss(pred, target).item())
+                if args.anti_collapse == "sigreg":
+                    pred, target, full_tokens = model.forward_online_target(f, ctx_pos, tgt_pos)
+                    val_losses.append(((pred - target) ** 2).mean().item())
+                    val_sigs.append(sigreg_loss(sigreg_input(full_tokens), num_slices=args.sigreg_slices).item())
+                else:
+                    pred, target, _ = model(f, ctx_pos, tgt_pos)
+                    val_losses.append(normalized_mse_loss(pred, target).item())
     val_loss = float(np.mean(val_losses))
+    # Day153: in sigreg mode, the quantity LeJEPA claims tracks representation
+    # quality is the full objective, (1-lambda)*pred + lambda*SIGReg, not pred alone
+    # (pred alone is still trivially 0 for a collapsed encoder).
+    if args.anti_collapse == "sigreg":
+        val_sigreg = float(np.mean(val_sigs))
+        val_total = (1 - args.sigreg_lambda) * val_loss + args.sigreg_lambda * val_sigreg
+        history["train_sigreg"].append(float(np.mean(epoch_sig)))
+        history["val_sigreg"].append(val_sigreg)
+        history["val_total"].append(val_total)
     train_loss = float(np.mean(epoch_losses))
     ctx_std = float(np.mean(epoch_std))
     ctx_cos_sim = float(np.mean(epoch_cos_sim))
@@ -208,7 +278,8 @@ for epoch in range(args.epochs):
     history["ctx_cos_sim_eval"].append(ctx_cos_sim_eval)
     history["ctx_within_cos_sim_eval"].append(ctx_within_cos_sim_eval)
 
-    smoothed = float(np.mean(history["val_loss"][-5:]))
+    select_key = "val_total" if args.anti_collapse == "sigreg" else "val_loss"
+    smoothed = float(np.mean(history[select_key][-5:]))
     if smoothed < best_val_loss:
         best_val_loss = smoothed
         best_epoch = epoch
@@ -230,6 +301,7 @@ for epoch in range(args.epochs):
             f"epoch {epoch:4d}  train_loss {train_loss:.4f}  val_loss {val_loss:.4f}  "
             f"ctx_std {ctx_std:.4f}  cos_sim(across-img) {ctx_cos_sim:.4f}  cos_sim(within-img) {ctx_within_cos_sim:.4f}  "
             f"[eval mode] cos_sim(across-img) {ctx_cos_sim_eval:.4f}  cos_sim(within-img) {ctx_within_cos_sim_eval:.4f}"
+            + (f"  val_sigreg {history['val_sigreg'][-1]:.4f}  val_total {history['val_total'][-1]:.4f}" if args.anti_collapse == "sigreg" else "")
         )
 
 print(f"\nbest smoothed val_loss {best_val_loss:.4f} at epoch {best_epoch} (of {args.epochs}); restoring that checkpoint")
@@ -245,9 +317,9 @@ print(
 history["best_val_loss"] = best_val_loss
 
 tag = (
-    f"seed{args.seed}_lr{args.lr}_ema{args.ema_decay}"
+    (f"seed{args.seed}_lr{args.lr}_sigreg-{args.sigreg_on}_lam{args.sigreg_lambda}" if args.anti_collapse == "sigreg" else f"seed{args.seed}_lr{args.lr}_ema{args.ema_decay}")
     + (f"_clip{args.clip_grad}" if args.clip_grad > 0 else "")
-    + (f"_vw{args.var_weight}" if args.var_weight != 5.0 else "")
+    + (f"_vw{args.var_weight}" if args.var_weight != 5.0 and args.anti_collapse == "variance" else "")
 )
 torch.save(model.state_dict(), f"outputs/model_ijepa_{tag}.pt")
 with open(f"outputs/history_ijepa_{tag}.json", "w") as f:
@@ -269,7 +341,9 @@ print(f"saved outputs/loss_curve_ijepa_{tag}.png")
 # collapse (a fully collapsed model trivially scores val_loss=0), so picking a
 # checkpoint by hand needs both curves, not just the loss.
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 7), sharex=True)
-ax1.plot(history["val_loss"], label="val_loss")
+ax1.plot(history["val_loss"], label="val_loss (prediction)")
+if args.anti_collapse == "sigreg":
+    ax1.plot(history["val_total"], label="val_total ((1-l)*pred + l*SIGReg)")
 ax1.axvline(best_epoch, color="gray", linestyle="--", label=f"auto best_epoch={best_epoch}")
 ax1.set_ylabel("val_loss")
 ax1.legend()
