@@ -1,0 +1,19 @@
+train frames 66109, val frames 1352, mean-action baseline val_mse 0.8099
+random encoder (init 123): scale 0.032  R2[raw] 0.251+-0.031  R2[std] 0.415+-0.013
+random encoder (init   1): scale 0.036  R2[raw] 0.254+-0.006  R2[std] 0.488+-0.015
+random encoder (init   2): scale 0.030  R2[raw] 0.172+-0.008  R2[std] 0.480+-0.025
+seed1_sigreg-image_lam0.05_valshuf       epoch  0  shuffled SIGReg  28.49  scale 0.162  R2[raw] 0.140+-0.002  R2[std] 0.164+-0.009
+seed1_sigreg-image_lam0.05_valshuf       epoch  5  shuffled SIGReg  15.71  scale 0.712  R2[raw] 0.233+-0.005  R2[std] 0.234+-0.007
+seed1_sigreg-image_lam0.05_valshuf       epoch 10  shuffled SIGReg  17.95  scale 0.750  R2[raw] 0.160+-0.006  R2[std] 0.173+-0.006
+seed1_sigreg-image_lam0.05_valshuf       epoch 15  shuffled SIGReg  16.19  scale 0.733  R2[raw] 0.192+-0.002  R2[std] 0.197+-0.002
+seed1_sigreg-image_lam0.05_valshuf       epoch 20  shuffled SIGReg  12.11  scale 0.765  R2[raw] 0.222+-0.002  R2[std] 0.224+-0.002
+seed1_sigreg-image_lam0.05_valshuf       epoch 25  shuffled SIGReg  12.35  scale 0.790  R2[raw] 0.212+-0.001  R2[std] 0.212+-0.004
+seed1_sigreg-image_lam0.05_valshuf       epoch 29  shuffled SIGReg  11.86  scale 0.788  R2[raw] 0.246+-0.002  R2[std] 0.247+-0.003
+seed1_sigreg-patch_lam0.05_valshuf       epoch  0  shuffled SIGReg  42.75  scale 0.073  R2[raw] 0.521+-0.003  R2[std] 0.547+-0.016
+seed1_sigreg-patch_lam0.05_valshuf       epoch  5  shuffled SIGReg  25.84  scale 0.059  R2[raw] 0.543+-0.010  R2[std] 0.549+-0.014
+seed1_sigreg-patch_lam0.05_valshuf       epoch 10  shuffled SIGReg  22.41  scale 0.042  R2[raw] 0.538+-0.008  R2[std] 0.533+-0.007
+seed1_sigreg-patch_lam0.05_valshuf       epoch 15  shuffled SIGReg  21.63  scale 0.034  R2[raw] 0.536+-0.001  R2[std] 0.572+-0.013
+seed1_sigreg-patch_lam0.05_valshuf       epoch 20  shuffled SIGReg  21.91  scale 0.032  R2[raw] 0.575+-0.014  R2[std] 0.566+-0.004
+seed1_sigreg-patch_lam0.05_valshuf       epoch 25  shuffled SIGReg  18.70  scale 0.027  R2[raw] 0.526+-0.020  R2[std] 0.544+-0.019
+seed1_sigreg-patch_lam0.05_valshuf       epoch 29  shuffled SIGReg  17.12  scale 0.029  R2[raw] 0.521+-0.007  R2[std] 0.561+-0.004
+saved outputs/day155_probe_seed1.json

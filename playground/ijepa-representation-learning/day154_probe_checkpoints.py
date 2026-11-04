@@ -16,6 +16,14 @@ checkpoints are compared under the same probe randomness. Random (untrained)
 encoders of the same architecture are probed with 3 init seeds to give a sense of
 how much R^2 moves for reasons that have nothing to do with training.
 
+Day155: two checks for the Day154 caveats. --standardize z-scores the pooled
+features with the train set's per-dimension mean/std before probing (so a
+checkpoint whose features are simply larger or smaller is not easier or harder
+for the probe to fit), and --probe-seeds runs the probe several times per
+checkpoint. Each checkpoint is encoded once and probed under every combination
+of {raw, standardized} x probe seeds. feat_scale (mean per-dimension std of the
+train features) is recorded so the scale confound can be looked at directly.
+
 Usage:
   python day154_probe_checkpoints.py --runs seed0_sigreg-image_lam0.05_valshuf ...
   (each run name is the checkpoint tag; all outputs/checkpoints/model_ijepa_<tag>_epoch*.pt are probed)
@@ -39,6 +47,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--runs", nargs="+", required=True)
 parser.add_argument("--probe-epochs", type=int, default=50)
 parser.add_argument("--out", default="outputs/day154_probe_checkpoints.json")
+parser.add_argument("--probe-seeds", nargs="+", type=int, default=[0], help="Day155: probe seeds per checkpoint")
+parser.add_argument("--both-scalings", action="store_true", help="Day155: probe raw AND standardized features")
 args = parser.parse_args()
 
 DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
@@ -139,14 +149,39 @@ def probe_r2(train_rep, val_rep, seed=0):
     return best, 1 - best / mean_baseline_mse
 
 
-results = {"mean_baseline_mse": mean_baseline_mse, "random": [], "runs": {}}
+def probe_all(train_rep, val_rep):
+    """Day155: probe every (scaling, probe seed) combination for one encoder.
+    Returns {"raw": [r2 per seed], "std": [...]} (std only with --both-scalings)
+    and the feature scale. Standardization uses train statistics only."""
+    out = {"feat_scale": train_rep.std(0).mean().item()}
+    scalings = ["raw", "std"] if args.both_scalings else ["raw"]
+    for sc in scalings:
+        tr, vr = train_rep, val_rep
+        if sc == "std":
+            mu, sd = train_rep.mean(0, keepdim=True), train_rep.std(0, keepdim=True) + 1e-6
+            tr, vr = (train_rep - mu) / sd, (val_rep - mu) / sd
+        out[sc] = [probe_r2(tr, vr, seed=ps)[1] for ps in args.probe_seeds]
+    return out
+
+
+def fmt(o):
+    parts = [f"scale {o['feat_scale']:.3f}"]
+    for sc in ["raw", "std"]:
+        if sc in o:
+            parts.append(f"R2[{sc}] {np.mean(o[sc]):.3f}+-{np.std(o[sc]):.3f}")
+    return "  ".join(parts)
+
+
+results = {"mean_baseline_mse": mean_baseline_mse, "probe_seeds": args.probe_seeds, "random": [], "runs": {}}
 
 for init_seed in [123, 1, 2]:
     torch.manual_seed(init_seed)
     m = IJEPAModel().to(DEVICE).eval()
-    mse, r2 = probe_r2(encode(m, train_frames), encode(m, val_frames))
-    results["random"].append({"init_seed": init_seed, "val_mse": mse, "r2": r2})
-    print(f"random encoder (init {init_seed:3d}): val_mse {mse:.4f}  R2 {r2:.3f}")
+    o = probe_all(encode(m, train_frames), encode(m, val_frames))
+    o["init_seed"] = init_seed
+    o["r2"] = float(np.mean(o["raw"]))
+    results["random"].append(o)
+    print(f"random encoder (init {init_seed:3d}): {fmt(o)}")
 
 for run in args.runs:
     on = "image" if "sigreg-image" in run else "patch"
@@ -161,9 +196,10 @@ for run in args.runs:
         m.load_state_dict(torch.load(p, map_location=DEVICE))
         m.eval()
         sig = shuffled_sigreg(m, on)
-        mse, r2 = probe_r2(encode(m, train_frames), encode(m, val_frames))
-        rows.append({"epoch": epoch, "shuffled_val_sigreg": sig, "val_mse": mse, "r2": r2})
-        print(f"{run:40s} epoch {epoch:2d}  shuffled SIGReg {sig:6.2f}  probe val_mse {mse:.4f}  R2 {r2:.3f}")
+        o = probe_all(encode(m, train_frames), encode(m, val_frames))
+        # "r2" keeps Day154's meaning (raw features; mean over probe seeds)
+        rows.append({"epoch": epoch, "shuffled_val_sigreg": sig, "r2": float(np.mean(o["raw"])), **o})
+        print(f"{run:40s} epoch {epoch:2d}  shuffled SIGReg {sig:6.2f}  {fmt(o)}")
     results["runs"][run] = rows
     with open(args.out, "w") as f:
         json.dump(results, f, indent=2)

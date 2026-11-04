@@ -1,6 +1,6 @@
 # I-JEPA Representation Learning (toy)
 
-Day 93-95, Day99, Day101, Day153 and Day154 of the "surgeon learning surgical video AI" series. A deliberate
+Day 93-95, Day99, Day101, Day153-155 of the "surgeon learning surgical video AI" series. A deliberate
 pivot away from ../action-conditioned-video-prediction/, which spent 15
 days (Day78-92) on whether conditioning on the robot action helps a small
 predictor and concluded that the negative result was most likely a
@@ -387,6 +387,13 @@ LayerNorm, which is what `TinyTransformer`'s post-norm output is).
 
 ## Result (Day 154) -- shuffled-val selection avoids collapse across seeds, but lower SIGReg does not mean a better action probe
 
+> **Day155 correction**: the comparisons against random encoders below were made
+> without standardizing the probe's input features, which made the random
+> encoders look much weaker than they are. See the Day155 section: patch-level
+> SIGReg beats random encoders only slightly, and image-level SIGReg ends up
+> *worse* than random. The main point (the label-free score does not track the
+> probe) still holds.
+
 Follow-up to Day153's three open items: select checkpoints with shuffled val
 batches, check a second seed, and probe the selected encoders' representation
 quality with Day94's action probe.
@@ -469,11 +476,58 @@ a possible confound, not checked; R^2 is the best of the probe's 50 epochs on
 val (Day94's mildly optimistic protocol); lambda, slice count and lr still not
 varied; no projector/BatchNorm before SIGReg.
 
+## Result (Day 155) -- standardizing the probe's input: random encoders were underestimated since Day94
+
+Day154 left two caveats on the action probe: one probe seed, and unstandardized
+input features. `day154_probe_checkpoints.py` gained `--probe-seeds` and
+`--both-scalings` (z-score the pooled features with train-set mean/std before the
+probe; each checkpoint is encoded once and probed under {raw, standardized} x
+probe seeds 0/1/2, and the features' mean per-dimension std is recorded as
+`feat_scale`). `day155_resnet18_standardized.py` re-probes Day95's ResNet18 the
+same way. Outputs: `outputs/day155_probe_seed{0,1}.{json,log}`,
+`outputs/day155_resnet18_standardized.{json,log}`.
+
+R^2 vs the mean-action baseline, mean of 3 probe seeds:
+
+| encoder | feat_scale | raw | **standardized** |
+|---|---|---|---|
+| random init (3 seeds) | 0.03 | 0.17-0.25 | **0.42-0.49** |
+| image SIGReg, near-collapsed early epochs (seed 0 ep 0/5) | 0.000-0.001 | 0.14-0.17 | 0.43-0.47 |
+| image SIGReg, epoch >= 10 (both seeds) | 0.71-0.81 | 0.16-0.35 | **0.17-0.36** |
+| patch SIGReg, all epochs (both seeds) | 0.03-0.07 | 0.47-0.59 | **0.51-0.57** |
+| ImageNet ResNet18 (Day95) | 0.42 | 0.70 | **0.68** |
+
+Probe-seed std was <= 0.03 everywhere, so probe randomness was not the problem.
+Feature scale was: the random encoders' outputs are ~0.03 in scale and the probe
+(Adam, lr 1e-3, 50 epochs) under-fits them; standardized, the same random
+features reach R^2 ~0.45. ResNet18's features are already O(0.4) and barely move.
+
+Rank correlation within each run between lower shuffled SIGReg and higher R^2,
+standardized: image +0.54 (seed 0, i.e. the wrong direction) / -0.89 (seed 1);
+patch +0.43 / -0.29. Still no consistent agreement.
+
+**Reading** (agreed with the owner):
+
+- Day154's main point stands: the label-free score does not track whether the
+  representation carries what this task (robot action) needs.
+- Day154's "patch-level SIGReg clearly beats random, image-level stays near
+  random" was wrong. Corrected: patch-level beats random only by ~0.05-0.1, and
+  image-level gets *worse* than random as it trains. Where SIGReg is applied
+  still separates the two, but neither is far from an untrained network, and
+  both stay well below ResNet18.
+- Probe comparisons need feature scale equalized first. Day94's "trained
+  encoder loses to random" was measured against the underestimated random
+  baseline; standardized, the random baseline is even stronger, so that
+  conclusion holds or strengthens.
+
+**Not measured**: Day94's EMA-trained checkpoint was not re-probed standardized;
+linear probe (instead of MLP) not tried; still two training seeds.
+
 ## Next steps (not yet done)
 
-- Day154's open caveat: rerun the probe with standardized inputs and 2-3
-  probe seeds, to rule out feature scale as the reason SIGReg and the probe
-  disagree. Nothing else from the Day153-154 thread is outstanding.
+- Day153-155 thread closed. Any future probe in this project should use
+  `--both-scalings` (or standardize by default) and compare against random
+  encoders probed the same way.
 
 Earlier thread (Day101) closed with nothing outstanding: This project and
 `../action-conditioned-video-prediction/` independently hit the same wall
@@ -539,7 +593,10 @@ from-scratch encoder either.
   `outputs/day153_val_batch_check.txt`)
 - `day154_probe_checkpoints.py` -- Day154: for every saved checkpoint of the
   given runs, shuffled val SIGReg plus Day94's action probe (seeded), with 3
-  random encoders as reference (outputs in `outputs/day154_probe_*.{json,log}`)
+  random encoders as reference (outputs in `outputs/day154_probe_*.{json,log}`).
+  Day155: `--probe-seeds`, `--both-scalings` (raw and standardized features)
+- `day155_resnet18_standardized.py` -- Day155: Day95's frozen ResNet18 probed
+  with raw and standardized features, 3 probe seeds
 - `outputs/` -- loss curves, training history (`history_ijepa_seed*.json`
   includes both collapse-fix runs' full curves and the Day94 LR/clip
   sweep), `day94_probe_results.json`, `day95_probe_results.json`,
