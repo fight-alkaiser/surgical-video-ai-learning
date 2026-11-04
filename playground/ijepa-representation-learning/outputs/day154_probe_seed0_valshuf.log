@@ -1,0 +1,19 @@
+train frames 66109, val frames 1352, mean-action baseline val_mse 0.8099
+random encoder (init 123): val_mse 0.6237  R2 0.230
+random encoder (init   1): val_mse 0.6030  R2 0.255
+random encoder (init   2): val_mse 0.6692  R2 0.174
+seed0_sigreg-image_lam0.05_valshuf       epoch  0  shuffled SIGReg  26.18  probe val_mse 0.6671  R2 0.176
+seed0_sigreg-image_lam0.05_valshuf       epoch  5  shuffled SIGReg  26.17  probe val_mse 0.6932  R2 0.144
+seed0_sigreg-image_lam0.05_valshuf       epoch 10  shuffled SIGReg  18.54  probe val_mse 0.5711  R2 0.295
+seed0_sigreg-image_lam0.05_valshuf       epoch 15  shuffled SIGReg  17.94  probe val_mse 0.5474  R2 0.324
+seed0_sigreg-image_lam0.05_valshuf       epoch 20  shuffled SIGReg  15.14  probe val_mse 0.5272  R2 0.349
+seed0_sigreg-image_lam0.05_valshuf       epoch 25  shuffled SIGReg  13.62  probe val_mse 0.5506  R2 0.320
+seed0_sigreg-image_lam0.05_valshuf       epoch 29  shuffled SIGReg  13.66  probe val_mse 0.5952  R2 0.265
+seed0_sigreg-patch_lam0.05_valshuf       epoch  0  shuffled SIGReg  34.53  probe val_mse 0.3550  R2 0.562
+seed0_sigreg-patch_lam0.05_valshuf       epoch  5  shuffled SIGReg  27.40  probe val_mse 0.3389  R2 0.582
+seed0_sigreg-patch_lam0.05_valshuf       epoch 10  shuffled SIGReg  21.83  probe val_mse 0.3455  R2 0.573
+seed0_sigreg-patch_lam0.05_valshuf       epoch 15  shuffled SIGReg  19.98  probe val_mse 0.3368  R2 0.584
+seed0_sigreg-patch_lam0.05_valshuf       epoch 20  shuffled SIGReg  17.87  probe val_mse 0.3625  R2 0.552
+seed0_sigreg-patch_lam0.05_valshuf       epoch 25  shuffled SIGReg  18.57  probe val_mse 0.4319  R2 0.467
+seed0_sigreg-patch_lam0.05_valshuf       epoch 29  shuffled SIGReg  17.14  probe val_mse 0.4206  R2 0.481
+saved outputs/day154_probe_seed0_valshuf.json

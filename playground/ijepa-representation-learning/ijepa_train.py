@@ -55,6 +55,16 @@ parser.add_argument(
 )
 parser.add_argument("--sigreg-lambda", type=float, default=0.05, help="LeJEPA's lambda: (1-l)*pred + l*SIGReg")
 parser.add_argument("--sigreg-slices", type=int, default=256)
+parser.add_argument(
+    "--val-order",
+    choices=["consecutive", "shuffled"],
+    default="consecutive",
+    help="Day154: how val batches (and the 8-frame eval-mode collapse probe) are drawn. "
+    "'consecutive' = Day93-153 behaviour, 64 adjacent frames of one episode per batch. "
+    "'shuffled' = one fixed permutation of all val frames, so each batch mixes the 4 val "
+    "episodes and distant time points (Day153 showed SIGReg is meaningless on near-duplicates).",
+)
+parser.add_argument("--ckpt-every", type=int, default=10, help="save a checkpoint every N epochs")
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -62,6 +72,8 @@ np.random.seed(args.seed)
 
 if args.anti_collapse == "sigreg":
     args.checkpoint_tag = f"seed{args.seed}_sigreg-{args.sigreg_on}_lam{args.sigreg_lambda}"
+    if args.val_order == "shuffled":
+        args.checkpoint_tag += "_valshuf"
 else:
     args.checkpoint_tag = f"seed{args.seed}_vw{args.var_weight}_ema{args.ema_decay}"
 os.makedirs("outputs/checkpoints", exist_ok=True)
@@ -106,7 +118,13 @@ opt = torch.optim.Adam(trainable, lr=args.lr)
 # collapse in eval mode every epoch -- the check Day99 found was missing. Drawn once
 # from val_frames so it's identical across epochs and comparable over training.
 NUM_PATCHES_FULL = 64
-probe_idx = np.arange(min(8, len(val_frames)))
+# Day154: val_order fixes both the val batches and this probe batch. The permutation is
+# drawn once (seed 0, independent of --seed) so every run is scored on the same batches.
+if args.val_order == "shuffled":
+    val_order = np.random.default_rng(0).permutation(len(val_frames))
+else:
+    val_order = np.arange(len(val_frames))
+probe_idx = val_order[: min(8, len(val_frames))]
 probe_frames = to_tensor(val_frames, probe_idx)
 
 
@@ -240,7 +258,7 @@ for epoch in range(args.epochs):
     with torch.no_grad():
         for _ in range(3):
             for i in range(0, len(val_frames), BATCH_SIZE):
-                idx = np.arange(i, min(i + BATCH_SIZE, len(val_frames)))
+                idx = val_order[i : min(i + BATCH_SIZE, len(val_frames))]
                 if len(idx) < 2:
                     continue
                 f = to_tensor(val_frames, idx)
@@ -290,7 +308,7 @@ for epoch in range(args.epochs):
     # can be the most-collapsed one. Save periodic checkpoints so an epoch can be
     # picked by hand afterward, looking at val_loss AND the eval-mode collapse check
     # together, instead of relying on the automatic argmin.
-    if epoch % 10 == 0 or epoch == args.epochs - 1:
+    if epoch % args.ckpt_every == 0 or epoch == args.epochs - 1:
         torch.save(
             model.state_dict(),
             f"outputs/checkpoints/model_ijepa_{args.checkpoint_tag}_epoch{epoch:04d}.pt",
@@ -319,6 +337,7 @@ history["best_val_loss"] = best_val_loss
 tag = (
     (f"seed{args.seed}_lr{args.lr}_sigreg-{args.sigreg_on}_lam{args.sigreg_lambda}" if args.anti_collapse == "sigreg" else f"seed{args.seed}_lr{args.lr}_ema{args.ema_decay}")
     + (f"_clip{args.clip_grad}" if args.clip_grad > 0 else "")
+    + ("_valshuf" if args.val_order == "shuffled" else "")
     + (f"_vw{args.var_weight}" if args.var_weight != 5.0 and args.anti_collapse == "variance" else "")
 )
 torch.save(model.state_dict(), f"outputs/model_ijepa_{tag}.pt")

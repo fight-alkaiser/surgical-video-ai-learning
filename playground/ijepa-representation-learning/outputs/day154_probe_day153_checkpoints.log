@@ -1,0 +1,13 @@
+train frames 66109, val frames 1352, mean-action baseline val_mse 0.8099
+random encoder (init 123): val_mse 0.6237  R2 0.230
+random encoder (init   1): val_mse 0.6030  R2 0.255
+random encoder (init   2): val_mse 0.6692  R2 0.174
+seed0_sigreg-image_lam0.05               epoch  0  shuffled SIGReg  26.25  probe val_mse 0.6205  R2 0.234
+seed0_sigreg-image_lam0.05               epoch 10  shuffled SIGReg  23.53  probe val_mse 0.5605  R2 0.308
+seed0_sigreg-image_lam0.05               epoch 20  shuffled SIGReg  19.51  probe val_mse 0.6221  R2 0.232
+seed0_sigreg-image_lam0.05               epoch 29  shuffled SIGReg  13.20  probe val_mse 0.5571  R2 0.312
+seed0_sigreg-patch_lam0.05               epoch  0  shuffled SIGReg  40.88  probe val_mse 0.3349  R2 0.586
+seed0_sigreg-patch_lam0.05               epoch 10  shuffled SIGReg  20.28  probe val_mse 0.4220  R2 0.479
+seed0_sigreg-patch_lam0.05               epoch 20  shuffled SIGReg  19.03  probe val_mse 0.4061  R2 0.499
+seed0_sigreg-patch_lam0.05               epoch 29  shuffled SIGReg  18.71  probe val_mse 0.4024  R2 0.503
+saved outputs/day154_probe_day153_checkpoints.json

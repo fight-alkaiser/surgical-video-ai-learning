@@ -1,0 +1,11 @@
+train episodes: 196, val episodes: 4
+train frames: 66109, val frames: 1352
+epoch    0  train_loss 0.3744  val_loss 0.2137  ctx_std 0.9581  cos_sim(across-img) 0.8503  cos_sim(within-img) 0.0075  [eval mode] cos_sim(across-img) 0.7995  cos_sim(within-img) -0.0081  val_sigreg 35.7396  val_total 1.9900
+epoch   10  train_loss 0.1597  val_loss 0.1576  ctx_std 0.9897  cos_sim(across-img) 0.4265  cos_sim(within-img) -0.0132  [eval mode] cos_sim(across-img) 0.4628  cos_sim(within-img) -0.0130  val_sigreg 22.2818  val_total 1.2638
+epoch   20  train_loss 0.1285  val_loss 0.1440  ctx_std 0.9910  cos_sim(across-img) 0.2935  cos_sim(within-img) -0.0145  [eval mode] cos_sim(across-img) 0.4514  cos_sim(within-img) -0.0151  val_sigreg 17.0994  val_total 0.9918
+epoch   29  train_loss 0.1206  val_loss 0.1473  ctx_std 0.9915  cos_sim(across-img) 0.2558  cos_sim(within-img) -0.0148  [eval mode] cos_sim(across-img) 0.4693  cos_sim(within-img) -0.0144  val_sigreg 15.3724  val_total 0.9085
+
+best smoothed val_loss 0.9365 at epoch 29 (of 30); restoring that checkpoint
+restored (best_epoch) checkpoint eval-mode collapse check: cos_sim(across-img) 0.4693  cos_sim(within-img) -0.0144
+saved outputs/loss_curve_ijepa_seed0_lr0.001_sigreg-patch_lam0.05_valshuf.png
+saved outputs/day101_collapse_check_seed0_lr0.001_sigreg-patch_lam0.05_valshuf.png

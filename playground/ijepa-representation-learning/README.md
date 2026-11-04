@@ -1,6 +1,6 @@
 # I-JEPA Representation Learning (toy)
 
-Day 93-95, Day99, Day101 and Day153 of the "surgeon learning surgical video AI" series. A deliberate
+Day 93-95, Day99, Day101, Day153 and Day154 of the "surgeon learning surgical video AI" series. A deliberate
 pivot away from ../action-conditioned-video-prediction/, which spent 15
 days (Day78-92) on whether conditioning on the robot action helps a small
 predictor and concluded that the negative result was most likely a
@@ -385,12 +385,95 @@ one seed only; λ, slice count and lr not varied; no projector/BatchNorm
 before SIGReg (LeVLJEPA reported SIGReg working poorly right after a final
 LayerNorm, which is what `TinyTransformer`'s post-norm output is).
 
+## Result (Day 154) -- shuffled-val selection avoids collapse across seeds, but lower SIGReg does not mean a better action probe
+
+Follow-up to Day153's three open items: select checkpoints with shuffled val
+batches, check a second seed, and probe the selected encoders' representation
+quality with Day94's action probe.
+
+**What changed**:
+
+- `ijepa_train.py`: `--val-order shuffled` draws val batches (and the 8-frame
+  eval-mode collapse probe) from one fixed permutation of the val frames
+  (seed 0, independent of `--seed`), so every batch mixes the 4 val episodes and
+  distant time points. Default `consecutive` keeps the Day93-153 behaviour.
+  `--ckpt-every` (default 10; 5 here). Shuffled runs are tagged `_valshuf`.
+- `day154_probe_checkpoints.py`: for every saved checkpoint of a run, shuffled
+  val SIGReg (same measurement as `day153_val_batch_check.py`) and Day94's
+  action probe (frozen context encoder, full image, mean-pooled, MLP probe ->
+  per-frame action, R^2 vs the mean-action baseline). Same protocol as
+  `probe_representation_quality.py` except that the probe and its data order
+  are seeded, so checkpoints are compared under the same probe randomness.
+  Random (untrained) encoders are probed with 3 init seeds.
+
+**Runs**: SIGReg on image / patch x seed 0 / 1, 30 epochs, lambda 0.05,
+otherwise identical to Day153.
+
+**1. Selection with shuffled val batches** -- the collapsed epoch 0 was never
+selected:
+
+| run | seed 0 | seed 1 |
+|---|---|---|
+| `sigreg-image` | epoch 29 | epoch 21 |
+| `sigreg-patch` | epoch 29 | epoch 29 |
+
+Shuffled val SIGReg fell roughly monotonically in all four runs (image:
+25-28 -> 12-14; patch: 35-43 -> 17). Image-level SIGReg still left every patch
+within an image as the same vector (eval-mode within-image cos 1.000, both
+seeds), as on Day153.
+
+**2. Action probe (R^2 vs mean-action baseline, higher is better)**, every
+saved checkpoint (`outputs/day154_probe_seed{0,1}_valshuf.{json,log}`):
+
+| | epoch 0 | 5 | 10 | 15 | 20 | 25 | 29 | selected |
+|---|---|---|---|---|---|---|---|---|
+| image, seed 0 | 0.18 | 0.14 | 0.30 | 0.32 | 0.35 | 0.32 | 0.27 | 0.27 (ep 29) |
+| image, seed 1 | 0.14 | 0.23 | 0.16 | 0.20 | 0.23 | 0.21 | 0.25 | 0.22 (ep 21) |
+| patch, seed 0 | 0.56 | 0.58 | 0.57 | 0.58 | 0.55 | 0.47 | 0.48 | 0.48 (ep 29) |
+| patch, seed 1 | 0.52 | 0.56 | 0.54 | 0.54 | 0.58 | 0.54 | 0.53 | 0.53 (ep 29) |
+
+Reference points, same probe: random encoder 0.23 / 0.26 / 0.17 (3 init
+seeds); Day95 frozen ImageNet ResNet18 0.69. Probing Day153's
+consecutive-val seed-0 checkpoints gives the same picture
+(`outputs/day154_probe_day153_checkpoints.{json,log}`: image 0.23-0.31, patch
+0.48-0.59, patch epoch 0 highest).
+
+Within each run, the rank correlation between "lower shuffled SIGReg" and
+"higher R^2" over the 7 checkpoints: image -0.57 (seed 0) and -0.89 (seed 1),
+i.e. in the expected direction but over R^2 values mostly inside the random
+encoders' range; patch +0.57 (seed 0) and 0.0 (seed 1), i.e. no agreement --
+in patch seed 0, R^2 fell from 0.58 to 0.48 while SIGReg kept improving.
+
+**Reading** (discussed with the owner before writing):
+
+- Selecting with shuffled val batches reliably rejects the collapsed
+  checkpoint, but what it certifies is "not collapsed / closer to isotropic",
+  not "more of the information this task needs". This is Day94's lesson
+  (no collapse is necessary, not sufficient) reached again, this time from the
+  model-selection side.
+- What separated the encoders was where SIGReg was applied, not which
+  checkpoint was selected: patch-level SIGReg beat random encoders from the
+  first epoch, image-level SIGReg stayed near random. The two SIGReg values
+  themselves are not comparable (64 pooled vectors vs 4096 patch tokens per
+  batch), so this comparison rests on the probe only.
+- LeJEPA's loss-vs-downstream correlation (Section 6.2, Spearman ~0.85) is
+  shown mainly on classification probes. Predicting this robot's per-frame
+  action needs fine position/motion information, and the label-free criterion
+  did not track it here. Whether that holds beyond this toy is untested.
+
+**Not measured / caveats**: two seeds; one probe seed (the random encoders
+alone spread R^2 by ~0.08, so within-run differences of ~0.05 are not
+meaningful); probe inputs are not standardized (as on Day94), so checkpoints
+whose features differ in scale may be easier or harder for the probe to fit --
+a possible confound, not checked; R^2 is the best of the probe's 50 epochs on
+val (Day94's mildly optimistic protocol); lambda, slice count and lr still not
+varied; no projector/BatchNorm before SIGReg.
+
 ## Next steps (not yet done)
 
-- Day154: select checkpoints with shuffled val batches, check whether that
-  choice holds across seeds, and run the Day94 action probe on the selected
-  checkpoint to see whether "lower shuffled SIGReg" means a better
-  representation, not just a less collapsed one.
+- Day154's open caveat: rerun the probe with standardized inputs and 2-3
+  probe seeds, to rule out feature scale as the reason SIGReg and the probe
+  disagree. Nothing else from the Day153-154 thread is outstanding.
 
 Earlier thread (Day101) closed with nothing outstanding: This project and
 `../action-conditioned-video-prediction/` independently hit the same wall
@@ -454,6 +537,9 @@ from-scratch encoder either.
   checkpoints' val SIGReg and across-image cosine similarity with
   consecutive vs shuffled val batches (output in
   `outputs/day153_val_batch_check.txt`)
+- `day154_probe_checkpoints.py` -- Day154: for every saved checkpoint of the
+  given runs, shuffled val SIGReg plus Day94's action probe (seeded), with 3
+  random encoders as reference (outputs in `outputs/day154_probe_*.{json,log}`)
 - `outputs/` -- loss curves, training history (`history_ijepa_seed*.json`
   includes both collapse-fix runs' full curves and the Day94 LR/clip
   sweep), `day94_probe_results.json`, `day95_probe_results.json`,
