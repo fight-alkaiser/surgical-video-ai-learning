@@ -498,9 +498,18 @@ R^2 vs the mean-action baseline, mean of 3 probe seeds:
 | ImageNet ResNet18 (Day95) | 0.42 | 0.70 | **0.68** |
 
 Probe-seed std was <= 0.03 everywhere, so probe randomness was not the problem.
-Feature scale was: the random encoders' outputs are ~0.03 in scale and the probe
-(Adam, lr 1e-3, 50 epochs) under-fits them; standardized, the same random
-features reach R^2 ~0.45. ResNet18's features are already O(0.4) and barely move.
+Feature scale was. `feat_scale` is the spread *across images*, not the size of
+the values: a random encoder's pooled vector is ~0.8-1.0 per dimension, far from
+the origin, but every image lands near the same point (spread ~0.015-0.03, likely
+the rank collapse of a randomly initialized deep Transformer, cf. Dong et al.
+2021, not checked here). The probe (Adam, lr 1e-3, 50 epochs) under-fits those
+tiny differences; standardized, the same random features reach R^2 ~0.45. ResNet18's
+features already spread ~0.4 across images and barely move. The patch run's pooled
+vectors are small for a different reason: its patch tokens are spread around the
+origin by SIGReg, so their per-image mean lands near the origin (~0.03 per dim).
+The image run's 1.000 within-image cos is the shortcut both losses allow: with no
+EMA teacher, copying one vector to every patch makes prediction trivial, and
+image-level SIGReg only sees the pooled vector.
 
 Rank correlation within each run between lower shuffled SIGReg and higher R^2,
 standardized: image +0.54 (seed 0, i.e. the wrong direction) / -0.89 (seed 1);
